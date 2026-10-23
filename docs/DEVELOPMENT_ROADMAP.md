@@ -1,33 +1,22 @@
 # Development roadmap
 
-## Phase 0 — Audit
+## Implemented foundation
 
-Completed: repository/history verification, active-stack inventory, security findings and isolated baseline checks. Historical promotional claims were separated from active implementation. See REPOSITORY_AUDIT.md.
+**Phases 0–1B:** repository audit/remediation, workspace-isolated authentication and messages/activity, invitations, owner/member management, ownership transfer, tasks/dependencies, revocable sessions, migrations and collaboration browser/CI coverage. Unsafe legacy external integration paths remain disabled.
 
-## Phase 1A — Secure foundation
+**Phase 2:** versioned source-linked decisions, corrections/supersession, validated evidence previews, deterministic lexical retrieval, temporal filters, visit-relative continuity and reproducible synthetic retrieval evaluation. This is structured/lexical project intelligence, not semantic embeddings or unrestricted model answering.
 
-Implemented: configuration and session hardening, disabled unsafe integrations, non-destructive seeding, workspace/membership ownership, scoped messages/activity/context, private legacy migrations, optional provider boundaries, frontend lint fixes, workspace/session UI, regression/browser tests, CI and documentation.
+**Phase 3:** three real local computational contracts, a handoff coordinator with durable delegated runs, leased execution, explicit bounded retries, cancellation/recovery, source-linked outcomes, and owner-approved exact local report publication. The frontend exposes plans, run timelines, approvals and persisted results. No agent implements arbitrary software changes or executes external tools.
 
-Completion requires executed tests, migration checks and CI; a workflow file alone is not evidence. Live provider compatibility, credential rotation and production readiness are not claimed.
+## Next: evaluate and harden
 
-## Phase 1B — Real collaboration
+1. Expand independently judged retrieval fixtures: paraphrases, multilingual queries, negation, long histories, revisions and realistic ambiguity. Measure latency on a stated workload before choosing FTS or optional embeddings.
+2. Add source-grounded optional model synthesis only with bounded authorized context, citation validation, missing-evidence behavior, provider budgets and live integration verification under separate authorization.
+3. Improve larger-project selectors, retrieval pagination stability during active edits, report scopes and retention controls. Add full temporal task revisions only when needed for point-in-time reconstruction.
+4. Establish deployment/operations: trusted TLS ingress, shared throttling, account verification/recovery, monitoring, tested backup restoration, worker supervision and resource/session/artifact retention.
+5. Introduce narrowly scoped external integrations one capability at a time. Require immutable connection ownership, bound approvals, replay protection, idempotent writes and verified execution receipts before enablement.
+6. Consider advanced agents/dynamic plans after fixed-contract reliability and evaluation justify expansion. Maintain explicit distinctions between proposed work, actual computation and verified external outcomes.
 
-Implemented: account-bound in-app invitation lifecycle; owner-managed removal, ownership transfer and leaving; persistent versioned tasks with assignments/status/priority/due dates and safe archival; acyclic prerequisites; server-side session revocation/logout-all; local authentication rate limiting; a complete collaboration interface and desktop/mobile browser journeys. Existing owner-only direct addition remains a documented compatibility/admin endpoint. Human collaboration and activity require no AI credentials.
+## Release gates
 
-Verification includes Phase 1A regressions, transaction/concurrency invariants, copied-token revocation, populated-schema preservation, PostgreSQL integration and both browser layouts. Completion is established by executed local/remote results in the implementation PR. Remaining release hardening includes email verification/recovery, distributed quotas, session-retention policy, operational monitoring and backup drills.
-
-## Phase 2 — Project Continuity Intelligence
-
-Source-linked decisions, task/document context, correction and supersession, permission-aware retrieval, and reproducible continuity evaluations. Start with structured storage; add embeddings only when they improve measured relevance. Evaluate recall, resume effort and source correctness. No results exist yet.
-
-## Phase 3 — Multi-agent coordination
-
-Persist agent configurations, task delegation, handoffs, dependency tracking, run states, interruption recovery, cancellation and idempotency. Acceptance requires durable real work and evidence, not chat-only role simulation.
-
-## Phase 4 — Integrations and approvals
-
-Select integrations by user value. Introduce scoped immutable connection ownership, signed/replay-safe callbacks, approval records, verified execution receipts, bounded retries and recovery. Historical voice/Composio code remains disabled until these requirements are implemented and tested with explicit authorization.
-
-## Phase 5 — Evaluation, deployment and release
-
-Reproducible end-to-end scenarios, reliability and task-completion measurement, security/dependency review, backup/restore drills, release configuration, observability, onboarding and user evaluation. Release only after the intended workflows are verified. No production deployment or adoption is claimed.
+Preserve membership/source boundaries, migration data, historical contributors and exact commit identity. Keep tests, real browser workflows, retrieval evaluation, PostgreSQL checks, dependency advisories, secret scanning, diagrams and setup instructions aligned with code. Do not claim production, semantic, model, scale, or user-impact verification from local deterministic tests.

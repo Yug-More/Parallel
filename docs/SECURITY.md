@@ -30,7 +30,7 @@ Tests cover anonymous access, cross-workspace reads/writes/context, membership p
 
 No production deployment is authorized or validated. Before release add operational monitoring, backup/restore drills, email verification, password recovery, shared rate limiting for distributed deployments, dependency vulnerability review, and abuse/cost quotas. Frontend advisory checks run in CI; the initial lockfile advisories were resolved through compatible updates. Revoked sessions, including copied cookies, cannot authenticate. The frontend uses recipient-approved in-app invitations. The Phase 1A direct member-add API remains owner-only for compatibility; owners are trusted to grant access. AI-generated text remains untrusted and may be inaccurate. Model output is rendered as text; do not introduce raw HTML rendering.
 
-Development's ephemeral secret invalidates sessions on process restart; set an explicit generated local secret if continuity is needed. Full prompt-injection mitigation and durable agent execution remain later work. No paid provider actions or production resources were used for this phase.
+Development's ephemeral secret invalidates sessions on process restart; set an explicit generated local secret if continuity is needed. Model prompt-injection defenses and external execution remain later work; local deterministic execution is described below. No paid provider actions or production resources were used for this phase.
 
 
 ## Phase 1B guarantees and remaining limits
@@ -42,3 +42,15 @@ Invitation IDs do not grant access: only the authenticated recipient can accept/
 Session records store a random identifier digest, not raw cookies. Logout and logout-all revoke server-side sessions. Existing Phase 1A stateless cookies are invalid after migration. Session history currently needs an operational retention policy; no user records are deleted automatically. The local IP limiter is bounded and testable, but is per process, resets on restart and is not a substitute for production ingress protection.
 
 The browser clears removed/revoked content after a failed authorization refresh (two-second polling interval); network interruptions cannot revoke information already read. No promise of erasing screenshots or human knowledge is made. In-flight reads authorized before removal may complete; subsequent requests are denied. Client state is not a security boundary.
+
+## Project intelligence and worker boundaries
+
+Decision sources are resolved by immutable kind/ID in the decision's workspace before revision creation. Snapshots preserve cited previews; current source navigation checks membership again. Default retrieval excludes terminal decisions and archived tasks. Including historical sources does not bypass membership. Text remains untrusted and is rendered without raw HTML. Retrieved assertions are not executable instructions or proof of truth.
+
+Every new decision/run/approval mutation acquires the workspace lock before authorization. Task/decision versions protect competing edits; composite FKs prevent cross-workspace successor, parent, retry and task links. Polymorphic source targets are service-validated rather than protected by target-table FKs. Direct database modifications are outside API guarantees.
+
+Workers execute only three code-defined deterministic contracts. Objectives and input text cannot create capabilities. No shell, model, external tools or outbound operations are part of those contracts. The worker checks initiating membership at claim and finalization, verifies task dependencies and context fingerprints, and discards late results after cancellation or lease recovery. Revoking a session denies subsequent API access; already queued authorized work survives logout unless cancelled or its membership becomes invalid.
+
+A publication request stores a fixed action, exact payload and SHA-256. Only the current owner may approve/reject the pending unexpired request. The worker independently checks payload equality/hash, initiator membership, approver's current ownership, expiry and context before atomically saving one assistant message and receipt. An approval is not an execution success. Replay, altered payloads, competing responses, post-approval ownership changes, cancellation and expiry are tested. External writes remain unavailable.
+
+Run contexts and evidence snapshots contain workspace data and require the same retention/backup protections as messages. They are not encrypted at rest by this application, signed, or tamper-proof against database administrators. Bound outstanding jobs, input sizes, graph scope and execution deadlines limit local abuse; broader public deployment still needs shared quotas and supervised workers. No new production resources or real credentials were used.

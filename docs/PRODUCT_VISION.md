@@ -1,13 +1,23 @@
 # Product vision
 
-Parallel helps small project teams and their AI assistants keep work coherent over days and weeks. Conversations alone do not reliably preserve decisions, task responsibility, evidence of completion, or the context needed to resume interrupted work.
+Parallel helps small project teams preserve the state and reasoning needed to resume work across days, people and tools. A discussion can contain contradictory advice; a task can be unfinished despite a confident report; a decision can be replaced. A useful workspace must make those distinctions inspectable.
 
-Project Continuity Intelligence is the ability to retrieve relevant authorized project context, distinguish current decisions from superseded ones, and connect claimed outcomes to evidence. It must be evaluated through repeatable workflows rather than agent counts or demonstrations.
+**Project Continuity Intelligence** connects authorized source records, structured choices, changes over time and verifiable agent outcomes. The implemented foundation is deliberately deterministic: users can trace what is shown to real records and inspect its limits without buying model calls.
 
-The target journey is: create a project; invite collaborators; exchange messages; assign tasks; record source-linked decisions; leave; return to trustworthy persisted state and clear next actions. Phases 1A–1B support account creation, owner/member workspaces, in-app invitations and membership lifecycle, messages, activity, assigned persistent tasks/dependencies, server-revocable sessions, and optional model replies. Source-linked decision records and evaluated continuity remain future work.
+## Users and workflow
 
-Primary users are small software/project teams that need ownership, continuity, and clear boundaries around agent actions. The intended differentiation is dependable shared project state and verified progress, not a decorative chatbot or an unbounded vector store.
+A small engineering team creates a private workspace, invites collaborators, exchanges messages, assigns tasks and dependencies, and records its reasoning as source-linked decisions. A returning teammate opens a visit-relative briefing, sees current accepted choices and unresolved work, and inspects the underlying evidence. A local coordinator delegates status computation and dependency analysis, then saves a handoff. Publishing it to the team conversation requires the current owner's approval of the exact content.
 
-Non-goals for this phase include autonomous external execution, multi-agent fan-out, semantic retrieval infrastructure, voice/telephony, production hosting, and claims of measured user impact. Retain useful existing components and keep architecture proportionate to demonstrated needs.
+The implementation supports that workflow with persistent storage, backend authorization, version conflicts, revision history, source navigation, bounded search, durable runs and execution receipts. It does not infer that a message is true, that a report completed a task, or that a queued run executed.
 
-Proposed evaluation dimensions: authorized retrieval correctness, decision recall with sources, time to resume a project, status-report accuracy, successful interruption recovery, and duplicate-action rate. No evaluation results or adoption metrics are claimed yet.
+## Differentiation and scope
+
+The value is a connected project record: why a choice was made, what replaced it, what prerequisites remain, what changed since a visit, and what an agent actually computed. Source previews distinguish original evidence from current edits. Agent results expose their scope and as-of time. Human control stays visible.
+
+The current product is an engineering foundation for local/team evaluation. It is not a production-hosted service, a general autonomous coding agent, or an indexed semantic memory of arbitrary external documents. Deterministic retrieval has measured ambiguity and vocabulary limitations. [Evaluation](EVALUATION.md) reports synthetic results without claiming user impact or industry benchmarks.
+
+## Non-goals and next evidence
+
+This phase does not restore external tools, voice/SMS, unrestricted browsing, paid model workflows or dynamic agent graphs. Future model synthesis must cite validated sources, separate suggestions from records and handle missing evidence. Future external actions need scoped connections, specific approvals, idempotent execution and independently checked receipts.
+
+Before expanding capability, gather representative relevance judgments and usability observations, measure interruption recovery on stated workloads, and establish backup, deployment, abuse-control and monitoring practices. Adoption and time-saved metrics remain unmeasured.

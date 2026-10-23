@@ -30,3 +30,8 @@ No model calls, telephony, emails, external document edits, production deploymen
 ## Phase 1B evolution
 
 Baseline 426306235cfc127287e58d6efb989555a8d5491a was clean, including models.py; the apparent UI edit did not represent an uncommitted change. Phase 1B adds real invitations, member removal/ownership transfer, tasks and dependencies, revocable sessions, local auth throttling and a complete collaboration UI. Phase 1A tests remain regression coverage. New tests exercise races, populated-schema upgrades, task/version invariants and real browser removal/cache clearing. No paid providers, email delivery, production deployment or original user databases are used.
+
+
+## Phases 2 + 3 evolution
+
+The verified starting main was d3bd47543da51a147cdfb7f4f6e171fbdd1ecac2 with a clean working tree. New modules add revisioned decisions/provenance, authorized lexical retrieval, explicit visit markers, current-state/change briefings, deterministic status/dependency agents, a fixed handoff coordinator and exact owner-approved local publication. Migration 0004 adds seven tables without rewriting existing records. Backend tests include competing revisions/workers/approvals and interrupted execution. Retrieval fixtures deliberately expose ambiguity and vocabulary gaps. Real browser workflows produce the documentation screenshots. Optional model replies remain separate and live-unverified; no external execution or production claims are added.
