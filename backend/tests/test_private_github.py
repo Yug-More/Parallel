@@ -437,3 +437,29 @@ def test_permission_recheck_discards_late_owner_revocation(accounts, application
     )
     with application.state.session_factory() as db:
         assert not db.get(RepositoryConnection, cid).active
+
+
+def test_private_chat_context_requires_fresh_permission_before_provider(
+    accounts, application, monkeypatch
+):
+    import providers
+
+    configure(application)
+    monkeypatch.setattr(github_app, "request_json", transport)
+    owner, _ = accounts()
+    wid = project(owner)
+    result = authorize(owner, wid, application)
+    cid = result["connection"]["id"]
+    message = owner.post(
+        f"/workspaces/{wid}/messages", json={"content": "Review current project context"}
+    ).json()
+    with application.state.session_factory() as db:
+        db.get(RepositoryConnection, cid).access_verified_until = utc_now() + timedelta(minutes=8)
+        db.commit()
+
+    def forbidden(*_args):
+        raise AssertionError("Stale private context must never reach a provider")
+
+    monkeypatch.setattr(providers, "generate_reply", forbidden)
+    response = owner.post(f"/workspaces/{wid}/agent-replies", json={"message_id": message["id"]})
+    assert response.status_code == 409
