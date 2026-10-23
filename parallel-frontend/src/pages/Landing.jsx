@@ -1,59 +1,69 @@
-import { motion as Motion } from "framer-motion";
+import ThemeToggle from "../components/ThemeToggle";
 import "./Landing.css";
 
 export default function Landing({ goLogin }) {
   return (
-    <div className="landing-wrapper">
-
-      {/* Background Animated Gradient */}
-      <div className="gradient-bg"></div>
-
-      {/* Floating Orbs */}
-      <div className="orb orb-1"></div>
-      <div className="orb orb-2"></div>
-      <div className="orb orb-3"></div>
-
-      <Motion.h1
-        className="landing-title"
-        initial={{ opacity: 0, y: -40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
+    <main className="landing-wrapper">
+      <header className="landing-header">
+        <strong>Parallel</strong>
+        <ThemeToggle />
+      </header>
+      <section className="landing-intro">
+        <p className="landing-eyebrow">
+          A shared record of how work moves forward
+        </p>
+        <h1>
+          Your project.
+          <br />
+          Its decisions.
+          <br />A clear way back.
+        </h1>
+        <p className="landing-subtitle">
+          Bring conversations, tasks, and source-linked decisions into one
+          private workspace. Return to what changed, inspect the evidence, and
+          prepare a handoff you can verify.
+        </p>
+        <button onClick={goLogin} className="cta-button">
+          Enter Dashboard →
+        </button>
+        <p className="landing-note">
+          Collaboration and local intelligence work without AI provider
+          credentials.
+        </p>
+      </section>
+      <section
+        className="landing-capabilities"
+        aria-label="Product capabilities"
       >
-        A Persistent Workspace<br />for Project Teams
-      </Motion.h1>
-
-      <Motion.p
-        className="landing-subtitle"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-      >
-        Keep project conversations and collaborators together in private workspaces. Return to saved context when you are ready to continue.
-      </Motion.p>
-
-      <Motion.button
-        onClick={goLogin}
-        className="cta-button"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        Enter Dashboard →
-      </Motion.button>
-
-      {/* Product Preview Card */}
-      <Motion.div
-        className="preview-card glass"
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.6 }}
-      >
-        <h3>Shared Project Conversations</h3>
-        <p>Workspace membership controls access to your conversations. Tasks and decision tracking are planned for later phases.</p>
-        <div className="preview-bar"></div>
-        <div className="preview-bar bar-2"></div>
-        <div className="preview-bar bar-3"></div>
-      </Motion.div>
-
-    </div>
+        <article>
+          <span>01 / Collaborate</span>
+          <h2>Work with explicit access.</h2>
+          <p>
+            Invite registered teammates, assign persistent tasks, manage
+            prerequisites, and keep project conversations together.
+          </p>
+        </article>
+        <article>
+          <span>02 / Remember</span>
+          <h2>Preserve the reasoning.</h2>
+          <p>
+            Link decisions to actual records. Inspect revisions, follow
+            replacements, and find current evidence through deterministic
+            search.
+          </p>
+        </article>
+        <article>
+          <span>03 / Coordinate</span>
+          <h2>Review what really ran.</h2>
+          <p>
+            Local agents compute status and dependency reports, coordinate a
+            handoff, and request owner approval before publishing it.
+          </p>
+        </article>
+      </section>
+      <footer className="landing-footer">
+        Private workspaces · Inspectable sources · Durable local execution
+      </footer>
+    </main>
   );
 }

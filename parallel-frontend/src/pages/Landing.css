@@ -1,129 +1,104 @@
 .landing-wrapper {
-  position: relative;
-  height: 100vh;
-  width: 100%;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 140px;
-  text-align: center;
-}
-
-/* BACKGROUND GRADIENT */
-.gradient-bg {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at top, var(--accent) 0%, transparent 60%);
-  opacity: 0.15;
-  filter: blur(120px);
-  z-index: -5;
-}
-
-/* FLOATING ORBS */
-.orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.25;
-}
-.orb-1 {
-  width: 320px;
-  height: 320px;
-  background: #00eaff;
-  top: 120px;
-  left: -80px;
-  animation: float 6s infinite ease-in-out;
-}
-.orb-2 {
-  width: 260px;
-  height: 260px;
-  background: #0066ff;
-  top: 200px;
-  right: -60px;
-  animation: float 5s infinite ease-in-out reverse;
-}
-.orb-3 {
-  width: 200px;
-  height: 200px;
-  background: #ffffff;
-  bottom: -40px;
-  left: 50%;
-  transform: translateX(-50%);
-  animation: float 7s infinite ease-in-out;
-}
-
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-30px); }
-  100% { transform: translateY(0px); }
-}
-
-/* TITLES */
-.landing-title {
-  font-size: 62px;
-  font-weight: 800;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  background: var(--bg);
   color: var(--text);
-  line-height: 1.1;
+  padding: 0 max(24px, calc((100% - 1180px) / 2));
 }
-
+.landing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--border);
+}
+.landing-header strong {
+  font-size: 23px;
+  letter-spacing: -0.8px;
+}
+.landing-intro {
+  padding: 80px 0 64px;
+  max-width: 820px;
+}
+.landing-eyebrow {
+  color: #157286;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 24px;
+}
+.landing-intro h1 {
+  font-size: clamp(44px, 6vw, 76px);
+  line-height: 1.08;
+  font-weight: 600;
+  letter-spacing: -2.5px;
+  margin: 0;
+}
 .landing-subtitle {
+  color: var(--text-secondary);
   font-size: 20px;
-  color: var(--text-secondary);
-  max-width: 700px;
-  margin-top: 25px;
+  max-width: 720px;
+  line-height: 1.65;
+  margin: 28px 0;
 }
-
-/* CTA BUTTON */
 .cta-button {
-  margin-top: 40px;
-  padding: 14px 38px;
-  font-size: 18px;
-  border-radius: 14px;
-  background: var(--accent);
-  color: black;
-  font-weight: bold;
-  border: none;
+  background: #157286;
+  color: #fff;
+  border: 1px solid #157286;
+  border-radius: 7px;
+  padding: 14px 24px;
+  font: inherit;
+  font-weight: 600;
   cursor: pointer;
-  transition: 0.2s;
 }
-
-/* PREVIEW CARD */
-.preview-card {
-  margin-top: 70px;
-  width: 600px;
-  padding: 28px;
-  text-align: left;
-  border-radius: 20px;
-  animation: fadeIn 0.5s ease-out;
+.cta-button:focus-visible {
+  outline: 3px solid #157286;
+  outline-offset: 4px;
 }
-
-.preview-card h3 {
-  color: var(--accent);
-  font-size: 22px;
-  margin-bottom: 8px;
-}
-
-.preview-card p {
+.landing-note {
+  font-size: 13px;
+  line-height: 1.6;
   color: var(--text-secondary);
-  margin-bottom: 16px;
+  margin-top: 18px;
 }
-
-.preview-bar {
-  height: 16px;
-  background: var(--accent);
-  border-radius: 8px;
-  margin-bottom: 10px;
-  opacity: 0.8;
+.landing-capabilities {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 36px;
+  border-top: 1px solid var(--border);
+  padding: 32px 0 60px;
 }
-.preview-bar.bar-2 {
-  width: 80%;
+.landing-capabilities span {
+  color: var(--text-secondary);
+  font-size: 12px;
 }
-.preview-bar.bar-3 {
-  width: 60%;
+.landing-capabilities h2 {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+  margin: 16px 0 12px;
 }
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px) }
-  to   { opacity: 1; transform: translateY(0px) }
+.landing-capabilities p {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 0;
+}
+.landing-footer {
+  border-top: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 20px 0;
+  font-size: 12px;
+  line-height: 1.7;
+}
+@media (max-width: 700px) {
+  .landing-intro {
+    padding-top: 48px;
+  }
+  .landing-capabilities {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+  .landing-subtitle {
+    font-size: 18px;
+  }
 }
