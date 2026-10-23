@@ -463,3 +463,27 @@
     border-top: 1px solid var(--border);
   }
 }
+
+.workspace-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; padding: 12px 24px; }
+.workspace-toolbar form { display: flex; gap: 8px; align-items: center; }
+.workspace-toolbar input, .workspace-toolbar select, .workspace-member-form input { padding: 8px; max-width: 100%; background: var(--panel-glass); color: var(--text); border: 1px solid var(--border); border-radius: 4px; }
+.workspace-toolbar label, .workspace-member-form label, .workspace-compose { display: flex; flex-direction: column; gap: 4px; }
+.workspace-compose { flex: 1; min-width: 0; }
+.workspace-error { padding: 12px 24px; color: var(--text); border-bottom: 1px solid var(--border); }
+.workspace-member-form { display: grid; gap: 8px; margin: 16px 0 24px; }
+.workspace-limits { margin-top: 24px; font-size: 13px; }
+.workspace-ai { padding: 10px; margin-top: 8px; }
+.chat-panel h2 { font-size: 20px; }
+.activity-panel h2 { font-size: 16px; margin: 12px 0; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 600px) { .dashboard-header { padding: 12px; flex-wrap: wrap; gap: 12px; } .workspace-toolbar { padding: 12px; } .workspace-toolbar form { flex-wrap: wrap; } }
+
+/* The conversation must fit below the workspace toolbar, not force a second viewport. */
+.dashboard-simple .chat-panel { min-height: 0; }
+.dashboard-simple .chat-scroll { min-height: 0; }
+@media (max-width: 900px) {
+  .dashboard-simple { height: auto; min-height: 100dvh; }
+  .dashboard-panels { overflow: visible; }
+  .dashboard-simple .chat-panel { min-height: 55dvh; }
+  .activity-panel { max-height: none; }
+}

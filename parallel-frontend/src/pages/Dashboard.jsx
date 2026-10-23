@@ -1,465 +1,148 @@
-import { useEffect, useState, useRef } from "react";
-import ChatBubble from "../components/ChatBubble";
-import ThemeToggle from "../components/ThemeToggle";
-import "./Dashboard.css";
-import "../components/ChatPanel.css";
+import { useEffect, useState } from 'react';
+import ChatBubble from '../components/ChatBubble';
+import ThemeToggle from '../components/ThemeToggle';
+import { api } from '../api';
+import './Dashboard.css';
+import '../components/ChatPanel.css';
 
-const apiBase = import.meta.env.VITE_API_BASE || "http://localhost:8000";
-
-/** Format E.164 US number so we don't double the country code: 16158066527 -> +1 (615) 806-6527 */
-function formatPlivoPhone(num) {
-  if (!num) return "";
-  const s = String(num).replace(/\D/g, "");
-  if (s.length === 11 && s.startsWith("1")) return `+1 (${s.slice(1, 4)}) ${s.slice(4, 7)}-${s.slice(7)}`;
-  if (s.length === 10) return `+1 (${s.slice(0, 3)}) ${s.slice(3, 6)}-${s.slice(6)}`;
-  return `+${s}`;
-}
-
-const MODES = [
-  { key: "chat", label: "Chat", icon: "💬", desc: "Talk to your AI agent" },
-  { key: "research", label: "Research", icon: "🔍", desc: "AGI web research agent" },
-  { key: "action", label: "Action", icon: "⚡", desc: "Composio app actions" },
-];
-
-const CONNECT_TOOLKITS = [
-  { key: "GMAIL", label: "Gmail" },
-  { key: "GOOGLEDOCS", label: "Google Docs" },
-  { key: "GOOGLEDRIVE", label: "Google Drive" },
-];
-
-export default function Dashboard() {
-  const [user, setUser] = useState({ id: null, name: "You" });
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [online, setOnline] = useState([]);
-  const [activity, setActivity] = useState([]);
-  const [mode, setMode] = useState("chat");
-  const [tools, setTools] = useState(null);
-  const [composioTools, setComposioTools] = useState([]);
-  const [selectedAction, setSelectedAction] = useState("GMAIL_SEND_EMAIL");
-  const [composioStatus, setComposioStatus] = useState(null);
-  const [connecting, setConnecting] = useState(false);
-  const [summaryLoading, setSummaryLoading] = useState(false);
-  const [summaryEmail, setSummaryEmail] = useState("");
-  const [showSummaryForm, setShowSummaryForm] = useState(false);
-  const chatEndRef = useRef(null);
+export default function Dashboard({ user, onLogout }) {
+  const [workspaces, setWorkspaces] = useState([]);
+  const [workspaceId, setWorkspaceId] = useState('');
+  const [snapshot, setSnapshot] = useState({ id: '', messages: [], activity: [], members: [] });
+  const [draft, setDraft] = useState('');
+  const [workspaceName, setWorkspaceName] = useState('');
+  const [memberEmail, setMemberEmail] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [refresh, setRefresh] = useState(0);
+  const [older, setOlder] = useState([]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch(`${apiBase}/me`, { credentials: "include" });
-        if (res.ok) {
-          const data = await res.json();
-          setUser({ id: data.id, name: data.name || "You" });
-        } else { window.location.reload(); }
-      } catch { window.location.reload(); }
-    })();
+    const controller = new AbortController();
+    api('/workspaces', { signal: controller.signal }).then((rows) => {
+      setWorkspaces(rows);
+      setWorkspaceId((current) => current || rows[0]?.id || '');
+    }).catch((err) => { if (err.name !== 'AbortError') setError(err.message); });
+    return () => controller.abort();
   }, []);
 
-  // Load messages initially, then poll every 5s for new ones (e.g. voice transcripts)
-  const refreshMessages = async () => {
-    try {
-      const res = await fetch(`${apiBase}/messages`, { credentials: "include" });
-      if (res.ok) {
-        const data = await res.json();
-        setMessages((prev) => {
-          // Only update if count changed (avoids scroll jumps)
-          if (data.length !== prev.length) return data;
-          return prev;
-        });
-      }
-    } catch (e) { console.error(e); }
-  };
-
   useEffect(() => {
-    if (!user.id) return;
-    refreshMessages();
-    const id = setInterval(refreshMessages, 2000);
-    return () => clearInterval(id);
-  }, [user.id]);
-
-  useEffect(() => {
-    if (!user.id) return;
-    (async () => {
+    if (!workspaceId) return;
+    const controller = new AbortController();
+    let pending = false;
+    const update = async () => {
+      if (pending) return;
+      pending = true;
       try {
-        const [toolsRes, cToolsRes, cStatusRes] = await Promise.all([
-          fetch(`${apiBase}/tools`, { credentials: "include" }),
-          fetch(`${apiBase}/composio/tools`, { credentials: "include" }),
-          fetch(`${apiBase}/composio/status`, { credentials: "include" }),
-        ]);
-        if (toolsRes.ok) setTools(await toolsRes.json());
-        if (cToolsRes.ok) {
-          const data = await cToolsRes.json();
-          setComposioTools(data.toolkits || []);
-          if (data.toolkits?.length) setSelectedAction(data.toolkits[0].name);
-        }
-        if (cStatusRes.ok) setComposioStatus(await cStatusRes.json());
-      } catch (e) { console.error(e); }
-    })();
-  }, [user.id]);
+        const [messages, activity, members] = await Promise.all(
+          ['messages', 'activity', 'members'].map((resource) => api(`/workspaces/${workspaceId}/${resource}`, { signal: controller.signal }))
+        );
+        if (!controller.signal.aborted) setSnapshot({ id: workspaceId, messages, activity, members });
+      } catch (err) {
+        if (err.name !== 'AbortError') setError(err.message);
+      } finally { pending = false; }
+    };
+    update();
+    const timer = setInterval(update, 3000);
+    return () => { controller.abort(); clearInterval(timer); };
+  }, [workspaceId, refresh]);
 
-  const refreshTeamActivity = async () => {
+  const current = workspaces.find((workspace) => workspace.id === workspaceId);
+  const view = snapshot.id === workspaceId ? snapshot : null;
+
+  async function createWorkspace(event) {
+    event.preventDefault(); setBusy(true); setError('');
     try {
-      const [onRes, actRes] = await Promise.all([
-        fetch(`${apiBase}/online`, { credentials: "include" }),
-        fetch(`${apiBase}/activity`, { credentials: "include" }),
-      ]);
-      if (onRes.ok) setOnline((await onRes.json()).members || []);
-      if (actRes.ok) setActivity((await actRes.json()) || []);
-    } catch (e) { console.error(e); }
-  };
+      const workspace = await api('/workspaces', { method: 'POST', body: { name: workspaceName } });
+      setWorkspaces((rows) => [...rows, workspace]);
+      setWorkspaceId(workspace.id); setWorkspaceName(''); setOlder([]); setDraft('');
+    } catch (err) { setError(err.message); }
+    finally { setBusy(false); }
+  }
 
-  useEffect(() => {
-    if (!user.id) return;
-    refreshTeamActivity();
-    const id = setInterval(refreshTeamActivity, 2000);
-    return () => clearInterval(id);
-  }, [user.id]);
-
-  const sendMessage = async (e) => {
-    e?.preventDefault();
-    const text = input.trim();
-    if (!text || loading) return;
-    setInput("");
-    setLoading(true);
-    setError("");
+  async function addMember(event) {
+    event.preventDefault(); setBusy(true); setError('');
     try {
-      const body = { content: text, mode };
-      if (mode === "action") body.action_tool = selectedAction;
-      const res = await fetch(`${apiBase}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || `Request failed (${res.status})`);
-      }
-      await res.json();
-      const [msgRes, actRes] = await Promise.all([
-        fetch(`${apiBase}/messages`, { credentials: "include" }),
-        fetch(`${apiBase}/activity`, { credentials: "include" }),
-      ]);
-      if (msgRes.ok) setMessages(await msgRes.json());
-      if (actRes.ok) setActivity(await actRes.json());
-    } catch (err) {
-      setError(err?.message || "Send failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+      await api(`/workspaces/${workspaceId}/members`, { method: 'POST', body: { email: memberEmail } });
+      setMemberEmail(''); setRefresh((value) => value + 1);
+    } catch (err) { setError(err.message); }
+    finally { setBusy(false); }
+  }
 
-  const handleLogout = async () => {
-    try { await fetch(`${apiBase}/auth/logout`, { method: "POST", credentials: "include" }); } catch (_) {}
-    window.location.reload();
-  };
-
-  const handleConnect = async (toolkit = "GMAIL") => {
-    setConnecting(true);
+  async function send(event) {
+    event.preventDefault();
+    if (!draft.trim() || !workspaceId || busy) return;
+    setBusy(true); setError('');
     try {
-      const res = await fetch(`${apiBase}/composio/connect`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ toolkit }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.redirect_url) window.open(data.redirect_url, "_blank");
-      } else {
-        const err = await res.json().catch(() => ({}));
-        setError(err.detail || "Connection failed");
-      }
-    } catch (err) {
-      setError("Failed to start connection");
-    } finally {
-      setConnecting(false);
-    }
-  };
+      await api(`/workspaces/${workspaceId}/messages`, { method: 'POST', body: { content: draft } });
+      setDraft(''); setRefresh((value) => value + 1);
+    } catch (err) { setError(err.message); }
+    finally { setBusy(false); }
+  }
 
-  const refreshComposioStatus = async () => {
+  async function askAgent() {
+    const source = [...(view?.messages || [])].reverse().find((message) => message.role === 'user');
+    if (!source) return;
+    setBusy(true); setError('');
     try {
-      const res = await fetch(`${apiBase}/composio/status`, { credentials: "include" });
-      if (res.ok) setComposioStatus(await res.json());
-    } catch (e) { console.error(e); }
-  };
+      await api(`/workspaces/${workspaceId}/agent-replies`, { method: 'POST', body: { message_id: source.id } });
+      setRefresh((value) => value + 1);
+    } catch (err) { setError(err.message); }
+    finally { setBusy(false); }
+  }
 
-  const handleGenerateSummary = async (e) => {
-    e?.preventDefault();
-    if (!summaryEmail.trim() || summaryLoading) return;
-    setSummaryLoading(true);
-    setError("");
+  async function loadOlder() {
+    const first = older[0] || view?.messages[0];
+    if (!first) return;
+    setBusy(true);
     try {
-      const res = await fetch(`${apiBase}/summary/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email_to: summaryEmail.trim() }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "Summary generation failed");
-      }
-      const data = await res.json();
-      setShowSummaryForm(false);
-      setSummaryEmail("");
-      // Refresh messages to show the summary entry
-      const [msgRes, actRes] = await Promise.all([
-        fetch(`${apiBase}/messages`, { credentials: "include" }),
-        fetch(`${apiBase}/activity`, { credentials: "include" }),
-      ]);
-      if (msgRes.ok) setMessages(await msgRes.json());
-      if (actRes.ok) setActivity(await actRes.json());
-      const docNote = data.doc_url ? ` Doc: ${data.doc_url}` : "";
-      alert(`Summary generated and emailed to ${summaryEmail}!${docNote}`);
-    } catch (err) {
-      setError(err?.message || "Summary failed");
-    } finally {
-      setSummaryLoading(false);
-    }
-  };
-
-  const displayMessages = messages.length
-    ? messages
-    : [{ id: "welcome", sender_name: "agent", role: "assistant", content: `Hey ${user.name} -- how can I help today?` }];
-
-  const loadingLabel =
-    mode === "research" ? "Researching (this can take up to 90s)..." :
-    mode === "action" ? "Running action..." : "Thinking...";
-
-  // Clean toolkit names — backend may return "ITEMTOOLKIT(SLUG='GMAIL')" or just "GMAIL"
-  const connectedToolkits = (composioStatus?.toolkits || []).map((t) => {
-    const s = String(t);
-    const m = s.match(/SLUG='([^']+)'/i) || s.match(/SLUG="([^"]+)"/i);
-    return m ? m[1].toUpperCase() : s.toUpperCase().trim();
-  });
+      const rows = await api(`/workspaces/${workspaceId}/messages?before=${encodeURIComponent(first.id)}`);
+      setOlder((previous) => [...rows, ...previous]);
+      if (!rows.length) setError('You have reached the beginning of this conversation.');
+    } catch (err) { setError(err.message); }
+    finally { setBusy(false); }
+  }
 
   return (
     <div className="dashboard-simple">
       <header className="dashboard-header">
-        <span className="dashboard-user">{user.name}</span>
-        <div className="dashboard-actions">
-          <button
-            type="button"
-            className="summary-toggle-btn"
-            onClick={() => setShowSummaryForm(!showSummaryForm)}
-            title="Generate summary, create Google Doc, and email it"
-          >
-            Summary + Email
-          </button>
-          <ThemeToggle />
-          <button type="button" className="logout-btn" onClick={handleLogout}>Log out</button>
-        </div>
+        <strong>Parallel / {user.name}</strong>
+        <div className="dashboard-actions"><ThemeToggle /><button disabled={busy} onClick={onLogout}>Log out</button></div>
       </header>
-
-      {/* Summary form */}
-      {showSummaryForm && (
-        <div className="summary-bar">
-          <form className="summary-form" onSubmit={handleGenerateSummary}>
-            <span className="summary-label">Generate chat summary, save to Google Doc, and email to:</span>
-            <input
-              className="summary-email-input"
-              type="email"
-              placeholder="recipient@example.com"
-              value={summaryEmail}
-              onChange={(e) => setSummaryEmail(e.target.value)}
-              disabled={summaryLoading}
-              required
-            />
-            <button type="submit" className="summary-send-btn" disabled={summaryLoading || !summaryEmail.trim()}>
-              {summaryLoading ? "Generating..." : "Generate & Send"}
-            </button>
-            <button type="button" className="summary-cancel-btn" onClick={() => setShowSummaryForm(false)}>Cancel</button>
-          </form>
-        </div>
-      )}
-
+      <div className="workspace-toolbar">
+        <label>Workspace <select aria-label="Workspace" value={workspaceId} disabled={busy} onChange={(event) => {
+          setWorkspaceId(event.target.value); setOlder([]); setDraft(''); setMemberEmail(''); setError('');
+        }}>{workspaces.map((workspace) => <option key={workspace.id} value={workspace.id}>{workspace.name}</option>)}</select></label>
+        <form onSubmit={createWorkspace}><label>New workspace <input value={workspaceName} onChange={(event) => setWorkspaceName(event.target.value)} required maxLength={120} /></label><button disabled={busy || !workspaceName.trim()}>Create</button></form>
+      </div>
+      {error && <p role="alert" className="workspace-error">{error}</p>}
       <div className="dashboard-panels">
-        {/* ── left: chat ── */}
-        <div className="chat-wrapper glass chat-panel">
-          <div className="mode-bar">
-            {MODES.map((m) => (
-              <button
-                key={m.key}
-                className={`mode-btn ${mode === m.key ? "active" : ""}`}
-                onClick={() => setMode(m.key)}
-                title={m.desc}
-              >
-                <span className="mode-icon">{m.icon}</span> {m.label}
-              </button>
-            ))}
-            {mode === "action" && composioTools.length > 0 && (
-              <select
-                className="toolkit-select"
-                value={selectedAction}
-                onChange={(e) => setSelectedAction(e.target.value)}
-              >
-                {composioTools.map((t) => (
-                  <option key={t.name} value={t.name}>{t.label}</option>
-                ))}
-              </select>
-            )}
+        <section aria-label="Workspace conversation" className="chat-wrapper glass chat-panel">
+          <h2>{current?.name || 'Loading workspaces…'}</h2>
+          <p>Messages are shared with this workspace’s members. AI replies are optional.</p>
+          <div className="chat-scroll" aria-live="polite">
+            {!view ? <p>Loading conversation…</p> : <>
+              {view.messages.length > 0 && <button disabled={busy} onClick={loadOlder}>Load older messages</button>}
+              {!view.messages.length && <p>No messages yet. Start the conversation.</p>}
+              {[...older, ...view.messages].filter((message, index, rows) => rows.findIndex((row) => row.id === message.id) === index).map((message) => (
+                <div key={message.id}><small>{message.sender_name} · {new Date(message.created_at).toLocaleString()}</small><ChatBubble sender={message.role === 'user' ? 'user' : 'ai'} text={message.content} /></div>
+              ))}
+            </>}
           </div>
-
-          {mode === "research" && (
-            <div className="mode-info research-info">
-              AGI browser agent will research the web for you. Queries take 30-90 seconds.
-            </div>
-          )}
-          {mode === "action" && (
-            <div className="mode-info action-info">
-              Composio executes real actions in apps.
-              {composioStatus && !composioStatus.connected && (
-                <span> You need to connect your accounts below first.</span>
-              )}
-              {composioStatus?.connected && (
-                <span> Connected: {connectedToolkits.join(", ") || "ready"}</span>
-              )}
-            </div>
-          )}
-
-          <div className="chat-scroll">
-            {displayMessages.map((m) => (
-              <ChatBubble key={m.id} sender={m.role === "user" ? "user" : "ai"} text={m.content} />
-            ))}
-            {error && <div className="status-bubble error">{error}</div>}
-            {loading && (
-              <div className="status-bubble">
-                <span>{loadingLabel}</span>
-                <span className="status-dots"><span></span><span></span><span></span></span>
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          <form className="input-container" onSubmit={sendMessage}>
-            <input
-              className="chat-input"
-              placeholder={
-                mode === "research" ? "What should AGI research?" :
-                mode === "action" ? `Describe the action (e.g. "Send email to ...")` :
-                "Ask your agent..."
-              }
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              disabled={loading}
-            />
-            <button type="submit" className="chat-send" disabled={loading}>
-              {mode === "research" ? "Research" : mode === "action" ? "Run" : "Send"}
-            </button>
+          <form className="input-container" onSubmit={send}>
+            <label className="workspace-compose">Message<input className="chat-input" value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={16000} disabled={busy || !view} /></label>
+            <button className="chat-send" disabled={busy || !view || !draft.trim()}>Send</button>
           </form>
-        </div>
-
-        {/* ── right: sidebar ── */}
+          <button className="workspace-ai" disabled={busy || !view?.messages.some((message) => message.role === 'user')} onClick={askAgent}>{busy ? 'Working…' : 'Ask AI about recent conversation'}</button>
+        </section>
         <aside className="activity-panel glass">
-          {tools && (
-            <div className="tools-status">
-              <h3 className="activity-title">Sponsor Tools</h3>
-              <div className="tool-cards">
-                <div className={`tool-card ${tools.agi?.enabled ? "enabled" : "disabled"}`}>
-                  <span className="tool-indicator" />
-                  <div>
-                    <strong>AGI Research</strong>
-                    <p>{tools.agi?.enabled ? "Connected (REST API)" : "No API key"}</p>
-                  </div>
-                </div>
-                <div className={`tool-card ${tools.composio?.enabled ? "enabled" : "disabled"}`}>
-                  <span className="tool-indicator" />
-                  <div>
-                    <strong>Composio Actions</strong>
-                    <p>
-                      {tools.composio?.enabled
-                        ? composioStatus?.connected
-                          ? `Connected (${connectedToolkits.join(", ") || "active"})`
-                          : "API key set - connect accounts below"
-                        : "No API key"}
-                    </p>
-                    {tools.composio?.enabled && (
-                      <div className="connect-buttons">
-                        {CONNECT_TOOLKITS.map((tk) => (
-                          <button
-                            key={tk.key}
-                            className={`connect-btn ${connectedToolkits.includes(tk.key) ? "connected" : ""}`}
-                            onClick={() => handleConnect(tk.key)}
-                            disabled={connecting}
-                          >
-                            {connectedToolkits.includes(tk.key) ? `${tk.label} ✓` : `Connect ${tk.label}`}
-                          </button>
-                        ))}
-                        <button className="connect-btn refresh-status-btn" onClick={refreshComposioStatus}>
-                          Refresh Status
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className={`tool-card ${tools.plivo?.enabled ? "enabled" : "disabled"}`}>
-                  <span className="tool-indicator" />
-                  <div>
-                    <strong>Plivo Voice/SMS</strong>
-                    <p>
-                      {tools.plivo?.enabled
-                        ? <>Call: <span className="phone-number">{formatPlivoPhone(tools.plivo.phone_number)}</span></>
-                        : "Not configured"}
-                    </p>
-                    {tools.plivo?.voice_mode === "live" && (
-                      <p className="voice-mode-badge live">Live AI Agent (Gemini)</p>
-                    )}
-                    {tools.plivo?.voice_mode === "record" && tools.plivo?.enabled && (
-                      <p className="voice-mode-badge record">Record &amp; Transcribe</p>
-                    )}
-                    {tools.tunnel_url && (
-                      <p className="tunnel-row">
-                        <a href={tools.tunnel_url} target="_blank" rel="noopener noreferrer" className="tunnel-link">
-                          Test tunnel
-                        </a>
-                      </p>
-                    )}
-                  </div>
-                </div>
-                {tools.gemini_voice && (
-                  <div className={`tool-card ${tools.gemini_voice?.enabled ? "enabled" : "disabled"}`}>
-                    <span className="tool-indicator" />
-                    <div>
-                      <strong>Gemini Voice AI</strong>
-                      <p>{tools.gemini_voice?.enabled ? "Pipecat + Gemini Live (speech-to-speech)" : "No Gemini API key"}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          <div className="activity-header">
-            <h3 className="activity-title">Team Activity</h3>
-            <button type="button" className="activity-refresh-btn" onClick={refreshTeamActivity}>Refresh</button>
-          </div>
-          <div className="online-row">
-            {online.map((m) => (
-              <div key={m.id} className="online-member">
-                <span className={`online-dot ${m.online ? "online" : "offline"}`} />
-                <span>{m.name}</span>
-              </div>
-            ))}
-          </div>
-          <div className="activity-feed">
-            {activity.length === 0 && (
-              <p className="activity-empty">No activity yet. Send a message to see updates here.</p>
-            )}
-            {activity.map((a) => (
-              <div key={a.id} className="activity-item">
-                <span className="activity-name">{a.user_name}:</span>{" "}
-                <span className="activity-summary">{a.summary}</span>
-              </div>
-            ))}
-          </div>
+          <h2>Members</h2>
+          {view?.members.map((member) => <p key={member.id}>{member.name} · {member.role}</p>)}
+          {current?.role === 'owner' && <form className="workspace-member-form" onSubmit={addMember}><label>Add an existing account by email<input type="email" value={memberEmail} onChange={(event) => setMemberEmail(event.target.value)} required /></label><button disabled={busy || !view}>Add member</button><small>Adding a member grants access to this workspace’s history.</small></form>}
+          <h2>Activity</h2>
+          {view && !view.activity.length && <p>No activity yet.</p>}
+          {view?.activity.map((item) => <p key={item.id}>{item.user_name}: {item.summary}</p>)}
+          <p className="workspace-limits">Tasks, decisions, invitations, voice, SMS and external actions are not available in this phase.</p>
         </aside>
       </div>
     </div>

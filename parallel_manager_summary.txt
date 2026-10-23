@@ -1,3 +1,6 @@
+HISTORICAL DOCUMENT — describes an earlier revision, not current functionality.
+See docs/ARCHITECTURE.md and docs/DEVELOPMENT_ROADMAP.md.
+
 Parallel-AI — Manager/Tasks Feature Integration Summary
 Generated: 2025-11-23T15:06:16Z
 

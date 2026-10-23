@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
-const ThemeContext = createContext();
+import { ThemeContext } from "./theme-state";
 
 export function ThemeProvider({ children }) {
   // Read theme from global variable OR fallback to light
@@ -22,8 +22,4 @@ export function ThemeProvider({ children }) {
       {children}
     </ThemeContext.Provider>
   );
-}
-
-export function useTheme() {
-  return useContext(ThemeContext);
 }
