@@ -4,7 +4,7 @@ Parallel helps small project teams and their AI assistants keep work coherent ov
 
 Project Continuity Intelligence is the ability to retrieve relevant authorized project context, distinguish current decisions from superseded ones, and connect claimed outcomes to evidence. It must be evaluated through repeatable workflows rather than agent counts or demonstrations.
 
-The target journey is: create a project; invite collaborators; exchange messages; assign tasks; record source-linked decisions; leave; return to trustworthy persisted state and clear next actions. Phase 1A supports account creation, owner/member workspaces, adding existing accounts, messages, activity, and optional model replies. Tasks, invitation delivery and decision records remain future work.
+The target journey is: create a project; invite collaborators; exchange messages; assign tasks; record source-linked decisions; leave; return to trustworthy persisted state and clear next actions. Phases 1A–1B support account creation, owner/member workspaces, in-app invitations and membership lifecycle, messages, activity, assigned persistent tasks/dependencies, server-revocable sessions, and optional model replies. Source-linked decision records and evaluated continuity remain future work.
 
 Primary users are small software/project teams that need ownership, continuity, and clear boundaries around agent actions. The intended differentiation is dependable shared project state and verified progress, not a decorative chatbot or an unbounded vector store.
 

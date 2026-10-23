@@ -1,7 +1,7 @@
 name: Verify
 on:
   push:
-    branches: [main, 'feat/**', 'codex/**']
+    branches: [main]
   pull_request:
 permissions:
   contents: read
@@ -63,6 +63,7 @@ jobs:
           --health-cmd "pg_isready -U parallel -d parallel_test"
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
+      APP_ENV: test
       DATABASE_URL: postgresql+psycopg2://parallel:test-only-database-password@localhost:5432/parallel_test
     steps:
       - uses: actions/checkout@v4
@@ -74,6 +75,7 @@ jobs:
       - run: python backend/migrate.py
       - run: cd backend && alembic check
       - run: python backend/tests/postgres_smoke.py
+      - run: python backend/tests/postgres_upgrade.py
   frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 15

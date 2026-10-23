@@ -25,3 +25,8 @@ Confirmed or source-identified defects included tracked Plivo credentials; unsig
 Backend tests use real isolated SQLite storage; migration tests adopt unversioned legacy records and verify preservation and private ownership. Provider tests use mocks solely for error and authorization behavior. Browser tests use real localhost HTTP with separate account contexts. CI includes Python 3.12/3.13, PostgreSQL 16 and Chromium checks. Exact results and remote CI status are recorded in the implementation PR; do not infer a passing run from workflow existence.
 
 No model calls, telephony, emails, external document edits, production deployment, secret rotation or history rewriting are part of this implementation. Phase 1A does not restore tasks, semantic memory or full agent orchestration.
+
+
+## Phase 1B evolution
+
+Baseline 426306235cfc127287e58d6efb989555a8d5491a was clean, including models.py; the apparent UI edit did not represent an uncommitted change. Phase 1B adds real invitations, member removal/ownership transfer, tasks and dependencies, revocable sessions, local auth throttling and a complete collaboration UI. Phase 1A tests remain regression coverage. New tests exercise races, populated-schema upgrades, task/version invariants and real browser removal/cache clearing. No paid providers, email delivery, production deployment or original user databases are used.
