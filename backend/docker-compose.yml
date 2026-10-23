@@ -3,29 +3,28 @@ services:
     image: postgres:16
     environment:
       POSTGRES_USER: parallel
-      POSTGRES_PASSWORD: parallel
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in backend/.env}
       POSTGRES_DB: parallel
     volumes:
       - db-data:/var/lib/postgresql/data
-
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U parallel -d parallel"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: parallel-ai-backend:latest
-    container_name: parallel-backend
-    env_file:
-      - .env
+    build: .
     environment:
-      - SPOON_IMPL=official
-      - DATABASE_URL=postgresql+psycopg2://parallel:parallel@db:5432/parallel
+      APP_ENV: development
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in backend/.env}
+      DATABASE_URL: postgresql+psycopg2://parallel:${POSTGRES_PASSWORD}@db:5432/parallel
+      CORS_ORIGINS: http://localhost:5174,http://127.0.0.1:5174
     ports:
-      - "8000:8000"
-    volumes:
-      - ./:/app
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+      - "127.0.0.1:8000:8000"
     depends_on:
-      - db
-
+      db:
+        condition: service_healthy
+    # Explicit migration command is also available via docker compose run --rm backend python migrate.py.
+    command: ["sh", "-c", "python migrate.py && exec uvicorn main:app --host 0.0.0.0 --port 8000"]
 volumes:
   db-data:

@@ -22,7 +22,7 @@ backend/rag_store/
 # Secrets
 *.env
 *.env.*
-!frontend/.env.example
+!parallel-frontend/.env.example
 !backend/.env.example
 
 # ---- Node / Vite / React
@@ -39,3 +39,9 @@ dist/
 
 # OS cruft
 Thumbs.db
+
+.ruff_cache/
+backend/.coverage
+backend/*.db-*
+parallel-frontend/test-results/
+parallel-frontend/playwright-report/
