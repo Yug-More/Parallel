@@ -10,6 +10,21 @@ depends_on = None
 
 
 def upgrade():
+    inconsistent = (
+        op.get_bind()
+        .execute(
+            sa.text(
+                "SELECT COUNT(*) FROM (SELECT w.id FROM workspaces w "
+                "LEFT JOIN workspace_memberships m ON m.workspace_id=w.id AND m.role='owner' "
+                "GROUP BY w.id,w.owner_id HAVING COUNT(m.user_id)<>1 OR MAX(m.user_id)<>w.owner_id) invalid"
+            )
+        )
+        .scalar()
+    )
+    if inconsistent:
+        raise RuntimeError(
+            "Inconsistent workspace ownership; preserve the backup and review before migration"
+        )
     op.add_column(
         "workspaces", sa.Column("revision", sa.Integer, nullable=False, server_default="0")
     )

@@ -184,3 +184,34 @@ def test_phase1a_upgrade_preserves_records_and_requires_new_login(tmp_path):
             == 201
         )
     engine.dispose()
+
+
+@pytest.mark.parametrize("role", ["member", "missing"])
+def test_phase1b_upgrade_refuses_inconsistent_ownership_without_changing_data(tmp_path, role):
+    url = f"sqlite:///{tmp_path / 'invalid_owner.db'}"
+    upgrade_database(url, "0002_workspaces")
+    engine = create_db_engine(url)
+    with engine.begin() as db:
+        db.execute(
+            text("INSERT INTO users (id,email,name) VALUES ('owner','owner@example.test','Owner')")
+        )
+        db.execute(
+            text(
+                "INSERT INTO workspaces (id,name,owner_id,created_at) VALUES ('space','Preserve','owner','2026-01-01')"
+            )
+        )
+        if role != "missing":
+            db.execute(
+                text(
+                    "INSERT INTO workspace_memberships (workspace_id,user_id,role,created_at) VALUES ('space','owner',:role,'2026-01-01')"
+                ),
+                {"role": role},
+            )
+    with pytest.raises(RuntimeError, match="Inconsistent workspace ownership"):
+        upgrade_database(url)
+    with engine.connect() as db:
+        assert db.execute(text("SELECT name FROM workspaces")).scalar() == "Preserve"
+        assert "revision" not in {
+            column["name"] for column in inspect(db).get_columns("workspaces")
+        }
+    engine.dispose()
