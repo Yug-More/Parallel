@@ -19,7 +19,7 @@ export default function Landing({ goLogin }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7 }}
       >
-        The AI Operating System<br />for Remote Teams
+        A Persistent Workspace<br />for Project Teams
       </Motion.h1>
 
       <Motion.p
@@ -28,7 +28,7 @@ export default function Landing({ goLogin }) {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
       >
-        Parallel OS unifies your company’s knowledge, tasks, updates, and agent workflows — in one clean, powerful workspace.
+        Keep project conversations and collaborators together in private workspaces. Return to saved context when you are ready to continue.
       </Motion.p>
 
       <Motion.button
@@ -47,8 +47,8 @@ export default function Landing({ goLogin }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5, duration: 0.6 }}
       >
-        <h3>AI-Powered Team Insights</h3>
-        <p>Your entire team’s progress, code activity, and updates — summarized instantly.</p>
+        <h3>Shared Project Conversations</h3>
+        <p>Workspace membership controls access to your conversations. Tasks and decision tracking are planned for later phases.</p>
         <div className="preview-bar"></div>
         <div className="preview-bar bar-2"></div>
         <div className="preview-bar bar-3"></div>

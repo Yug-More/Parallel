@@ -11,6 +11,7 @@ concurrency:
 jobs:
   dependencies:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -20,6 +21,7 @@ jobs:
       - run: pip-audit -r backend/requirements-ai.txt --progress-spinner off
   backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       matrix:
         python: ['3.12', '3.13']
@@ -48,6 +50,7 @@ jobs:
           alembic check
   postgres:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
         image: postgres:16
@@ -73,6 +76,7 @@ jobs:
       - run: python backend/tests/postgres_smoke.py
   frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -93,6 +97,7 @@ jobs:
       - run: npm run build
         working-directory: parallel-frontend
       - run: npx playwright install --with-deps chromium
+        timeout-minutes: 5
         working-directory: parallel-frontend
       - run: npm test
         working-directory: parallel-frontend
