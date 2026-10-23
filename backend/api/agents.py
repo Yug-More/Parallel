@@ -323,7 +323,7 @@ def reasoning(
     run = db.query(AgentRun).filter_by(id=run_id, workspace_id=workspace_id).first()
     if not run or not visible(db, run):
         raise HTTPException(404, "Run evidence unavailable")
-    if len(run.objective) > 200:
+    if not 3 <= len(run.objective) <= 200:
         raise HTTPException(422, "Use Ask workspace for a shorter evidence question")
     return answer(
         workspace_id,

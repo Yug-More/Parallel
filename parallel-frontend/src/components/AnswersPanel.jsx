@@ -102,6 +102,11 @@ export default function AnswersPanel({ workspaceId, onAccessLost }) {
               new request.
             </p>
           )}
+          {answer.warnings?.map((warning) => (
+            <p className="feedback" key={warning}>
+              {warning}
+            </p>
+          ))}
           {answer.claims.map((claim, index) => (
             <div key={index}>
               <p className="muted">

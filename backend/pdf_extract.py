@@ -20,7 +20,8 @@ def extract_pdf(raw, timeout=8):
         result = subprocess.run(
             [sys.executable, "-I", str(Path(__file__).with_name("pdf_parser.py"))],
             input=raw,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
             timeout=timeout,
             env={"PATH": os.defpath},
             check=False,

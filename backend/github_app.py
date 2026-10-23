@@ -6,6 +6,7 @@ This module does not create/install apps, change permissions, or write repositor
 
 import json
 import ssl
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -68,7 +69,11 @@ def request_json(path, *, token=None, data=None):
             raise SyncError("repository_access_lost") from None
         if exc.code in {403, 429}:
             try:
-                delay = max(60, int(exc.headers.get("Retry-After", "60")))
+                delay = max(
+                    60,
+                    int(exc.headers.get("Retry-After", "60")),
+                    int(exc.headers.get("X-RateLimit-Reset", "0")) - int(time.time()),
+                )
             except ValueError:
                 delay = 60
             raise SyncError("rate_limited", delay if delay <= 86400 else None) from None
@@ -186,7 +191,7 @@ def expire_workspace(db, wid):
         db.flush()
 
 
-def private_fetch(settings, connection, read=None):
+def private_fetch(settings, connection, read=None, on_refresh=None):
     read = read or request_json
     credentials = unseal(settings, connection.credential)
     expires = connection.credential_expires_at
@@ -201,6 +206,8 @@ def private_fetch(settings, connection, read=None):
             },
         )
         credentials, expires = token_payload(value)
+        if on_refresh:
+            on_refresh(seal(settings, credentials), expires)
     token = credentials["access_token"]
     rid = verified_repository(
         settings, token, connection.installation_id, connection.repository, read

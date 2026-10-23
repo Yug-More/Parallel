@@ -82,7 +82,7 @@ def passage_record(db, workspace_id, passage_id):
         "document_id": document.id,
         "revision_id": revision.id,
         "ordinal": passage.ordinal,
-        "page_number": passage.page_number,
+        **({"page_number": passage.page_number} if passage.page_number is not None else {}),
         "filename": revision.filename,
     }
 

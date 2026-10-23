@@ -301,6 +301,29 @@ def evaluate():
                 ).json()
                 assert answer["state"] == "abstained" and not answer["claims"]
                 abstentions += 1
+            state_checks = {}
+            for name, query, forbidden in [
+                ("superseded_default_hidden", "obsolete stateless policy", labels["old"]),
+                ("archive_hidden", "retired audit blueprint", labels["archived"]),
+                ("revoked_hidden", "removed webhook secret", labels["removed"]),
+            ]:
+                rows = owner.get(
+                    f"/workspaces/{wid}/knowledge", params={"q": query, "limit": 100}
+                ).json()["items"]
+                state_checks[name] = not ({r["ref"] for r in rows} & forbidden)
+                assert state_checks[name]
+            coverage, focused = methods["coverage"], methods["focused"]
+            assert coverage["recall_at_5"] >= methods["legacy"]["recall_at_5"]
+            assert (
+                coverage["precision_returned_at_5"] >= methods["legacy"]["precision_returned_at_5"]
+            )
+            assert focused["recall_at_5"] >= coverage["recall_at_5"]
+            comparison = {"improved_mrr_cases": [], "regressed_mrr_cases": []}
+            for old, new in zip(coverage["cases"], focused["cases"], strict=True):
+                if (new["rr"] or 0) > (old["rr"] or 0):
+                    comparison["improved_mrr_cases"].append(new["name"])
+                if (new["rr"] or 0) < (old["rr"] or 0):
+                    comparison["regressed_mrr_cases"].append(new["name"])
             return {
                 "judgments": "developer-created frozen holdout; not independent human judgments",
                 "queries": len(cases),
@@ -309,11 +332,8 @@ def evaluate():
                 "authorization_denials": denials,
                 "unauthorized_leaks": 0,
                 "unsupported_questions_abstained": abstentions,
-                "state_checks": {
-                    "superseded_default_hidden": True,
-                    "archive_hidden": True,
-                    "revoked_hidden": True,
-                },
+                "state_checks": state_checks,
+                "focused_vs_coverage": comparison,
                 "limitations": "Synthetic local dataset; no live private/model calls. Returned precision uses actual returned count; strict precision@5 divides by five, including empty slots. Lexical paraphrase and multilingual misses remain; conflicts are quoted, not resolved.",
             }
 

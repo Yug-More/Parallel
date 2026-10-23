@@ -36,8 +36,8 @@ export default function NativeActions({ workspaceId, owner, onAccessLost }) {
       <h3>Native action proposals</h3>
       <p>
         Current owners can approve the exact task plan. Created tasks start To
-        do, unassigned, with sequential prerequisites. Approval never means the
-        work is done.
+        do, unassigned, with only the dependencies shown in the preview.
+        Approval never means the work is done.
       </p>
       {(query.error || actions.error) && (
         <p role="alert">{query.error || actions.error}</p>
@@ -46,7 +46,8 @@ export default function NativeActions({ workspaceId, owner, onAccessLost }) {
       {query.data?.items.length === 0 && (
         <p>
           No native proposals yet. Use Task planner or Delivery coordinator with
-          up to five task titles separated by semicolons.
+          up to five task titles separated by semicolons, or the exact objective
+          triage github issues.
         </p>
       )}
       {query.data?.items.map((proposal) => (
@@ -62,7 +63,10 @@ export default function NativeActions({ workspaceId, owner, onAccessLost }) {
                     <p>{task.description}</p>
                     <p>
                       {task.status} · {task.priority} · unassigned
-                      {index > 0 ? " · depends on previous step" : ""}
+                      {index > 0 &&
+                      proposal.payload.proposal.sequential_dependencies
+                        ? " · depends on previous step"
+                        : ""}
                     </p>
                   </li>
                 ))}

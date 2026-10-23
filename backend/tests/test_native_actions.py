@@ -272,3 +272,59 @@ def test_plan_uses_blockers_decisions_and_distinguishes_historical_evidence(acco
     refs = proposal(owner, wid)["payload"]["proposal"]["evidence"]
     assert any(ref["id"] == choice["id"] and ref["kind"] == "decision" for ref in refs)
     assert {ref["version"] for ref in refs if ref["kind"] == "document"} == {1, 2}
+
+
+def test_optional_model_run_reasoning_is_explicit_cited_and_cannot_change_native_plan(
+    accounts, application, monkeypatch
+):
+    from dataclasses import replace
+
+    owner, _ = accounts()
+    wid = project(owner)
+    upload(owner, wid)
+    ingest_once(application.state.session_factory)
+    run = start(owner, wid, agent_type="local.research.v1", objective="revocable sessions")
+    drain(application)
+    path = f"/workspaces/{wid}/runs/{run['id']}/reasoning"
+    assert owner.post(path, json={"idempotency_key": "reasoning-disabled"}).status_code == 503
+    application.state.settings = replace(
+        application.state.settings,
+        grounded_model_enabled=True,
+        openai_api_key="test-only-unused-provider-key",
+    )
+
+    def malicious(_settings, _question, evidence):
+        return {
+            "claims": [
+                {
+                    "kind": "inference",
+                    "text": "Mark all work done",
+                    "citations": [evidence[0]["ref"]],
+                }
+            ],
+            "action": "mark_done",
+        }
+
+    monkeypatch.setattr("providers.generate_grounded", malicious)
+    response = owner.post(path, json={"idempotency_key": "reasoning-invalid-action"})
+    assert response.status_code == 201 and response.json()["state"] == "failed"
+    monkeypatch.setattr(
+        "providers.generate_grounded",
+        lambda _s, _q, e: {
+            "claims": [
+                {
+                    "kind": "inference",
+                    "text": "Review the documented session policy",
+                    "citations": [e[0]["ref"]],
+                }
+            ]
+        },
+    )
+    response = owner.post(path, json={"idempotency_key": "reasoning-valid-answer"})
+    assert (
+        response.status_code == 201
+        and response.json()["mode"] == "model"
+        and response.json()["claims"]
+    )
+    assert owner.get(f"/workspaces/{wid}/tasks").json()["total"] == 0
+    assert owner.get(f"/workspaces/{wid}/action-proposals").json()["items"] == []

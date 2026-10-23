@@ -522,6 +522,7 @@ export default function Dashboard({ user, onLogout }) {
                   {tab === "agents" && (
                     <AgentsPanel
                       key={workspaceId}
+                      onNavigate={setTab}
                       workspaceId={workspaceId}
                       user={user}
                       workspace={view.workspace}

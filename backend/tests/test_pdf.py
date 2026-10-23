@@ -110,3 +110,39 @@ def test_pdf_signature_size_timeout_and_segmentation(accounts, monkeypatch):
     text = "alpha " * 160 + "\n\n" + "bravo " * 180
     parts = list(segments(text))
     assert all(len(p) <= 1200 for p in parts) and "".join(parts) == text
+
+
+def test_pdf_revision_keeps_old_page_provenance_and_immutable_identifiers(accounts, application):
+    import base64
+
+    owner, _ = accounts()
+    wid = project(owner)
+    doc = upload(owner, wid, pdf_bytes(), filename="design.pdf").json()
+    ingest_once(application.state.session_factory)
+    original = owner.get(f"/workspaces/{wid}/knowledge?kind=document").json()["items"]
+    response = owner.post(
+        f"/workspaces/{wid}/documents/{doc['id']}/revisions",
+        json={
+            "version": 1,
+            "filename": "corrected.pdf",
+            "title": "Corrected design",
+            "content_base64": base64.b64encode(pdf_bytes(("Corrected session policy",))).decode(),
+        },
+    )
+    assert response.status_code == 202
+    ingest_once(application.state.session_factory)
+    current = owner.get(f"/workspaces/{wid}/knowledge?kind=document").json()["items"]
+    assert len(current) == 1 and current[0]["version"] == 2
+    for old in original:
+        source = owner.get(f"/workspaces/{wid}/sources/document/{old['id']}").json()
+        assert (
+            source["status"] == "historical"
+            and source["page_number"] in {1, 2}
+            and source["filename"] == "design.pdf"
+        )
+    assert (
+        owner.get(f"/workspaces/{wid}/knowledge?kind=document&include_historical=true").json()[
+            "total"
+        ]
+        == 3
+    )

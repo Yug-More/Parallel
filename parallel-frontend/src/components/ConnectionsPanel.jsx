@@ -1,3 +1,4 @@
+import GitHubAuthorization from "./GitHubAuthorization";
 import { useState } from "react";
 import { api } from "../api";
 import { useProjectAction, useWorkspaceQuery } from "./projectHooks";
@@ -61,10 +62,24 @@ export default function ConnectionsPanel({
           </label>
           <p>
             Authorize read-only public imports into this workspace. No GitHub
-            writes, private repositories, or account tokens.
+            writes or account tokens. Private access uses the separate GitHub
+            App flow below.
           </p>
           <button disabled={actions.busy}>Connect public repository</button>
         </form>
+      )}
+      {owner && query.data?.private_enabled && (
+        <GitHubAuthorization
+          workspaceId={workspaceId}
+          onAccessLost={onAccessLost}
+          onConnected={query.reload}
+        />
+      )}
+      {owner && query.data && !query.data.private_enabled && (
+        <p>
+          Private access requires operator-configured GitHub App authorization.
+          It is disabled on this server.
+        </p>
       )}
       {query.data?.items.length === 0 && <p>No repositories connected.</p>}
       {query.data?.items.map((connection) => (
@@ -72,7 +87,9 @@ export default function ConnectionsPanel({
           <h3>{connection.repository}</h3>
           <p>
             {connection.active
-              ? "Read-only public connection"
+              ? connection.auth_mode === "github_app_user"
+                ? "Read-only selected GitHub App connection · revalidated every sync"
+                : "Read-only public connection"
               : "Revoked; imported sources unavailable"}
           </p>
           <ul>

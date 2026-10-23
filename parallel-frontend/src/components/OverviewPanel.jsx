@@ -25,6 +25,39 @@ export default function OverviewPanel({
           </p>
         </div>
       </div>
+      <details className="surface">
+        <summary>First project: setup and return checklist</summary>
+        <ol>
+          <li>
+            Choose or create a workspace, then invite a registered teammate in
+            Members.
+          </li>
+          <li>
+            Upload text, Markdown or an extractable PDF in Documents. Wait for
+            Ready.
+          </li>
+          <li>
+            Optionally connect a public repository or authorize a configured
+            GitHub App in Connections.
+          </li>
+          <li>
+            Search sources in Intelligence and inspect citations in Ask
+            workspace.
+          </li>
+          <li>
+            Run Delivery coordinator with explicit task titles, or use the exact
+            objective “triage github issues”.
+          </li>
+          <li>
+            Review the exact native plan in Agents. An owner approves it; only
+            an executed receipt means tasks were created.
+          </li>
+          <li>
+            Return to Intelligence for changes since your last visit. Tasks stay
+            unfinished until a person updates them.
+          </li>
+        </ol>
+      </details>
       <div className="form-grid">
         <article className="surface">
           <h3>Tasks</h3>
@@ -68,7 +101,7 @@ export default function OverviewPanel({
           <h3>Connected knowledge</h3>
           <p>
             {data.documents} {data.documents === 1 ? "document" : "documents"} ·{" "}
-            {data.connections} public repository
+            {data.connections} repository{" "}
             {data.connections === 1 ? "connection" : "connections"}
           </p>
           <div className="button-row">

@@ -447,10 +447,13 @@ def compute(contract, context, children=None):
             proposal = {
                 "action": "create_task_plan",
                 "tasks": steps,
-                "sequential_dependencies": True,
+                "sequential_dependencies": context["objective"].casefold().strip()
+                != "triage github issues",
                 "evidence": evidence,
             }
         summary = f"{len(dependency_report['facts'])} existing blocked task(s); {len(ready)} existing ready task(s). {len(steps)} proposed task(s); {len(titles) - len(steps)} existing or empty title(s) skipped. Objective steps preserve your wording. No work was executed."
+        if context["objective"].casefold().strip() == "triage github issues":
+            summary = f"{len(steps)} open GitHub issue task(s) proposed from authorized imported evidence. No tasks created; owner approval required. Separate issues have no inferred dependencies."
         facts = [
             {"text": "Existing task: " + row["title"], "sources": [reference(row)]}
             for row in active

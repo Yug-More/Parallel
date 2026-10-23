@@ -53,16 +53,16 @@ class SharedRateLimiter:
             # including the first request race and rollover. Rejections also count.
             count = db.execute(
                 text("""
-                INSERT INTO abuse_counters (key, window, count) VALUES (:key, :window, 1)
+                INSERT INTO abuse_counters (key, "window", count) VALUES (:key, :window, 1)
                 ON CONFLICT (key) DO UPDATE SET
-                    count = CASE WHEN abuse_counters.window = :window THEN abuse_counters.count + 1 ELSE 1 END,
-                    window = :window
+                    count = CASE WHEN abuse_counters."window" = :window THEN abuse_counters.count + 1 ELSE 1 END,
+                    "window" = :window
                 RETURNING count
             """),
                 {"key": digest, "window": window},
             ).scalar_one()
             db.execute(
-                text("DELETE FROM abuse_counters WHERE window < :old"), {"old": window - 1440}
+                text('DELETE FROM abuse_counters WHERE "window" < :old'), {"old": window - 1440}
             )
             db.commit()
         if count > (limit or self.limit):

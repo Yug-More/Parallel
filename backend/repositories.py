@@ -250,7 +250,29 @@ def sync_once(factory, fetch=fetch_repository, settings=None):
                 raise SyncError("private_connector_disabled")
             from github_app import private_fetch
 
-            records, credential, credential_expiry = private_fetch(settings, connection)
+            def save_rotation(ciphertext, expires):
+                # Refresh tokens rotate once. Persist immediately, before later
+                # paginated reads can fail, while rechecking authority and lease.
+                with factory() as db:
+                    lock_workspace(db, wid)
+                    current_job = db.get(RepositorySync, job_id)
+                    current_connection = db.get(RepositoryConnection, current_job.connection_id)
+                    if (
+                        current_job.state != "running"
+                        or current_job.lease_token != token
+                        or current_job.lease_until <= utc_now()
+                        or not authorized(db, current_job, current_connection)
+                    ):
+                        raise SyncError("refresh_authority_changed")
+                    current_connection.credential, current_connection.credential_expires_at = (
+                        ciphertext,
+                        expires,
+                    )
+                    db.commit()
+
+            records, credential, credential_expiry = private_fetch(
+                settings, connection, on_refresh=save_rotation
+            )
         else:
             records = fetch(repo)
     except SyncError as exc:

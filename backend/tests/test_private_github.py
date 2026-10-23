@@ -325,3 +325,57 @@ def test_private_pagination_and_tampered_credentials_fail_safely(application):
     )
     with pytest.raises(SyncError):
         github_app.private_fetch(settings, row, read)
+
+
+def test_rotated_refresh_grant_survives_later_sync_outage(accounts, application, monkeypatch):
+    configure(application)
+    monkeypatch.setattr(github_app, "request_json", transport)
+    owner, _ = accounts()
+    wid = project(owner)
+    cid = authorize(owner, wid, application)["connection"]["id"]
+    factory = application.state.session_factory
+    with factory() as db:
+        db.get(RepositoryConnection, cid).credential_expires_at = utc_now() - timedelta(seconds=1)
+        db.commit()
+
+    def outage(path, **kwargs):
+        if path == "/login/oauth/access_token":
+            return {**transport(path, **kwargs), "refresh_token": "fixture-rotated-refresh"}
+        if path == "/repos/org/private":
+            raise SyncError("github_unavailable", 60)
+        return transport(path, **kwargs)
+
+    monkeypatch.setattr(github_app, "request_json", outage)
+    assert sync_once(factory, settings=application.state.settings)
+    with factory() as db:
+        row = db.get(RepositoryConnection, cid)
+        assert (
+            github_app.unseal(application.state.settings, row.credential)["refresh_token"]
+            == "fixture-rotated-refresh"
+        )
+        job = db.query(RepositorySync).one()
+        assert job.state == "queued" and job.error_code == "github_unavailable"
+
+
+def test_private_revoke_during_provider_read_discards_import(accounts, application, monkeypatch):
+    configure(application)
+    monkeypatch.setattr(github_app, "request_json", transport)
+    owner, _ = accounts()
+    wid = project(owner)
+    cid = authorize(owner, wid, application)["connection"]["id"]
+
+    def revoked(path, **kwargs):
+        if path == "/repos/org/private":
+            assert (
+                owner.post(
+                    f"/workspaces/{wid}/connections/{cid}/revoke", json={"version": 1}
+                ).status_code
+                == 200
+            )
+        return transport(path, **kwargs)
+
+    monkeypatch.setattr(github_app, "request_json", revoked)
+    assert sync_once(application.state.session_factory, settings=application.state.settings)
+    with application.state.session_factory() as db:
+        assert db.query(ImportedRecord).count() == 0
+        assert db.query(RepositorySync).one().state == "cancelled"

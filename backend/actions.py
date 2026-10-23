@@ -99,7 +99,7 @@ def execute_once(factory):
                 )
                 db.add(task)
                 db.flush()
-                if previous:
+                if previous and expected_plan["sequential_dependencies"]:
                     db.add(
                         TaskDependency(
                             workspace_id=row.workspace_id, task_id=task.id, depends_on_id=previous
