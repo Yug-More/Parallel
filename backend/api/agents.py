@@ -6,13 +6,21 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import Field
 
 from collaboration import lock_workspace, record_activity
-from models import AgentRun, Approval, RunEvent, utc_now
+from knowledge_lifecycle import visible
+from models import ActionProposal, AgentRun, Approval, RunEvent, utc_now
 from orchestration import CONTRACTS, TERMINAL, cancel_tree, create_run, digest, event, fail
 from provenance import SourceRef
 from security import DB, CurrentUser, InputModel, as_utc, require_member
 
 router = APIRouter()
-AgentType = Literal["local.status.v1", "local.dependencies.v1", "local.handoff.v1"]
+AgentType = Literal[
+    "local.status.v1",
+    "local.dependencies.v1",
+    "local.handoff.v1",
+    "local.plan.v1",
+    "local.research.v1",
+    "local.delivery.v1",
+]
 
 
 class RunInput(InputModel):
@@ -28,8 +36,8 @@ class RetryInput(InputModel):
     idempotency_key: str = Field(min_length=8, max_length=100)
 
 
-def run_out(run):
-    return {
+def run_out(run, db):
+    output = {
         key: (as_utc(getattr(run, key)) if key.endswith("_at") else getattr(run, key))
         for key in (
             "id",
@@ -51,6 +59,11 @@ def run_out(run):
             "completed_at",
         )
     }
+    if not visible(db, run):
+        output["outcome"] = None
+        output["evidence_unavailable"] = True
+        output["input_refs"] = []
+    return output
 
 
 def get_run(db, workspace_id, run_id):
@@ -60,7 +73,7 @@ def get_run(db, workspace_id, run_id):
     return row
 
 
-def approval_out(approval):
+def approval_out(approval, db):
     data = {
         key: getattr(approval, key)
         for key in (
@@ -80,6 +93,9 @@ def approval_out(approval):
         data["state"] = "expired"
     for key in ["created_at", "expires_at", "responded_at", "executed_at"]:
         data[key] = as_utc(getattr(approval, key))
+    if not visible(db, db.get(AgentRun, approval.run_id)):
+        data["payload"] = None
+        data["evidence_unavailable"] = True
     return data
 
 
@@ -91,7 +107,7 @@ def contracts(user: CurrentUser):
             **value,
             "mode": "deterministic_local",
             "external_actions": False,
-            "approval": "Owner approval is required only to publish the exact report to the workspace conversation.",
+            "approval": "Current owner approval is required for exact report publication and native task-plan execution; no work is automatically marked done.",
         }
         for key, value in CONTRACTS.items()
     ]
@@ -112,7 +128,7 @@ def start(workspace_id: str, payload: RunInput, user: CurrentUser, db: DB):
         payload.idempotency_key,
     )
     db.commit()
-    return run_out(run)
+    return run_out(run, db)
 
 
 @router.get("/workspaces/{workspace_id}/runs")
@@ -131,7 +147,7 @@ def runs(
     return {
         "total": query.count(),
         "items": [
-            run_out(row)
+            run_out(row, db)
             for row in query.order_by(AgentRun.created_at.desc(), AgentRun.id)
             .offset(offset)
             .limit(limit)
@@ -145,10 +161,10 @@ def detail(workspace_id: str, run_id: str, user: CurrentUser, db: DB):
     run = get_run(db, workspace_id, run_id)
     approval = db.query(Approval).filter_by(workspace_id=workspace_id, run_id=run_id).first()
     return {
-        **run_out(run),
-        "context": run.context,
+        **run_out(run, db),
+        "context": run.context if visible(db, run) else None,
         "children": [
-            run_out(row)
+            run_out(row, db)
             for row in db.query(AgentRun)
             .filter_by(workspace_id=workspace_id, parent_id=run_id)
             .order_by(AgentRun.agent_type)
@@ -165,7 +181,7 @@ def detail(workspace_id: str, run_id: str, user: CurrentUser, db: DB):
             .order_by(RunEvent.created_at, RunEvent.id)
             .limit(100)
         ],
-        "approval": approval_out(approval) if approval else None,
+        "approval": approval_out(approval, db) if approval else None,
     }
 
 
@@ -183,7 +199,7 @@ def cancel(workspace_id: str, run_id: str, user: CurrentUser, db: DB):
     cancel_tree(db, run, user.id)
     record_activity(db, workspace_id, user, f"Cancelled local run: {run.objective}")
     db.commit()
-    return run_out(run)
+    return run_out(run, db)
 
 
 @router.post("/workspaces/{workspace_id}/runs/{run_id}/retry", status_code=201)
@@ -200,7 +216,7 @@ def retry(workspace_id: str, run_id: str, payload: RetryInput, user: CurrentUser
     if existing:
         if existing.idempotency_key != payload.idempotency_key:
             raise HTTPException(409, "This failed run already has a retry")
-        return run_out(existing)
+        return run_out(existing, db)
     new = create_run(
         db,
         workspace_id,
@@ -215,7 +231,7 @@ def retry(workspace_id: str, run_id: str, payload: RetryInput, user: CurrentUser
         run.id,
     )
     db.commit()
-    return run_out(new)
+    return run_out(new, db)
 
 
 @router.get("/workspaces/{workspace_id}/approvals")
@@ -234,7 +250,7 @@ def approvals(
     return {
         "total": query.count(),
         "items": [
-            approval_out(row)
+            approval_out(row, db)
             for row in query.order_by(Approval.created_at.desc(), Approval.id)
             .offset(offset)
             .limit(limit)
@@ -267,6 +283,8 @@ def respond(
         fail(db, run, "approval_expired")
         db.commit()
         raise HTTPException(409, "Approval has expired")
+    if action == "approve" and not visible(db, run):
+        raise HTTPException(409, "Source knowledge changed; request a new report")
     if payload.payload_hash != item.payload_hash or digest(item.payload) != item.payload_hash:
         raise HTTPException(409, "Approval payload changed; refresh and inspect it")
     item.state, item.approver_id, item.responded_at = (
@@ -283,7 +301,12 @@ def respond(
         payload_hash=item.payload_hash,
     )
     if action == "reject":
+        proposal = (
+            db.query(ActionProposal).filter_by(workspace_id=workspace_id, run_id=run.id).first()
+        )
+        if proposal and proposal.state in {"pending", "approved"}:
+            proposal.state = "cancelled"
         run.state, run.completed_at, run.error_code = "cancelled", utc_now(), "publication_rejected"
     record_activity(db, workspace_id, user, f"{item.state.title()} publication: {run.objective}")
     db.commit()
-    return approval_out(item)
+    return approval_out(item, db)

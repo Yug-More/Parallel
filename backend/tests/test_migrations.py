@@ -227,12 +227,10 @@ def test_phase1b_upgrade_preserves_every_existing_table(tmp_path):
         AuthSession,
         Invitation,
         Membership,
-        Message,
         Task,
         TaskDependency,
         User,
         UserCredential,
-        Workspace,
         utc_now,
     )
 
@@ -248,7 +246,12 @@ def test_phase1b_upgrade_preserves_every_existing_table(tmp_path):
         )
         db.flush()
         db.add(UserCredential(user_id="owner", password_hash=hash_password("keep-password")))
-        db.add(Workspace(id="space", name="Preserve all records", owner_id="owner"))
+        db.execute(
+            text(
+                "INSERT INTO workspaces (id,name,owner_id,created_at) VALUES (:id,:name,:owner,:created)"
+            ),
+            {"id": "space", "name": "Preserve all records", "owner": "owner", "created": utc_now()},
+        )
         db.flush()
         db.add(Membership(workspace_id="space", user_id="owner", role="owner"))
         db.flush()
@@ -281,16 +284,11 @@ def test_phase1b_upgrade_preserves_every_existing_table(tmp_path):
         db.add(
             AuthSession(id="a" * 64, user_id="owner", expires_at=utc_now() + timedelta(hours=24))
         )
-        db.add(
-            Message(
-                id="message",
-                workspace_id="space",
-                user_id="owner",
-                sender_id="owner",
-                sender_name="Owner",
-                role="user",
-                content="Preserve private history",
-            )
+        db.execute(
+            text(
+                "INSERT INTO messages (id,workspace_id,user_id,sender_id,sender_name,role,content,created_at) VALUES ('message','space','owner','owner','Owner','user','Preserve private history',:created)"
+            ),
+            {"created": utc_now()},
         )
         db.add(
             Activity(
@@ -315,9 +313,17 @@ def test_phase1b_upgrade_preserves_every_existing_table(tmp_path):
         "activities",
     ]
 
+    original_columns = {
+        table: ",".join(column["name"] for column in inspect(engine).get_columns(table))
+        for table in tables
+    }
+
     def snapshot():
         with engine.connect() as db:
-            return {table: db.execute(text(f"SELECT * FROM {table}")).all() for table in tables}
+            return {
+                table: db.execute(text(f"SELECT {original_columns[table]} FROM {table}")).all()
+                for table in tables
+            }
 
     before = snapshot()
     upgrade_database(url)
@@ -357,3 +363,183 @@ def test_intelligence_migration_uses_portable_postgres_boolean_default():
         migration.upgrade()
     assert "publish BOOLEAN DEFAULT false NOT NULL" in sql.getvalue()
     assert "BOOLEAN DEFAULT 0" not in sql.getvalue()
+
+
+def test_populated_phase3_upgrade_preserves_records_and_receipts(tmp_path):
+    from datetime import datetime, timedelta
+
+    from sqlalchemy import MetaData, select
+
+    url = f"sqlite:///{tmp_path / 'phase3-upgrade.db'}"
+    upgrade_database(url, "0004_intelligence")
+    engine = create_db_engine(url)
+    metadata = MetaData()
+    metadata.reflect(engine)
+    now = datetime(2026, 10, 1)
+    with engine.begin() as db:
+        db.execute(
+            metadata.tables["users"].insert(),
+            {"id": "owner", "email": "owner@example.test", "name": "Owner"},
+        )
+        db.execute(
+            metadata.tables["workspaces"].insert(),
+            {"id": "space", "owner_id": "owner", "name": "Phase 3 project", "created_at": now},
+        )
+        db.execute(
+            metadata.tables["workspace_memberships"].insert(),
+            {"workspace_id": "space", "user_id": "owner", "role": "owner", "created_at": now},
+        )
+        db.execute(
+            metadata.tables["messages"].insert(),
+            {
+                "id": "report",
+                "workspace_id": "space",
+                "user_id": "owner",
+                "sender_id": "local.status.v1",
+                "sender_name": "Project status",
+                "role": "assistant",
+                "content": "Retain approved report",
+                "created_at": now,
+            },
+        )
+        db.execute(
+            metadata.tables["decisions"].insert(),
+            {
+                "id": "choice",
+                "workspace_id": "space",
+                "creator_id": "owner",
+                "title": "Preserve choices",
+                "context": "Prior work",
+                "statement": "Retain provenance",
+                "rationale": "Auditability",
+                "alternatives": "",
+                "tradeoffs": "",
+                "status": "accepted",
+                "version": 1,
+                "created_at": now,
+                "updated_at": now,
+            },
+        )
+        db.execute(
+            metadata.tables["decision_revisions"].insert(),
+            {
+                "decision_id": "choice",
+                "workspace_id": "space",
+                "actor_id": "owner",
+                "version": 1,
+                "reason": "Initial decision",
+                "snapshot": {"title": "Preserve choices", "statement": "Retain provenance"},
+                "created_at": now,
+            },
+        )
+        db.execute(
+            metadata.tables["decision_sources"].insert(),
+            {
+                "workspace_id": "space",
+                "decision_id": "choice",
+                "revision": 1,
+                "kind": "message",
+                "source_id": "report",
+                "snapshot": {"body": "Retain approved report"},
+            },
+        )
+        db.execute(
+            metadata.tables["workspace_visits"].insert(),
+            {"workspace_id": "space", "user_id": "owner", "through": now},
+        )
+        db.execute(
+            metadata.tables["agent_runs"].insert(),
+            {
+                "id": "run",
+                "workspace_id": "space",
+                "initiator_id": "owner",
+                "agent_type": "local.status.v1",
+                "objective": "Preserve outcome",
+                "request_hash": "a" * 64,
+                "input_refs": [],
+                "state": "completed",
+                "attempt": 1,
+                "context": {"fingerprint": "before"},
+                "outcome": {"summary": "Stored report"},
+                "created_at": now,
+                "completed_at": now,
+            },
+        )
+        db.execute(
+            metadata.tables["approvals"].insert(),
+            {
+                "id": "approval",
+                "workspace_id": "space",
+                "run_id": "run",
+                "action": "publish_report",
+                "payload": {"content": "Retain approved report"},
+                "payload_hash": "b" * 64,
+                "state": "executed",
+                "approver_id": "owner",
+                "message_id": "report",
+                "created_at": now,
+                "expires_at": now + timedelta(days=1),
+                "executed_at": now,
+            },
+        )
+        db.execute(
+            metadata.tables["run_events"].insert(),
+            {
+                "id": "event",
+                "workspace_id": "space",
+                "run_id": "run",
+                "event": "published",
+                "detail": {"message_id": "report"},
+                "created_at": now,
+            },
+        )
+
+    def snapshot():
+        with engine.connect() as db:
+            return {
+                name: db.execute(select(table).order_by(*table.primary_key.columns)).all()
+                for name, table in metadata.tables.items()
+                if name != "alembic_version"
+            }
+
+    before = snapshot()
+    upgrade_database(url)
+    upgrade_database(url)
+    assert snapshot() == before
+    with engine.connect() as db:
+        assert db.execute(text("SELECT knowledge_epoch FROM workspaces")).scalar() == 0
+        assert db.execute(text("SELECT knowledge_epoch FROM messages")).scalar() is None
+        assert db.execute(text("PRAGMA foreign_key_check")).all() == []
+    engine.dispose()
+
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "0005_documents.py",
+        "0006_repositories.py",
+        "0007_answers.py",
+        "0008_actions.py",
+        "0009_worker_health.py",
+    ],
+)
+def test_connected_migrations_compile_portable_postgres_ddl(filename):
+    import importlib.util
+    import io
+    from pathlib import Path
+
+    from alembic.migration import MigrationContext
+    from alembic.operations import Operations
+
+    path = Path(__file__).parents[1] / "migrations/versions" / filename
+    spec = importlib.util.spec_from_file_location("connected_migration", path)
+    migration = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(migration)
+    sql = io.StringIO()
+    context = MigrationContext.configure(
+        dialect_name="postgresql", opts={"as_sql": True, "output_buffer": sql}
+    )
+    with Operations.context(context):
+        migration.upgrade()
+    assert "BOOLEAN DEFAULT 0" not in sql.getvalue()
+    assert "CREATE TABLE" in sql.getvalue()

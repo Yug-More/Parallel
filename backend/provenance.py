@@ -9,7 +9,16 @@ from typing import Literal
 from fastapi import HTTPException
 from pydantic import Field
 
-from models import Activity, Decision, DecisionRevision, DecisionSource, Message, Task, User
+from models import (
+    Activity,
+    Decision,
+    DecisionRevision,
+    DecisionSource,
+    Message,
+    Task,
+    User,
+    Workspace,
+)
 from security import InputModel, as_utc
 
 SourceKind = Literal["message", "task", "activity", "decision"]
@@ -41,6 +50,11 @@ def source_record(db, workspace_id, kind, source_id):
     elif kind == "task":
         title, body = row.title, row.description
     elif kind == "message":
+        if (
+            row.knowledge_epoch is not None
+            and row.knowledge_epoch != db.get(Workspace, workspace_id).knowledge_epoch
+        ):
+            raise HTTPException(404, "Source evidence is no longer available")
         title, body = f"Message from {row.sender_name}", row.content
     else:
         title, body = row.summary[:200], row.summary
@@ -124,6 +138,23 @@ def revision_sources(db, decision, version=None):
     )
 
 
+def source_preview(db, workspace_id, source):
+    try:
+        current = source_record(db, workspace_id, source.kind, source.source_id)
+        return {"cited": source.snapshot, "current": current}
+    except HTTPException as exc:
+        if exc.status_code != 404:
+            raise
+        tombstone = {
+            "kind": source.kind,
+            "id": source.source_id,
+            "title": "Source unavailable",
+            "body": "",
+            "version": None,
+        }
+        return {"cited": tombstone, "current": tombstone}
+
+
 def decision_out(db, decision):
     creator = db.get(User, decision.creator_id)
     return {
@@ -136,10 +167,7 @@ def decision_out(db, decision):
         "created_at": as_utc(decision.created_at),
         "updated_at": as_utc(decision.updated_at),
         "sources": [
-            {
-                "cited": source.snapshot,
-                "current": source_record(db, decision.workspace_id, source.kind, source.source_id),
-            }
+            source_preview(db, decision.workspace_id, source)
             for source in revision_sources(db, decision)
         ],
     }

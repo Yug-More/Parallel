@@ -17,10 +17,18 @@ class Settings:
     secret_key: str
     environment: str = "development"
     allowed_origins: tuple[str, ...] = ("http://localhost:5174", "http://127.0.0.1:5174")
+    grounded_model_enabled: bool = False
+    github_connector_enabled: bool = False
     openai_api_key: str | None = None
     openai_model: str = "gpt-4.1-mini"
 
     def __post_init__(self):
+        if (
+            not self.openai_model
+            or len(self.openai_model) > 200
+            or any(c.isspace() for c in self.openai_model)
+        ):
+            raise ValueError("OPENAI_MODEL must be a bounded model identifier")
         if self.environment not in {"development", "test", "production"}:
             raise ValueError("APP_ENV must be development, test, or production")
         if len(self.secret_key.encode()) < 32:
@@ -58,6 +66,8 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
             ).split(",")
             if origin.strip()
         ),
+        grounded_model_enabled=environ.get("GROUNDED_MODEL_ENABLED", "false").lower() == "true",
+        github_connector_enabled=environ.get("GITHUB_CONNECTOR_ENABLED", "false").lower() == "true",
         openai_api_key=environ.get("OPENAI_API_KEY") or None,
         openai_model=environ.get("OPENAI_MODEL", "gpt-4.1-mini"),
     )

@@ -40,7 +40,9 @@ jobs:
       - run: ruff format --check backend scripts
       - run: python scripts/check_secrets.py
       - run: pytest -q backend/tests
-      - run: python backend/evaluation/run.py
+      - run: python backend/evaluation/run.py --ranking legacy
+      - run: python backend/evaluation/run.py --ranking coverage
+      - run: python backend/evaluation/connected.py
       - name: Fresh database migration and metadata verification
         working-directory: backend
         env:
@@ -78,6 +80,7 @@ jobs:
       - run: python backend/tests/postgres_smoke.py
       - run: python backend/tests/postgres_upgrade.py
       - run: python backend/tests/postgres_intelligence.py
+      - run: python backend/tests/postgres_connected.py
   frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 15

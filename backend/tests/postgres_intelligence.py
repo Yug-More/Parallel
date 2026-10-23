@@ -12,7 +12,7 @@ def main():
     from datetime import timedelta
 
     from fastapi.testclient import TestClient
-    from sqlalchemy import make_url, text
+    from sqlalchemy import inspect, make_url, text
     from sqlalchemy.orm import Session
 
     from config import Settings, load_settings
@@ -26,7 +26,6 @@ def main():
         Task,
         TaskDependency,
         User,
-        Workspace,
         utc_now,
     )
     from orchestration import run_once
@@ -53,7 +52,12 @@ def main():
             ]
         )
         db.flush()
-        db.add(Workspace(id="space", name="Phase 1B preservation", owner_id="keep"))
+        db.execute(
+            text(
+                "INSERT INTO workspaces (id,name,owner_id,created_at) VALUES ('space','Phase 1B preservation','keep',:created)"
+            ),
+            {"created": utc_now()},
+        )
         db.flush()
         db.add(Membership(workspace_id="space", user_id="keep", role="owner"))
         db.flush()
@@ -93,10 +97,17 @@ def main():
         "auth_sessions",
     ]
 
+    original_columns = {
+        table: ",".join(column["name"] for column in inspect(engine).get_columns(table))
+        for table in tables
+    }
+
     def snapshot():
         with engine.connect() as db:
             return {
-                table: db.execute(text(f"SELECT * FROM {table} ORDER BY 1")).all()
+                table: db.execute(
+                    text(f"SELECT {original_columns[table]} FROM {table} ORDER BY 1")
+                ).all()
                 for table in tables
             }
 
