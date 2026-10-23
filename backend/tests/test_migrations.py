@@ -335,3 +335,25 @@ def test_phase1b_upgrade_preserves_every_existing_table(tmp_path):
     with engine.connect() as db:
         assert db.execute(text("PRAGMA foreign_key_check")).all() == []
     engine.dispose()
+
+
+def test_intelligence_migration_uses_portable_postgres_boolean_default():
+    import importlib.util
+    import io
+    from pathlib import Path
+
+    from alembic.migration import MigrationContext
+    from alembic.operations import Operations
+
+    path = Path(__file__).parents[1] / "migrations/versions/0004_intelligence.py"
+    spec = importlib.util.spec_from_file_location("intelligence_migration", path)
+    migration = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(migration)
+    sql = io.StringIO()
+    context = MigrationContext.configure(
+        dialect_name="postgresql", opts={"as_sql": True, "output_buffer": sql}
+    )
+    with Operations.context(context):
+        migration.upgrade()
+    assert "publish BOOLEAN DEFAULT false NOT NULL" in sql.getvalue()
+    assert "BOOLEAN DEFAULT 0" not in sql.getvalue()

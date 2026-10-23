@@ -109,7 +109,7 @@ def upgrade():
         sa.Column("idempotency_key", sa.String(length=100), nullable=True),
         sa.Column("request_hash", sa.String(length=64), nullable=False),
         sa.Column("input_refs", sa.JSON(), nullable=False),
-        sa.Column("publish", sa.Boolean(), server_default=sa.text("0"), nullable=False),
+        sa.Column("publish", sa.Boolean(), server_default=sa.false(), nullable=False),
         sa.Column("state", sa.String(length=32), nullable=False),
         sa.Column("attempt", sa.Integer(), nullable=False),
         sa.Column("retry_of_id", sa.String(), nullable=True),
