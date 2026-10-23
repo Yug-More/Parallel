@@ -26,6 +26,7 @@ from api import (
     messages,
     overview,
     repositories,
+    retention,
     semantic,
     tasks,
     workspaces,
@@ -35,7 +36,7 @@ from database import create_db_engine
 from rate_limit import SharedRateLimiter
 from request_limits import RequestBodyLimit
 
-SCHEMA_REVISION = "0013_shared_limits"
+SCHEMA_REVISION = "0018_sync_checkpoints"
 logger = logging.getLogger("parallel.http")
 logger.setLevel(logging.INFO)
 logger.propagate = False
@@ -153,6 +154,7 @@ def create_app(settings=None):
     app.include_router(repositories.router)
     app.include_router(semantic.router)
     app.include_router(github_app.router)
+    app.include_router(retention.router)
 
     @app.websocket("/voice/ws")
     async def disabled_voice(websocket: WebSocket):

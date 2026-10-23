@@ -128,6 +128,7 @@ export function SourceViewer({
 }
 
 export function SourcePicker({
+  extended = false,
   workspaceId,
   value,
   onChange,
@@ -136,7 +137,10 @@ export function SourcePicker({
 }) {
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState("message");
-  const path = `/workspaces/${workspaceId}/knowledge?kind=${kind}&q=${encodeURIComponent(query)}&limit=10&include_historical=true&include_archived=true`;
+  const [trained, setTrained] = useState(false);
+  const [submitted, setSubmitted] = useState(null);
+  const [consent, setConsent] = useState(false);
+  const path = `/workspaces/${workspaceId}/knowledge?kind=${kind}&q=${encodeURIComponent(trained ? submitted || "" : query)}&ranking=${trained && submitted !== null ? "trained" : "coverage"}&external_consent=${consent}&limit=10&include_historical=true&include_archived=true`;
   const { data, error } = useWorkspaceQuery(path, workspaceId, onAccessLost);
   return (
     <fieldset className="source-picker">
@@ -153,7 +157,15 @@ export function SourcePicker({
             value={kind}
             onChange={(e) => setKind(e.target.value)}
           >
-            {["message", "task", "decision", "activity"].map((x) => (
+            {[
+              "message",
+              "task",
+              "decision",
+              "activity",
+              ...(extended
+                ? ["document", "external", "decision_revision"]
+                : []),
+            ].map((x) => (
               <option key={x} value={x}>
                 {x}
               </option>
@@ -169,6 +181,42 @@ export function SourcePicker({
           />
         </label>
       </div>
+      {extended && (
+        <>
+          <label>
+            <input
+              type="checkbox"
+              checked={trained}
+              onChange={(event) => {
+                setTrained(event.target.checked);
+                setSubmitted(null);
+              }}
+            />
+            Use optional trained retrieval to select evidence
+          </label>
+          {trained && (
+            <>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={consent}
+                  onChange={(event) => setConsent(event.target.checked)}
+                />
+                Authorize external query transmission if configured; owner
+                access and provider costs may apply.
+              </label>
+              <button type="button" onClick={() => setSubmitted(query)}>
+                Search trained evidence
+              </button>
+              <p>
+                Up to 8 documents, imported records or historical revisions.
+                Queued local agents use the selected evidence without calling
+                models.
+              </p>
+            </>
+          )}
+        </>
+      )}
       {error && <p role="alert">{error}</p>}
       <ul className="source-results">
         {data?.items.map((row) => (
@@ -178,6 +226,14 @@ export function SourcePicker({
               type="button"
               disabled={
                 value.length >= 30 ||
+                (["document", "external", "decision_revision"].includes(
+                  row.kind,
+                ) &&
+                  value.filter((item) =>
+                    ["document", "external", "decision_revision"].includes(
+                      item.kind,
+                    ),
+                  ).length >= 8) ||
                 value.some((s) => s.kind === row.kind && s.id === row.id)
               }
               onClick={() => onChange([...value, row])}

@@ -1,5 +1,7 @@
 # Development
 
+Current Phase 10–12 implementation, setup, verification and limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
+
 ## Requirements
 
 Use Python 3.12 or 3.13 and Node 22.12+ (the lockfile also permits compatible Node 20.19+). CI tests Python 3.12/3.13 and Node 22. SQLite is bundled with Python. PostgreSQL 16 is the CI/Docker database target.

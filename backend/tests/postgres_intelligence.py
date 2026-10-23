@@ -25,7 +25,6 @@ def main():
         Membership,
         Task,
         TaskDependency,
-        User,
         utc_now,
     )
     from orchestration import run_once
@@ -45,11 +44,25 @@ def main():
     upgrade_database(url, "0003_collaboration")
     engine = create_db_engine(url)
     with Session(engine) as db:
-        db.add_all(
+        # Seed the actual historical columns, independent of new ORM fields.
+        db.execute(
+            text(
+                "INSERT INTO users (id,email,name,created_at,last_seen_at) VALUES (:id,:email,:name,:created,:created)"
+            ),
             [
-                User(id="keep", email="keep@example.test", name="Preserved"),
-                User(id="invitee", email="invitee@example.test", name="Invitee"),
-            ]
+                {
+                    "id": "keep",
+                    "email": "keep@example.test",
+                    "name": "Preserved",
+                    "created": utc_now(),
+                },
+                {
+                    "id": "invitee",
+                    "email": "invitee@example.test",
+                    "name": "Invitee",
+                    "created": utc_now(),
+                },
+            ],
         )
         db.flush()
         db.execute(

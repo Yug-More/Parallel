@@ -1,5 +1,7 @@
 # Operations and recovery
 
+Current Phase 10–12 implementation, setup, verification and limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
+
 This is a local/team foundation, not a public deployment recipe. Keep the HTTP process, worker and migrations on the same configured database. No user database was reset or migrated during implementation verification.
 
 ## Readiness and worker health
@@ -43,3 +45,11 @@ Before public deployment establish TLS/trusted ingress, broader account/organiza
 [Worker systemd example](../deploy/parallel-worker.service) is an operator-reviewed Linux template. It uses a dedicated unprivileged user, private environment file, restart-on-failure and SIGINT shutdown; it has not been installed or used to deploy this repository. Replace paths and configure the database privately. Ensure the HTTP service uses the same migrated database and stable SECRET_KEY. Monitor job latency/failures rather than treating a recent heartbeat as success. Private syncs may occupy a worker longer than the heartbeat threshold; concurrency/throughput remain unmeasured.
 
 Shared counters expire after one day and contain only HMAC keys/window/count; raw IPs are not retained. Durable project records still use archive/revocation rather than hard deletion. Pending device grants are cleared when completed/expired/failed (expiry is materialized on owner inspection); an operator retention process for abandoned historical rows is still required. No existing user database or deployment was changed.
+
+## Phase 12 restoration and retained data
+
+[The executed synthetic PostgreSQL drill](postgres-restore-phase12.json) compared 32 tables/24 rows including exact native execution receipts, preserved the source and verified repeat migration. The same exclusive-new-database drill runs in CI. It is not a production backup or RTO/RPO claim. See [the reproducible command and retention exceptions](INTELLIGENCE_HARDENING.md).
+
+`RECOVERY_OUTBOX_PATH` is development/test only, absolute and private; production rejects it. Keep outbox files out of web roots and backups intended for sharing. Database token expiry does not clean the private delivery files; the operator must remove expired outbox files. Worker operational retention expires abandoned recovery jobs at thirty minutes, retains recovery metadata seven days and retains expired sessions seven days after expiry. It never expires native project history or retention receipts automatically.
+
+Heartbeat status means recently alive, including while a job waits on I/O. Inspect durable job state/checkpoints and receipts for actual progress. Queue exceptions back off for thirty seconds; persistent failures need operator investigation. Existing systemd/Compose templates remain operator-installed examples, not a managed deployment.

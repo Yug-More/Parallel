@@ -1,5 +1,7 @@
 # Product vision
 
+Current Phase 10–12 implementation, setup, verification and limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
+
 Parallel helps small project teams preserve the state and reasoning needed to resume work across days, people and tools. A discussion can contain contradictory advice; a task can be unfinished despite a confident report; a decision can be replaced. A useful workspace must make those distinctions inspectable.
 
 **Project Continuity Intelligence** connects authorized source records, structured choices, changes over time and verifiable agent outcomes. The implemented foundation is deliberately deterministic: users can trace what is shown to real records and inspect its limits without buying model calls.

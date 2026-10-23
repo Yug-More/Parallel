@@ -1,5 +1,6 @@
 """Disposable real HTTP server used only by Playwright; no provider credentials."""
 
+import os
 import sys
 import threading
 from pathlib import Path
@@ -26,6 +27,11 @@ def main():
                 environment="test",
                 github_connector_enabled=True,
                 local_index_enabled=True,
+                embedding_provider="local",
+                embedding_model="browser-fixture-not-trained",
+                embedding_local_path=str(Path(temporary) / "no-model-download"),
+                embedding_artifact_sha256="a" * 64,
+                recovery_outbox_path=os.environ.get("PARALLEL_E2E_OUTBOX"),
                 github_app_enabled=True,
                 github_app_id=123,
                 github_app_client_id="e2e-fixture-client",
@@ -70,8 +76,23 @@ def main():
 
             return fetch_repository(repository, read)
 
+        import api.semantic
+        import embedding_providers
         import github_app
+        from recovery import LocalOutbox, deliver_once
         from semantic import index_once
+
+        class FixtureEmbeddings:
+            name = "trained-browser-fixture"
+            model = "fabricated-vectors-not-quality-evidence"
+            trained, external, usage_tokens = True, False, 0
+
+            def embed(self, texts):
+                return [[1.0, 0.0] for _ in texts]
+
+        # Only this disposable test server injects fabricated vectors.
+        embedding_providers.configured_provider = lambda _: FixtureEmbeddings()
+        api.semantic.configured_provider = embedding_providers.configured_provider
 
         def fixture_private(path, *, token=None, data=None):
             if path == "/login/device/code":
@@ -139,7 +160,13 @@ def main():
                     app.state.session_factory
                 ) or ingest_once(app.state.session_factory) or sync_once(
                     app.state.session_factory, fixture_fetch, settings=app.state.settings
-                ) or index_once(app.state.session_factory)
+                ) or index_once(app.state.session_factory, settings=app.state.settings) or (
+                    app.state.settings.recovery_outbox_path
+                    and deliver_once(
+                        app.state.session_factory,
+                        LocalOutbox(app.state.settings.recovery_outbox_path),
+                    )
+                )
                 stopped.wait(0.2)
 
         thread = threading.Thread(target=worker, daemon=True)

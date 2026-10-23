@@ -79,7 +79,17 @@ export default function AgentsPanel({
       objective,
       task_id: taskId || null,
       publish,
-      input_refs: refs.map(({ kind, id }) => ({ kind, id })),
+      input_refs: refs
+        .filter(
+          ({ kind }) =>
+            !["document", "external", "decision_revision"].includes(kind),
+        )
+        .map(({ kind, id }) => ({ kind, id })),
+      knowledge_refs: refs
+        .filter(({ kind }) =>
+          ["document", "external", "decision_revision"].includes(kind),
+        )
+        .map(({ kind, id }) => ({ kind, id })),
     };
     const signature = JSON.stringify(body);
     if (request.current?.signature !== signature)
@@ -245,6 +255,7 @@ export default function AgentsPanel({
           <details>
             <summary>Add explicit project sources</summary>
             <SourcePicker
+              extended
               workspaceId={workspaceId}
               value={refs}
               onChange={setRefs}

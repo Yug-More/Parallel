@@ -114,6 +114,9 @@ def agent_reply(
     workspace_id: str, payload: ReplyInput, request: Request, user: CurrentUser, db: DB
 ):
     require_member(db, user.id, workspace_id)
+    from github_app import require_fresh_private_access
+
+    require_fresh_private_access(db, workspace_id)
     source = (
         db.query(Message)
         .filter(

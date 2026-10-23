@@ -8,6 +8,8 @@ export default function DocumentsPanel({
   onConfirm,
 }) {
   const base = `/workspaces/${workspaceId}/documents`;
+  const [externalConsent, setExternalConsent] = useState(false);
+  const [includeHistory, setIncludeHistory] = useState(false);
   const [offset, setOffset] = useState(0);
   const [file, setFile] = useState(null);
   const [title, setTitle] = useState("");
@@ -100,7 +102,7 @@ export default function DocumentsPanel({
           )}
         </div>
       </form>
-      {index.data?.enabled && (
+      {(index.data?.enabled || index.data?.trained_enabled) && (
         <article className="surface">
           <h3>Optional passage index</h3>
           <p>
@@ -108,24 +110,82 @@ export default function DocumentsPanel({
             after source changes. Search falls back to lexical results when
             unavailable.
           </p>
-          <button
-            disabled={actions.busy}
-            onClick={async () => {
-              await actions.act(
-                () =>
-                  api(`/workspaces/${workspaceId}/retrieval-index`, {
-                    method: "POST",
-                  }),
-                "Index requested.",
-              );
-              index.reload();
-            }}
-          >
-            Build local passage index
-          </button>
+          {index.data.enabled && (
+            <button
+              disabled={actions.busy}
+              onClick={async () => {
+                await actions.act(
+                  () =>
+                    api(`/workspaces/${workspaceId}/retrieval-index`, {
+                      method: "POST",
+                    }),
+                  "Index requested.",
+                );
+                index.reload();
+              }}
+            >
+              Build local passage index
+            </button>
+          )}
+          {index.data.trained_enabled && (
+            <>
+              <p>
+                Trained embeddings index current tasks, decisions, documents and
+                imported records. Maximum 64 sources per job. Similarity is not
+                confidence.
+              </p>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={includeHistory}
+                  onChange={(event) => setIncludeHistory(event.target.checked)}
+                />
+                Include historical decision revisions
+              </label>
+              {index.data.external && (
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={externalConsent}
+                    onChange={(event) =>
+                      setExternalConsent(event.target.checked)
+                    }
+                  />
+                  I authorize sending this workspace's indexed source text to
+                  the configured external embedding provider. Provider costs may
+                  apply.
+                </label>
+              )}
+              <button
+                disabled={
+                  actions.busy || (index.data.external && !externalConsent)
+                }
+                onClick={async () => {
+                  await actions.act(
+                    () =>
+                      api(`/workspaces/${workspaceId}/retrieval-index`, {
+                        method: "POST",
+                        body: {
+                          provider: "trained",
+                          external_consent: externalConsent,
+                          include_historical: includeHistory,
+                        },
+                      }),
+                    "Trained index requested.",
+                  );
+                  index.reload();
+                }}
+              >
+                Build trained index · owner only
+              </button>
+            </>
+          )}
           {index.data.items.map((item) => (
             <p key={item.id}>
               {item.state} · {item.passage_count} passages · {item.model}
+              {item.duration_ms != null
+                ? ` · ${item.duration_ms} ms · ${item.input_characters} characters · ${item.usage_tokens} provider tokens`
+                : ""}
               {item.error_code ? ` · ${item.error_code}` : ""}
             </p>
           ))}

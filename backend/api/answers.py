@@ -11,7 +11,6 @@ from answers import answer_out, current_evidence, validate_claims
 from collaboration import lock_workspace
 from knowledge_sources import fingerprint, resolve
 from models import KnowledgeAnswer, utc_now
-from retrieval import retrieve
 from security import DB, CurrentUser, InputModel, require_member
 
 router = APIRouter()
@@ -20,6 +19,8 @@ router = APIRouter()
 class Question(InputModel):
     question: str = Field(min_length=3, max_length=200)
     mode: Literal["extractive", "model"] = "extractive"
+    retrieval_mode: Literal["lexical", "trained"] = "lexical"
+    external_consent: bool = False
     idempotency_key: str = Field(min_length=8, max_length=100)
 
 
@@ -52,7 +53,11 @@ def answer(workspace_id: str, payload: Question, user: CurrentUser, db: DB, requ
         .first()
     )
     if existing:
-        if existing.question != payload.question or existing.mode != payload.mode:
+        if (
+            existing.question != payload.question
+            or existing.mode != payload.mode
+            or existing.retrieval_mode != payload.retrieval_mode
+        ):
             raise HTTPException(409, "Idempotency key already used for another question")
         return answer_out(db, existing)
     settings = request.app.state.settings
@@ -70,7 +75,53 @@ def answer(workspace_id: str, payload: Question, user: CurrentUser, db: DB, requ
         >= 10
     ):
         raise HTTPException(429, "Answer request limit reached; wait a minute")
-    results = retrieve(db, workspace_id, q=payload.question, limit=8)
+    from answers import planned_evidence
+
+    results, evidence_plan = planned_evidence(db, workspace_id, payload.question)
+    if payload.retrieval_mode == "trained":
+        from embedding_providers import configured_provider
+        from github_app import require_fresh_private_access
+        from semantic import hybrid
+
+        provider = configured_provider(settings)
+        if provider is None:
+            raise HTTPException(503, "Trained embedding provider is disabled")
+        if provider.external:
+            require_member(db, user.id, workspace_id, owner=True)
+            require_fresh_private_access(db, workspace_id)
+            if not payload.external_consent:
+                raise HTTPException(422, "Explicit external query transmission consent required")
+            db.commit()
+            request.app.state.auth_limiter.check("embedding-global-budget", limit=12)
+        results = hybrid(
+            db, workspace_id, q=payload.question, provider=provider, user_id=user.id, limit=8
+        )
+        lock_workspace(db, workspace_id, user.id)
+        # Trained retrieval releases the lock across latency. A competing request
+        # may have completed this same idempotency key in the meantime.
+        existing = (
+            db.query(KnowledgeAnswer)
+            .filter_by(
+                workspace_id=workspace_id,
+                creator_id=user.id,
+                idempotency_key=payload.idempotency_key,
+            )
+            .first()
+        )
+        if existing:
+            if (
+                existing.question != payload.question
+                or existing.mode != payload.mode
+                or existing.retrieval_mode != payload.retrieval_mode
+            ):
+                raise HTTPException(409, "Idempotency key already used for another question")
+            return answer_out(db, existing)
+        evidence_plan = {
+            "strategy": results["method"],
+            "index_status": results["index_status"],
+            "scope": "current authorized sources",
+        }
+
     evidence = []
     refs = []
     for row in results["items"]:
@@ -93,12 +144,18 @@ def answer(workspace_id: str, payload: Question, user: CurrentUser, db: DB, requ
                 "status": source["status"],
             }
         )
+    if payload.mode == "model":
+        from github_app import require_fresh_private_access
+
+        require_fresh_private_access(db, workspace_id)
     row = KnowledgeAnswer(
         id=str(uuid4()),
         workspace_id=workspace_id,
         creator_id=user.id,
         question=payload.question,
         mode=payload.mode,
+        retrieval_mode=payload.retrieval_mode,
+        evidence_plan=evidence_plan,
         provider_model=settings.openai_model if payload.mode == "model" else None,
         idempotency_key=payload.idempotency_key,
         state="processing",
@@ -109,7 +166,15 @@ def answer(workspace_id: str, payload: Question, user: CurrentUser, db: DB, requ
     db.commit()  # provider latency never holds the workspace lock
     code = None
     if payload.mode == "model":
-        request.app.state.auth_limiter.check("provider-global-budget", limit=30)
+        try:
+            request.app.state.auth_limiter.check("provider-global-budget", limit=30)
+        except HTTPException:
+            lock_workspace(db, workspace_id, user.id)
+            db.refresh(row)
+            if row.state == "processing":
+                row.state, row.error_code, row.completed_at = "failed", "provider_budget", utc_now()
+            db.commit()
+            raise
     try:
         if not evidence:
             claims = []
@@ -126,6 +191,8 @@ def answer(workspace_id: str, payload: Question, user: CurrentUser, db: DB, requ
         claims, code = [], "answer_generation_failed"
     lock_workspace(db, workspace_id, user.id)
     db.refresh(row)
+    if row.state != "processing":
+        return answer_out(db, row)
     try:
         current_evidence(db, row)
     except HTTPException:

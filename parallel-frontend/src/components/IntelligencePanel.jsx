@@ -15,6 +15,7 @@ export default function IntelligencePanel({
   const [kind, setKind] = useState("");
   const [historical, setHistorical] = useState(false);
   const [archived, setArchived] = useState(false);
+  const [externalConsent, setExternalConsent] = useState(false);
   const [ranking, setRanking] = useState("coverage");
   const [searchParams, setSearchParams] = useState("");
   const [offset, setOffset] = useState(0);
@@ -281,6 +282,7 @@ export default function IntelligencePanel({
               const p = new URLSearchParams({
                 q: query,
                 ranking,
+                external_consent: externalConsent,
                 include_historical: historical,
                 include_archived: archived,
               });
@@ -309,11 +311,27 @@ export default function IntelligencePanel({
                 <option value="focused">
                   Lexical phrases and current decisions
                 </option>
+                <option value="trained">
+                  Optional trained embeddings + lexical fallback
+                </option>
                 <option value="hybrid">
                   Optional local similarity + lexical fallback
                 </option>
               </select>
             </label>
+            {ranking === "trained" && (
+              <label>
+                <input
+                  type="checkbox"
+                  checked={externalConsent}
+                  onChange={(event) => setExternalConsent(event.target.checked)}
+                />
+                If an external provider is configured, I authorize sending this
+                query to it. External queries require workspace ownership and
+                may incur provider costs. Local models do not require this
+                consent.
+              </label>
+            )}
             <label>
               Record type
               <select

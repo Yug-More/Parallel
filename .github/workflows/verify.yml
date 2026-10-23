@@ -82,6 +82,12 @@ jobs:
       - run: python backend/tests/postgres_upgrade.py
       - run: python backend/tests/postgres_intelligence.py
       - run: python backend/tests/postgres_connected.py
+      - name: PostgreSQL recovery, trained-adapter and retention boundaries
+        env:
+          PARALLEL_TEST_POSTGRES: 'true'
+        run: pytest -q backend/tests/test_recovery.py backend/tests/test_embedding_providers.py backend/tests/test_retention.py
+      - name: Isolated PostgreSQL dump and restoration drill
+        run: python backend/tests/postgres_restore.py --container "${{ job.services.postgres.id }}"
   frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 15

@@ -1,6 +1,7 @@
 """Local-only durable worker: python worker.py [--once]. No external execution."""
 
 import argparse
+import logging
 import time
 from uuid import uuid4
 
@@ -14,9 +15,10 @@ from documents import ingest_once
 from github_app import expire_workspace, maintain_private
 from models import RepositoryConnection
 from orchestration import run_once
+from recovery import LocalOutbox, deliver_once, maintain_operational_records
 from repositories import sync_once
 from semantic import index_once
-from worker_health import heartbeat
+from worker_health import HeartbeatSupervisor
 
 
 def main():
@@ -28,21 +30,25 @@ def main():
     settings = load_settings()
     engine = create_db_engine(settings.database_url)
     factory = sessionmaker(bind=engine, expire_on_commit=False)
-    worker_id, last_heartbeat = str(uuid4()), 0
-    registered = False
+    worker_id = str(uuid4())
+    supervisor = None
+    cooldowns = {}
+    last_maintenance = 0
     cursor = 0
     try:
         with engine.connect() as connection:
             if (
                 "alembic_version" not in inspect(connection).get_table_names()
                 or connection.execute(text("SELECT version_num FROM alembic_version")).scalar()
-                != "0013_shared_limits"
+                != "0018_sync_checkpoints"
             ):
                 raise RuntimeError("Run migrations before starting the worker")
+        supervisor = HeartbeatSupervisor(factory, worker_id)
+        supervisor.__enter__()
         while True:
-            if time.monotonic() - last_heartbeat > 10:
-                heartbeat(factory, worker_id)
-                registered, last_heartbeat = True, time.monotonic()
+            if time.monotonic() - last_maintenance >= 60:
+                maintain_operational_records(factory)
+                last_maintenance = time.monotonic()
             with factory() as db:
                 ids = (
                     db.query(RepositoryConnection.workspace_id)
@@ -62,14 +68,25 @@ def main():
             ]
             if settings.github_connector_enabled:
                 queues.append(lambda: sync_once(factory, settings=settings))
-            if settings.local_index_enabled:
-                queues.append(lambda: index_once(factory))
+            if settings.local_index_enabled or settings.embedding_provider != "disabled":
+                queues.append(lambda: index_once(factory, settings=settings))
+            if settings.recovery_outbox_path:
+                queues.append(
+                    lambda: deliver_once(factory, LocalOutbox(settings.recovery_outbox_path))
+                )
             worked = False
             for step in range(len(queues)):
                 index = (cursor + step) % len(queues)
-                if queues[index]():
-                    cursor, worked = (index + 1) % len(queues), True
-                    break
+                if cooldowns.get(index, 0) > time.monotonic():
+                    continue
+                try:
+                    if queues[index]():
+                        cursor, worked = (index + 1) % len(queues), True
+                        break
+                except Exception:
+                    logging.getLogger(__name__).warning("worker_queue_failed queue=%d", index)
+                    cooldowns[index] = time.monotonic() + 30
+                    cursor = (index + 1) % len(queues)
             if args.once:
                 break
             if not worked:
@@ -77,8 +94,8 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
-        if registered:
-            heartbeat(factory, worker_id, "stopped")
+        if supervisor:
+            supervisor.__exit__(None, None, None)
         engine.dispose()
 
 

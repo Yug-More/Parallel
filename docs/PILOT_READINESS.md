@@ -1,5 +1,7 @@
 # Pilot foundation and evidence
 
+Current Phase 10–12 implementation, setup, verification and limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
+
 Parallel now connects extractable PDF evidence, selected GitHub App imports, source-linked questions and approved issue-review tasks in the existing collaborative workspace. This is a demonstrated engineering foundation, not a claim of production readiness, human usability validation or live private/model verification.
 
 ## Reproduce the core workflow
@@ -40,3 +42,11 @@ Remaining requirements before a wider pilot/public service:
 [Operations](OPERATIONS.md), [Security](SECURITY.md), [Evaluation](EVALUATION.md) and the delivery PR contain verification scope and actual CI evidence. No existing user database was reset/migrated, external App registered, paid call made, public deployment performed or historical commit rewritten.
 
 The captured local runs completed all three workflow goals at each viewport with **31 counted interactions**, **seven section changes**, **three refresh checks**, **zero navigation errors**, **zero unexpected API error responses** and no horizontal overflow in the checked overview. Recorded automation durations were **18.842 s** desktop and **19.016 s** mobile, including a deliberate device-poll wait; these are machine timings, not human task-completion times. Source-dialog keyboard/focus behavior is asserted separately. The retained original collaboration journeys continue to cover invitation, membership and session behavior.
+
+## Phase 10–12 persisted evidence
+
+Two additional Chromium journeys exercise desktop/mobile token delivery through a private filesystem outbox, verification, trained-adapter fixture indexing, a grounded source quotation, exact document-erasure review, disappearance of saved claims, password reset and subsequent login. Embedding vectors are fabricated by the disposable test server; no trained quality or real email ownership is established. All original nine journeys are retained.
+
+![Actual mobile retention review](screenshots/phase101112-retention-390.png)
+
+The new capture uses synthetic account/document data and the real React/FastAPI/database flow. There were **zero human participants**. No usability success rate, user satisfaction or production readiness is inferred from browser automation. Independent task-based user testing, real trained-model judgments and authorized live private-GitHub verification remain next-cycle work.

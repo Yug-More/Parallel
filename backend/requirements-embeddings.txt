@@ -1,0 +1,4 @@
+# Optional operator-installed runtime. Not installed in baseline or offline CI.
+# Provision trusted safetensors weights separately; runtime never downloads them.
+-r requirements-ai.txt
+sentence-transformers==6.2.0

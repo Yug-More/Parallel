@@ -23,11 +23,17 @@ AgentType = Literal[
 ]
 
 
+class KnowledgeRef(InputModel):
+    kind: Literal["document", "external", "decision_revision"]
+    id: str = Field(min_length=1, max_length=100)
+
+
 class RunInput(InputModel):
     agent_type: AgentType
     objective: str = Field(min_length=1, max_length=1000)
     task_id: str | None = Field(None, min_length=1, max_length=100)
     input_refs: list[SourceRef] = Field(default_factory=list, max_length=30)
+    knowledge_refs: list[KnowledgeRef] = Field(default_factory=list, max_length=8)
     publish: bool = False
     idempotency_key: str = Field(min_length=8, max_length=100)
 
@@ -48,6 +54,7 @@ def run_out(run, db):
             "task_id",
             "parent_id",
             "input_refs",
+            "knowledge_refs",
             "publish",
             "state",
             "attempt",
@@ -63,6 +70,7 @@ def run_out(run, db):
         output["outcome"] = None
         output["evidence_unavailable"] = True
         output["input_refs"] = []
+        output["knowledge_refs"] = []
     return output
 
 
@@ -126,6 +134,7 @@ def start(workspace_id: str, payload: RunInput, user: CurrentUser, db: DB):
         [ref.model_dump() for ref in payload.input_refs],
         payload.publish,
         payload.idempotency_key,
+        knowledge_refs=[ref.model_dump() for ref in payload.knowledge_refs],
     )
     db.commit()
     return run_out(run, db)
@@ -229,6 +238,7 @@ def retry(workspace_id: str, run_id: str, payload: RetryInput, user: CurrentUser
         payload.idempotency_key,
         run.attempt + 1,
         run.id,
+        knowledge_refs=run.knowledge_refs,
     )
     db.commit()
     return run_out(new, db)

@@ -1,5 +1,7 @@
 # Development roadmap
 
+Current Phase 10–12 implementation, setup, verification and limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
+
 ## Implemented foundation
 
 **Phases 0–1B:** audit/remediation, private workspace authentication, messages/activity, invitations, ownership/membership, tasks/dependencies, revocable sessions, migrations and collaboration browser/CI coverage. Unsafe legacy external execution remains disabled.

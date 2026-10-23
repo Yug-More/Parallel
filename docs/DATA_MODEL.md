@@ -1,5 +1,7 @@
 # Data model
 
+Current Phase 10–12 behavior: [trained intelligence, selected evidence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections retain their historical scope.
+
 All domain data belongs to a workspace. SQLAlchemy models are in `backend/models.py`; Alembic revisions are the only schema-change mechanism. SQLite enables foreign keys on every application connection. PostgreSQL 16 is exercised in CI. Timestamps are stored as timezone-naive UTC and serialized with a UTC offset.
 
 ```mermaid
@@ -90,3 +92,7 @@ The current schema head is `0013_shared_limits`. Additive migrations preserve or
 - `0013_shared_limits`: `abuse_counters` with HMAC key, fixed-minute window and count, used by atomic SQLite/PostgreSQL upserts. This table is operational telemetry, not project history.
 
 Populated Phase 6 upgrades compare every original column in every historical table before and after repeated upgrades, including ready passages and public connections. Fresh/repeated migrations, metadata drift and portable PostgreSQL DDL are checked. Existing document passages remain null-page; existing connections become explicitly public without acquiring any credential. Existing sessions and native receipts are preserved. Downgrades remain blocked.
+
+## Additive Phase 10–12 migration chain
+
+0014 adds index dimensions/options/timing/input/usage/attempt metadata and explicit extended run references. 0015 adds nullable email verification and hashed one-use recovery requests. 0016 adds nullable workspace closure and signed-plan retention receipts. 0017 binds saved answers to retrieval mode/evidence scope, defaulting old answers to lexical. 0018 adds successful repository reconciliation checkpoints. No upgrade deletes content, clears credentials, verifies old email addresses or closes workspaces. Existing-record migration tests compare the original columns before and after upgrade; historical seed fixtures use historical-schema SQL rather than new ORM columns.

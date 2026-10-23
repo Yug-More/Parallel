@@ -1,5 +1,7 @@
 # Connected knowledge and grounded answers
 
+Current Phase 10–12 implementation, setup, verification and limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
+
 Parallel keeps native tasks/decisions, uploaded passages, imported GitHub records and generated interpretations distinct. Everything is retrieved inside an authenticated workspace. No external write capability is enabled.
 
 ## Local documents
@@ -93,3 +95,9 @@ Decision-source previews/history redact unavailable generated-message evidence. 
 Optional `POST /workspaces/{w}/runs/{id}/reasoning` reuses a 3–200-character objective as an explicit current-evidence model question and saves a separately cited answer. The Agents UI exposes this only when model mode is configured. It never modifies run outcomes, proposals or tasks. Structured claims and citation allowlists constrain output shape, not truth or prompt-injection immunity; [official structured-output guidance](https://developers.openai.com/api/docs/guides/structured-outputs) and [untrusted-data guidance](https://developers.openai.com/api/docs/guides/agent-builder-safety) inform this boundary. Lexical negation-overlap warnings flag possible conflict without resolving it. The shared model budget is 30 requests/minute across HTTP processes using the same database/signing secret, plus existing workspace answer quotas; configure provider-side spend caps separately.
 
 For the private connector pagination bound, a full fourth page intentionally fails rather than silently truncating. Operators with larger repositories must wait for a separately reviewed cursor/full-reconciliation design. The public connector retains its existing first-page snapshot semantics. A refresh failure or unavailable encryption key can require a fresh owner authorization; neither path falls back to public/CLI access.
+
+## Current private permission and sync controls
+
+The owner can explicitly revalidate an existing selected GitHub App connection without fetching repository content. A failed permission/identity check revokes the connection. External model transmission requires a permission check within thirty seconds; ordinary cached reads still expire after ten minutes. This residual window and the live owner-run verification harness are documented in [hardening](INTELLIGENCE_HARDENING.md).
+
+Successful full snapshots now record atomic reconciliation checkpoints: connection version, committed time and created/updated/unavailable/unchanged counts. Failures leave the last success intact. Stable upserts avoid revising unchanged records. This does not implement GitHub remote delta streaming or page-resume cursors. No second decorative connector or repository write capability was added.

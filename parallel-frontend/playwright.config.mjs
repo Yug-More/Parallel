@@ -1,7 +1,16 @@
+import process from "node:process";
+import { randomUUID } from "node:crypto";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { defineConfig } from "@playwright/test";
 
+process.env.PARALLEL_E2E_OUTBOX ||= join(
+  tmpdir(),
+  `parallel-e2e-outbox-${randomUUID()}`,
+);
 export default defineConfig({
   testDir: "./tests",
+  globalTeardown: "./tests/cleanup.mjs",
   workers: 1,
   retries: 0,
   use: {
@@ -13,6 +22,7 @@ export default defineConfig({
   webServer: [
     {
       command: `${process.env.PARALLEL_TEST_PYTHON || "python"} ../backend/tests/e2e_server.py`,
+      env: { PARALLEL_E2E_OUTBOX: process.env.PARALLEL_E2E_OUTBOX },
       url: "http://127.0.0.1:18001/health",
       reuseExistingServer: false,
     },

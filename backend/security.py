@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import AuthSession, Membership, User, utc_now
+from models import AuthSession, Membership, User, Workspace, utc_now
 
 DB = Annotated[Session, Depends(get_db)]
 
@@ -129,7 +129,7 @@ CurrentUser = Annotated[User, Depends(current_user)]
 
 def require_member(db, user_id, workspace_id, owner=False):
     membership = db.get(Membership, (workspace_id, user_id))
-    if membership is None:
+    if membership is None or db.get(Workspace, workspace_id).closed_at is not None:
         # Do not reveal whether a guessed workspace exists.
         raise HTTPException(404, "Workspace not found")
     if owner and membership.role != "owner":

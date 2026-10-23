@@ -8,6 +8,8 @@ import ConnectionsPanel from "../components/ConnectionsPanel";
 import DocumentsPanel from "../components/DocumentsPanel";
 import IntelligencePanel from "../components/IntelligencePanel";
 import ChatBubble from "../components/ChatBubble";
+import RetentionPanel from "../components/RetentionPanel";
+import AccountRecovery from "../components/AccountRecovery";
 import ConfirmDialog from "../components/ConfirmDialog";
 import InvitationInbox from "../components/InvitationInbox";
 import TaskBoard from "../components/TaskBoard";
@@ -270,6 +272,7 @@ export default function Dashboard({ user, onLogout }) {
           </button>
         </div>
       </header>
+      <AccountRecovery verification />
       <div className="collab-shell">
         <aside className="workspace-sidebar">
           <label>
@@ -346,6 +349,13 @@ export default function Dashboard({ user, onLogout }) {
                   <span className="role-label">{view.workspace.role}</span>
                 )}
               </div>
+              {tab === "members" && view?.workspace.role === "owner" && (
+                <RetentionPanel
+                  key={workspaceId}
+                  workspaceId={workspaceId}
+                  onAccessLost={lostAccess}
+                />
+              )}
               <nav className="workspace-nav" aria-label="Workspace sections">
                 {[
                   ["overview", "Overview"],

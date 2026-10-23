@@ -6,6 +6,8 @@ import { useProjectAction, useWorkspaceQuery } from "./projectHooks";
 export default function AnswersPanel({ workspaceId, onAccessLost }) {
   const base = `/workspaces/${workspaceId}/answers`;
   const [question, setQuestion] = useState("");
+  const [retrievalMode, setRetrievalMode] = useState("lexical");
+  const [externalConsent, setExternalConsent] = useState(false);
   const [mode, setMode] = useState("extractive");
   const [source, setSource] = useState(null);
   const query = useWorkspaceQuery(base, workspaceId, onAccessLost, 5000);
@@ -17,7 +19,13 @@ export default function AnswersPanel({ workspaceId, onAccessLost }) {
         () =>
           api(base, {
             method: "POST",
-            body: { question, mode, idempotency_key: crypto.randomUUID() },
+            body: {
+              question,
+              mode,
+              retrieval_mode: retrievalMode,
+              external_consent: externalConsent,
+              idempotency_key: crypto.randomUUID(),
+            },
           }),
         "Answer saved with its evidence references.",
       )
@@ -51,6 +59,31 @@ export default function AnswersPanel({ workspaceId, onAccessLost }) {
           />
         </label>
         <label>
+          Evidence retrieval
+          <select
+            value={retrievalMode}
+            onChange={(event) => setRetrievalMode(event.target.value)}
+          >
+            <option value="lexical">
+              Lexical with explicit blocker/change scope
+            </option>
+            <option value="trained">
+              Optional trained hybrid with lexical fallback
+            </option>
+          </select>
+        </label>
+        {retrievalMode === "trained" && (
+          <label>
+            <input
+              type="checkbox"
+              checked={externalConsent}
+              onChange={(event) => setExternalConsent(event.target.checked)}
+            />
+            Authorize sending this question to the external embedding provider
+            if configured. Owner access and provider costs may apply.
+          </label>
+        )}
+        <label>
           Answer mode
           <select value={mode} onChange={(e) => setMode(e.target.value)}>
             <option value="extractive">Matching source excerpts · local</option>
@@ -77,6 +110,12 @@ export default function AnswersPanel({ workspaceId, onAccessLost }) {
       {query.data?.items.map((answer) => (
         <article className="surface" key={answer.id}>
           <h3>{answer.question}</h3>
+          {answer.evidence_plan && (
+            <p>
+              Evidence scope: {answer.evidence_plan.scope} ·{" "}
+              {answer.evidence_plan.strategy}
+            </p>
+          )}
           <p>
             {answer.mode === "model"
               ? "Model interpretation"

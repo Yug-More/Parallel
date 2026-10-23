@@ -102,6 +102,25 @@ export default function ConnectionsPanel({
           </ul>
           {owner && connection.active && (
             <div className="button-row">
+              {connection.auth_mode === "github_app_user" && (
+                <button
+                  disabled={actions.busy}
+                  onClick={async () => {
+                    await actions.act(
+                      () =>
+                        api(`${base}/${connection.id}/verify`, {
+                          method: "POST",
+                          body: { version: connection.version },
+                        }),
+                      "Private permissions revalidated. Model transmission is available for 30 seconds.",
+                    );
+                    query.reload();
+                  }}
+                >
+                  Revalidate private access
+                </button>
+              )}
+
               <button
                 disabled={actions.busy || !query.data.enabled}
                 onClick={async () => {

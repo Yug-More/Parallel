@@ -1,5 +1,7 @@
 # Project continuity
 
+Current Phase 10–12 behavior: [trained intelligence, selected evidence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections retain their historical scope.
+
 Parallel connects persisted conversation, tasks, decisions and activity. It offers deterministic source retrieval and a change briefing, not an LLM-generated memory of everything the team has done.
 
 ## Records and authority
