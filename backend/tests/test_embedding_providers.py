@@ -299,3 +299,47 @@ def test_external_consent_and_budgets_are_explicit(accounts, application, monkey
     assert response.status_code == 202
     assert response.json()["options"]["maximum_calls"] == 4
     assert response.json()["options"]["maximum_input_bytes"] == 64000
+
+
+def test_native_edits_get_new_attempt_series_but_same_snapshot_retries_are_bounded(
+    accounts, application, monkeypatch
+):
+    from datetime import timedelta
+
+    from test_collaboration import task
+
+    from models import utc_now
+
+    owner, _, wid, _, fake = trained_workspace(accounts, application, monkeypatch)
+    factory = application.state.session_factory
+    index_once(factory, fake())
+
+    def cool_down():
+        with factory() as db:
+            db.query(RetrievalIndex).update({"created_at": utc_now() - timedelta(minutes=2)})
+            db.commit()
+
+    for number in range(4):
+        task(owner, wid, title=f"Native edit {number}")
+        cool_down()
+        queued = owner.post(f"/workspaces/{wid}/retrieval-index", json={"provider": "trained"})
+        assert queued.status_code == 202, queued.text
+        assert queued.json()["attempt"] == 1
+        index_once(factory, fake())
+    task(owner, wid, title="Retry-bounded snapshot")
+
+    class Broken(fake):
+        def embed(self, _texts):
+            raise RuntimeError("fixture failure")
+
+    for attempt in range(1, 4):
+        cool_down()
+        queued = owner.post(f"/workspaces/{wid}/retrieval-index", json={"provider": "trained"})
+        assert queued.status_code == 202, queued.text
+        assert queued.json()["attempt"] == attempt
+        index_once(factory, Broken())
+    cool_down()
+    assert (
+        owner.post(f"/workspaces/{wid}/retrieval-index", json={"provider": "trained"}).status_code
+        == 429
+    )

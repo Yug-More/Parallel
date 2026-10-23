@@ -123,13 +123,18 @@ def queue(
         previous.state, previous.entries = "cancelled", []
     if previous and (utc_now() - previous.created_at).total_seconds() < 60:
         raise HTTPException(429, "Wait one minute between indexing attempts")
-    attempts = (
-        db.query(RetrievalIndex)
-        .filter_by(
-            workspace_id=workspace_id, epoch=epoch, provider=provider.name, model=provider.model
-        )
-        .count()
+    attempts_query = db.query(RetrievalIndex).filter_by(
+        workspace_id=workspace_id, epoch=epoch, provider=provider.name, model=provider.model
     )
+    if body.provider == "trained":
+        # Native edits do not advance the revocable-knowledge epoch. A changed
+        # source snapshot gets a new bounded attempt series, while the shared
+        # minute quota and workspace cooldown still limit external spending.
+        attempts_query = attempts_query.filter(
+            RetrievalIndex.options["source_fingerprint"].as_string()
+            == options["source_fingerprint"]
+        )
+    attempts = attempts_query.count()
     if attempts >= 3:
         raise HTTPException(429, "Three indexing attempts allowed per knowledge version")
     row = RetrievalIndex(
