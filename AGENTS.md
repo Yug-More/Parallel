@@ -16,6 +16,13 @@
 - Do not purchase services, incur paid API costs, deploy production, place calls, send messages, rotate real credentials, or modify external documents without authorization.
 - Never delete user data, rewrite history, force-push, bypass protections, or change collaborators without explicit authorization.
 
+## Collaboration invariants
+- Keep owner/member as the role model; ownership transfer is the only elevation operation. Descriptive profile roles grant no privileges.
+- Serialize workspace mutations through collaboration.lock_workspace before membership checks. Removal unassigns tasks; transfer preserves one owner and revokes pending invitations.
+- Task edits/archive require the current version. Reject cycles, cross-workspace prerequisites, and completion before prerequisites. Archive rather than delete user task data.
+- Sessions require a live, unrevoked database record. Never restore stateless acceptance of old JWTs. Do not store browser tokens in localStorage.
+- Invitations are in-app and account-bound; never claim email delivery. Preserve terminal invitation IDs and check recipient identity, expiry, and state under the workspace lock.
+
 ## Verification and documentation
 - Work autonomously on routine authorized engineering; investigate failures and finish verification without redundant confirmation requests.
 - Run backend Ruff and pytest, frontend lint/build and affected browser tests. Test membership, cross-workspace reads/writes, context isolation, persistence, migrations and provider failures with isolated databases.

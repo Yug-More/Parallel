@@ -119,3 +119,99 @@ def test_unknown_legacy_schema_is_rejected(tmp_path):
     with engine.connect() as db:
         assert db.execute(text("SELECT private_note FROM users")).scalar() == "do not discard"
     engine.dispose()
+
+
+def test_phase1a_upgrade_preserves_records_and_requires_new_login(tmp_path):
+    from fastapi.testclient import TestClient
+    from sqlalchemy.orm import Session
+
+    from config import Settings
+    from main import create_app
+    from models import Membership, Workspace
+
+    url = f"sqlite:///{tmp_path / 'phase1a.db'}"
+    upgrade_database(url, "0002_workspaces")
+    engine = create_db_engine(url)
+    with engine.begin() as db:
+        db.execute(
+            text("INSERT INTO users (id,email,name) VALUES ('owner','owner@example.test','Owner')")
+        )
+        db.execute(
+            text("INSERT INTO user_credentials (user_id,password_hash) VALUES ('owner',:hash)"),
+            {"hash": hash_password("correct-password")},
+        )
+        db.execute(
+            text(
+                "INSERT INTO workspaces (id,name,owner_id,created_at) VALUES ('workspace','Preserved','owner','2026-01-01')"
+            )
+        )
+        db.execute(
+            text(
+                "INSERT INTO workspace_memberships (workspace_id,user_id,role,created_at) VALUES ('workspace','owner','owner','2026-01-01')"
+            )
+        )
+        db.execute(
+            text(
+                "INSERT INTO messages (id,user_id,workspace_id,sender_id,sender_name,role,content,created_at) VALUES ('message','owner','workspace','owner','Owner','user','Keep this','2026-01-01')"
+            )
+        )
+        db.execute(
+            text(
+                "INSERT INTO activities (id,user_id,workspace_id,user_name,summary) VALUES ('activity','owner','workspace','Owner','Keep activity')"
+            )
+        )
+    upgrade_database(url)
+    upgrade_database(url)
+    with Session(engine) as db:
+        assert db.get(Workspace, "workspace").name == "Preserved"
+        assert (
+            db.execute(text("SELECT summary FROM activities WHERE id='activity'")).scalar()
+            == "Keep activity"
+        )
+        assert db.get(Membership, ("workspace", "owner")).role == "owner"
+    with TestClient(
+        create_app(Settings(database_url=url, secret_key="test-only-migration-session-signing-key"))
+    ) as client:
+        assert (
+            client.post(
+                "/auth/login", json={"email": "owner@example.test", "password": "correct-password"}
+            ).status_code
+            == 200
+        )
+        assert client.get("/workspaces/workspace/messages").json()[0]["content"] == "Keep this"
+        assert (
+            client.post("/workspaces/workspace/tasks", json={"title": "After upgrade"}).status_code
+            == 201
+        )
+    engine.dispose()
+
+
+@pytest.mark.parametrize("role", ["member", "missing"])
+def test_phase1b_upgrade_refuses_inconsistent_ownership_without_changing_data(tmp_path, role):
+    url = f"sqlite:///{tmp_path / 'invalid_owner.db'}"
+    upgrade_database(url, "0002_workspaces")
+    engine = create_db_engine(url)
+    with engine.begin() as db:
+        db.execute(
+            text("INSERT INTO users (id,email,name) VALUES ('owner','owner@example.test','Owner')")
+        )
+        db.execute(
+            text(
+                "INSERT INTO workspaces (id,name,owner_id,created_at) VALUES ('space','Preserve','owner','2026-01-01')"
+            )
+        )
+        if role != "missing":
+            db.execute(
+                text(
+                    "INSERT INTO workspace_memberships (workspace_id,user_id,role,created_at) VALUES ('space','owner',:role,'2026-01-01')"
+                ),
+                {"role": role},
+            )
+    with pytest.raises(RuntimeError, match="Inconsistent workspace ownership"):
+        upgrade_database(url)
+    with engine.connect() as db:
+        assert db.execute(text("SELECT name FROM workspaces")).scalar() == "Preserve"
+        assert "revision" not in {
+            column["name"] for column in inspect(db).get_columns("workspaces")
+        }
+    engine.dispose()

@@ -3,7 +3,11 @@
 .venv
 __pycache__
 *.pyc
-*.db
+*.db*
 *.sqlite*
 tests
 legacy
+
+.pytest_cache
+.ruff_cache
+*.log

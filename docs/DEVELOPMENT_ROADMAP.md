@@ -12,7 +12,9 @@ Completion requires executed tests, migration checks and CI; a workflow file alo
 
 ## Phase 1B — Real collaboration
 
-Next: invitations/acceptance, member removal and ownership transfer, tasks and assignment/status flows, user-visible session expiry handling, consistent activity, and browser coverage of these workflows. Establish database-backed session revocation and operational rate limits before public exposure. Acceptance: collaborators complete a task workflow, reload/restart, and recover authorized persisted state; outsiders remain rejected.
+Implemented: account-bound in-app invitation lifecycle; owner-managed removal, ownership transfer and leaving; persistent versioned tasks with assignments/status/priority/due dates and safe archival; acyclic prerequisites; server-side session revocation/logout-all; local authentication rate limiting; a complete collaboration interface and desktop/mobile browser journeys. Existing owner-only direct addition remains a documented compatibility/admin endpoint. Human collaboration and activity require no AI credentials.
+
+Verification includes Phase 1A regressions, transaction/concurrency invariants, copied-token revocation, populated-schema preservation, PostgreSQL integration and both browser layouts. Completion is established by executed local/remote results in the implementation PR. Remaining release hardening includes email verification/recovery, distributed quotas, session-retention policy, operational monitoring and backup drills.
 
 ## Phase 2 — Project Continuity Intelligence
 

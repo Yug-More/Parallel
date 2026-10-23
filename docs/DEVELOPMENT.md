@@ -38,7 +38,7 @@ No provider credentials are required. For optional AI replies install `pip insta
 2. Make a database-native backup and verify it can be restored. For SQLite use Python's sqlite3 backup API while the application is stopped; preserve WAL state through the backup API rather than copying a live main file. Use pg_dump/restore procedures for PostgreSQL.
 3. Test `python migrate.py` against a disposable copy first.
 4. Inspect account/message/activity counts and ownership. Only then run against the intended database.
-5. Run `alembic current` and `alembic check`; expect 0002_workspaces and no new upgrade operations.
+5. Run `alembic current` and `alembic check`; expect 0003_collaboration and no new upgrade operations.
 
 Revision 0001 adopts known legacy tables or creates an empty schema; it does not stamp a database blindly. Revision 0002 creates one private workspace per original user and assigns that user's message/activity rows there. Credentials, record IDs, existing timestamps and contents are preserved. Missing legacy creation timestamps are filled with the migration time so pagination remains ordered. No other user receives membership. Unknown schemas or orphan ownership stop migration for owner review; never delete records merely to make migration pass.
 
@@ -74,7 +74,7 @@ npx playwright install chromium
 PARALLEL_TEST_PYTHON=../backend/.venv/bin/python npm test
 ```
 
-Browser tests create a temporary database/server on 127.0.0.1:18001 and frontend on 15175. Use an executable Python with the backend dependencies installed. Test accounts and databases are disposable; no paid keys are passed. CI also verifies PostgreSQL migration and registration/message persistence.
+Desktop/mobile browser tests create a temporary database/server on 127.0.0.1:18001 and frontend on 15175. Use an executable Python with the backend dependencies installed. Test accounts and databases are disposable; no paid keys are passed. CI also verifies PostgreSQL collaboration, optimistic task concurrency, session revocation, and upgrade from a populated Phase 1A schema.
 
 ## Docker (development)
 
@@ -91,3 +91,18 @@ The image runs as an unprivileged user, includes application code, and excludes 
 - 403 membership write: only the owner can add members.
 - Invalid password input: registration requires 8+ characters and at most 72 UTF-8 bytes. Existing shorter legacy passwords can still authenticate.
 - CORS/cookie failures: match hostnames, ports and allowed origins; production requires HTTPS.
+
+
+## Phase 1B upgrade and collaboration usage
+
+Run `python migrate.py` after the existing backup/disposable-copy procedure. Revision 0003 checks that each existing workspace has exactly one matching owner membership, then adds tables and constraints without resetting Phase 1A records. Inconsistent ownership stops before schema changes for owner review. Existing users must log in again: old stateless JWTs have no session record. The script refuses destructive downgrades. `alembic check` must show no model drift. CI tests both a populated SQLite Phase 1A file and an isolated PostgreSQL Phase 1A schema.
+
+Use Members → Invite collaborator with a registered email. The recipient opens Invitations and accepts/declines. No email delivery is configured. Owners revoke pending invitations in Members; owners can remove members and transfer ownership to an existing member. A member may leave; an owner must transfer first. Adding a collaborator grants access to existing workspace history.
+
+Use Tasks → New task. Choose an assignee from current members, a status, priority, optional due date, description and prerequisite tasks. Save commits real database state. API edits/archive require the current version; on conflict use Reload task and reconcile your draft. The UI offers up to 100 recent active prerequisite candidates; the API supports any active same-workspace task. Tasks are listed 50 per page and archived rather than deleted.
+
+Mark prerequisites Done before completing dependents. Reopen completed dependents before reopening their prerequisite. Remove dependent links before archiving a prerequisite. Removing a member clears their assignments, including archived-task assignments, while preserving creator attribution and task contents.
+
+Log out revokes the current session. Log out all sessions requires confirmation and invalidates all existing browser sessions. Other browsers return to sign-in on their next authenticated refresh. Auth throttling returns 429/Retry-After after 20 registration/login attempts per connection IP within 60 seconds; do not trust X-Forwarded-For without a controlled deployment design.
+
+`postgres_smoke.py` and `postgres_upgrade.py` are CI-only scripts guarded by APP_ENV=test and the disposable parallel_test database name. The upgrade script creates an isolated schema in that test service; never point these scripts at user databases.

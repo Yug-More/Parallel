@@ -1,6 +1,8 @@
 """Cookie sessions, input boundaries, and membership authorization."""
 
 from datetime import datetime, timedelta, timezone
+from hashlib import sha256
+from secrets import token_urlsafe
 from typing import Annotated
 
 import bcrypt
@@ -11,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Membership, User
+from models import AuthSession, Membership, User, utc_now
 
 DB = Annotated[Session, Depends(get_db)]
 
@@ -64,9 +66,18 @@ def verify_password(password, password_hash):
         return False
 
 
-def set_session(response, user_id, settings):
+def set_session(response, user_id, settings, db):
+    session_id = token_urlsafe(32)
+    expires = utc_now() + timedelta(hours=24)
+    db.add(
+        AuthSession(id=sha256(session_id.encode()).hexdigest(), user_id=user_id, expires_at=expires)
+    )
     token = jwt.encode(
-        {"sub": user_id, "exp": datetime.now(timezone.utc) + timedelta(hours=24)},
+        {
+            "sub": user_id,
+            "jti": session_id,
+            "exp": datetime.now(timezone.utc) + timedelta(hours=24),
+        },
         settings.secret_key,
         algorithm="HS256",
     )
@@ -81,19 +92,35 @@ def set_session(response, user_id, settings):
     )
 
 
-def current_user(request: Request, db: DB):
+def session_from_request(request, db):
     try:
         payload = jwt.decode(
             request.cookies.get("access_token", ""),
             request.app.state.settings.secret_key,
             algorithms=["HS256"],
-            options={"require": ["exp", "sub"]},
+            options={"require": ["exp", "sub", "jti"]},
         )
-        user = db.get(User, payload["sub"])
+        if not isinstance(payload["jti"], str):
+            return None
+        session = db.get(AuthSession, sha256(payload["jti"].encode()).hexdigest())
+        if (
+            session
+            and session.user_id == payload["sub"]
+            and session.revoked_at is None
+            and session.expires_at > utc_now()
+        ):
+            return session
     except (InvalidTokenError, ValueError, TypeError):
-        user = None
+        pass
+    return None
+
+
+def current_user(request: Request, db: DB):
+    session = session_from_request(request, db)
+    user = db.get(User, session.user_id) if session else None
     if user is None:
         raise HTTPException(401, "Not authenticated")
+    request.state.session_id = session.id
     return user
 
 

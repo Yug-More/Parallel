@@ -4,9 +4,13 @@ Parallel is a persistent project workspace for humans and AI agents. Its directi
 
 ## Current functionality
 
-Phase 1A provides cookie authentication, private workspaces, owner-managed membership for existing accounts, shared workspace messages, scoped activity, optional AI replies, and database migrations. The React application restores sessions after reload. Human messaging works without provider credentials.
+Phase 1B adds in-app invitations, membership removal and ownership transfer, persistent collaborative tasks, task dependencies, and server-side session revocation to the Phase 1A workspace foundation. Users can invite a registered collaborator, accept access, exchange messages, assign and update tasks, leave, and return to the same database-backed state.
 
-Tasks, decision records, invitation delivery, semantic memory, durable agent workflows, voice/SMS, and external tool execution are not released features. Historical integration code is retained as disabled reference material. Live AI-provider behavior has not been verified in this phase.
+Task statuses are To Do, In Progress, Blocked and Done. Tasks include priority, due date, descriptions, creator/assignee attribution and safe archival. Dependencies reject cycles and prevent premature completion. Stale edits return a conflict rather than overwrite a teammate's changes.
+
+Invitations appear in the app; **no email is sent**. Only the recipient can accept or decline. Owners can revoke pending invitations and transfer ownership to a current member. Removing a member immediately blocks future API access and unassigns their tasks. The UI clears cached workspace content on its next authorization refresh.
+
+Human collaboration requires no provider credentials. Optional AI replies remain conversation-only and unverified against a live provider. Source-linked decisions, semantic memory, durable agent workflows, voice/SMS, and external tool execution remain future work.
 
 ## Stack
 
@@ -32,7 +36,7 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:5174. Register an account; its initial workspace is private. Create another workspace and add a collaborator's existing account by email. Adding membership grants access to that workspace's history.
+Open http://localhost:5174. Register an account; its initial workspace is private. Create another workspace, open Members, and invite a collaborator's registered email. They accept through Invitations. Acceptance grants access to that workspace's history.
 
 Development generates a process-local signing secret when none is supplied; set a generated `SECRET_KEY` in `backend/.env` to retain sessions across backend restarts. Production requires an explicit secret and HTTPS origins. Never use a sample password or provider credential.
 
@@ -52,7 +56,7 @@ npx playwright install chromium
 PARALLEL_TEST_PYTHON=../backend/.venv/bin/python npm test
 ```
 
-Browser tests use disposable databases and local servers; no provider calls. Run `python scripts/check_secrets.py` from the repository root before commits. GitHub Actions verifies Python 3.12/3.13, PostgreSQL migrations, frontend build/lint, and the browser workflow.
+Desktop and mobile Chromium tests use disposable databases, separate account contexts, and real local servers; no provider calls. Run `python scripts/check_secrets.py` from the repository root before commits. GitHub Actions verifies Python 3.12/3.13, PostgreSQL migrations, frontend build/lint, and the browser workflow.
 
 ## Documentation and roadmap
 
@@ -64,7 +68,7 @@ Browser tests use disposable databases and local servers; no provider calls. Run
 - [Development roadmap](docs/DEVELOPMENT_ROADMAP.md)
 - [Engineering instructions](AGENTS.md)
 
-Phase 1B adds complete collaboration flows, tasks, invitations, and membership lifecycle. Later phases add source-linked decisions and evaluated continuity, durable coordination, approved integrations, and release operations.
+Phase 2 begins with source-linked decisions and permission-aware project continuity. Later phases add source-linked decisions and evaluated continuity, durable coordination, approved integrations, and release operations.
 
 ## History and licensing
 
