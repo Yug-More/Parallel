@@ -9,12 +9,12 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import sessionmaker
 
-from api import auth, invitations, messages, tasks, workspaces
+from api import agents, auth, decisions, intelligence, invitations, messages, tasks, workspaces
 from config import load_settings
 from database import create_db_engine
 from rate_limit import AuthRateLimiter
 
-SCHEMA_REVISION = "0003_collaboration"
+SCHEMA_REVISION = "0004_intelligence"
 
 
 def create_app(settings=None):
@@ -83,6 +83,9 @@ def create_app(settings=None):
     app.include_router(messages.router)
     app.include_router(invitations.router)
     app.include_router(tasks.router)
+    app.include_router(agents.router)
+    app.include_router(decisions.router)
+    app.include_router(intelligence.router)
 
     @app.websocket("/voice/ws")
     async def disabled_voice(websocket: WebSocket):
