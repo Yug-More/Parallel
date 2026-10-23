@@ -1,43 +1,41 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ThemeProvider } from "./context/ThemeContext";
-import Landing from "./pages/Landing";
-import Dashboard from "./pages/Dashboard";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
+import { useEffect, useState } from 'react';
+import { ThemeProvider } from './context/ThemeContext';
+import Landing from './pages/Landing';
+import Dashboard from './pages/Dashboard';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import { api } from './api';
 
 export default function App() {
-  const [page, setPage] = useState("landing");
+  const [page, setPage] = useState('landing');
+  const [user, setUser] = useState(null);
+  const [checking, setChecking] = useState(true);
+  const [error, setError] = useState('');
 
-  function go(to) {
-    setPage(to);
+  useEffect(() => {
+    const controller = new AbortController();
+    api('/me', { signal: controller.signal }).then(setUser).catch(() => {}).finally(() => {
+      if (!controller.signal.aborted) setChecking(false);
+    });
+    return () => controller.abort();
+  }, []);
+
+  async function signedIn() {
+    try { setUser(await api('/me')); setError(''); }
+    catch (err) { setError(err.message); }
   }
 
-  return (
-    <ThemeProvider>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={page}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -12 }}
-          transition={{ duration: 0.28 }}
-          style={{ height: "100%" }}
-        >
-          {page === "landing" && <Landing goLogin={() => go("login")} />}
-          {page === "login" && (
-            <Login
-              goDashboard={() => go("dashboard")}
-              goSignup={() => go("signup")}
-              goForgot={() => {}}
-            />
-          )}
-          {page === "signup" && (
-            <Signup goLogin={() => go("login")} goDashboard={() => go("dashboard")} />
-          )}
-          {page === "dashboard" && <Dashboard />}
-        </motion.div>
-      </AnimatePresence>
-    </ThemeProvider>
-  );
+  async function logout() {
+    try { await api('/auth/logout', { method: 'POST' }); setUser(null); setPage('login'); setError(''); }
+    catch (err) { setError(err.message); }
+  }
+
+  return <ThemeProvider>
+    {error && <p role="alert">{error}</p>}
+    {checking ? <p role="status">Restoring your session…</p> : user ? <Dashboard user={user} onLogout={logout} /> : <>
+      {page === 'landing' && <Landing goLogin={() => setPage('login')} />}
+      {page === 'login' && <Login goDashboard={signedIn} goSignup={() => setPage('signup')} />}
+      {page === 'signup' && <Signup goLogin={() => setPage('login')} goDashboard={signedIn} />}
+    </>}
+  </ThemeProvider>;
 }

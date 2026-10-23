@@ -1,60 +1,47 @@
-"""
-Seed script: creates two demo accounts (Sean & Yug) for the simplified Parallel AI.
-Run once (with backend stopped), then start the backend.
+"""Explicit, non-destructive local account creation. No default passwords."""
 
-Usage:  python seed.py
-"""
+import argparse
+import getpass
+from uuid import uuid4
 
-import uuid
-import bcrypt
-from datetime import datetime, timezone
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 
-from database import SessionLocal, engine, Base
+from api.workspaces import create_workspace
+from config import load_settings
+from database import create_db_engine
 from models import User, UserCredential
-
-# Recreate all tables (drops existing so we get a clean schema)
-Base.metadata.drop_all(bind=engine)
-Base.metadata.create_all(bind=engine)
-
-db = SessionLocal()
+from security import Registration, hash_password
 
 
-def _hash(pw: str) -> str:
-    return bcrypt.hashpw(pw.encode(), bcrypt.gensalt()).decode()
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--confirm-development", action="store_true", required=True)
+    parser.add_argument("--email", required=True)
+    parser.add_argument("--name", required=True)
+    args = parser.parse_args()
+    settings = load_settings()
+    if settings.environment != "development":
+        parser.error("Seeding is restricted to APP_ENV=development")
+    payload = Registration(
+        email=args.email, name=args.name, password=getpass.getpass("New password: ")
+    )
+    engine = create_db_engine(settings.database_url)
+    try:
+        with Session(engine) as db:
+            if db.query(User).filter(func.lower(User.email) == payload.email).first():
+                print("Account already exists; no changes made.")
+                return
+            user = User(id=str(uuid4()), name=payload.name, email=payload.email)
+            db.add(user)
+            db.flush()
+            db.add(UserCredential(user_id=user.id, password_hash=hash_password(payload.password)))
+            create_workspace(db, user, "Personal workspace")
+            db.commit()
+            print("Development account created. Existing records were preserved.")
+    finally:
+        engine.dispose()
 
 
-now = datetime.now(timezone.utc)
-sean_id = str(uuid.uuid4())
-yug_id = str(uuid.uuid4())
-
-sean = User(
-    id=sean_id,
-    email="sean@parallel.dev",
-    name="Sean",
-    role="Engineering",
-    created_at=now,
-    last_seen_at=now,
-)
-yug = User(
-    id=yug_id,
-    email="yug@parallel.dev",
-    name="Yug",
-    role="Engineering",
-    created_at=now,
-    last_seen_at=now,
-)
-db.add(sean)
-db.add(yug)
-
-db.add(UserCredential(user_id=sean_id, password_hash=_hash("pass"), created_at=now))
-db.add(UserCredential(user_id=yug_id, password_hash=_hash("pass"), created_at=now))
-
-db.commit()
-db.close()
-
-print("Seed complete!")
-print()
-print("  Sean  ->  email: sean@parallel.dev   password: pass")
-print("  Yug   ->  email: yug@parallel.dev    password: pass")
-print()
-print("Start the backend and log in from two browser windows.")
+if __name__ == "__main__":
+    main()

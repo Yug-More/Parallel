@@ -1,13 +1,11 @@
-fastapi>=0.115
-uvicorn[standard]>=0.30
-pydantic>=2.7
-python-dotenv>=1.0
-openai>=1.51
-python-jose[cryptography]>=3.3
-bcrypt>=4.0
-plivo>=4.0
-composio>=0.10
-composio-openai>=0.10
-requests>=2.31
-pipecat-ai[google,silero]
-loguru
+-c constraints.txt
+fastapi==0.135.2
+uvicorn==0.42.0
+SQLAlchemy==2.0.48
+alembic==1.18.4
+pydantic==2.12.5
+python-dotenv==1.2.2
+PyJWT==2.15.1
+bcrypt==4.3.0
+psycopg2-binary==2.9.11
+starlette==1.9.0

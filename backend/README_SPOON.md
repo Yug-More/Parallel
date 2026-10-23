@@ -1,31 +1,5 @@
-# Parallel-AI Backend — Official Spoon OS Mode
+# Historical orchestration
 
-This repo can run in two modes:
+The Spoon/LangGraph orchestrator was disconnected from the active application before Phase 1A. Historical implementations are retained under legacy/ with .disabled suffixes. They reference unavailable client identities and are not runnable or supported.
 
-1) **Local Orchestrator (Windows-friendly)** — `spoon_os.py`
-2) **Official Spoon OS Graph (Linux container)** — `spoon_official.py` using `spoon_ai.graph.StateGraph`
-
-## Run Official Spoon OS with Docker
-
-```bash
-cd backend
-# Ensure backend/.env contains your rotated keys
-docker compose up --build
-```
-
-The server will be at http://localhost:8000
-
-## Switching main.py between modes
-
-Set an env var:
-
-- `SPOON_IMPL=official` → use `spoon_official.build_team_graph()`
-- anything else (default) → use local orchestrator functions in `spoon_os.py`
-
-## Endpoints
-
-- `POST /rooms` → create a room
-- `GET /rooms/{id}` → fetch state
-- `POST /rooms/{id}/ask` → { mode: "teammate" | "team", target_agent?: "yug"|"sean"|"severin"|"nayab" }
-- `GET /rooms/{id}/memory`
-- `POST /rooms/{id}/memory/query`
+SPOON_IMPL does not enable orchestration. Room/memory endpoints documented in earlier versions are not active. See ../docs/ARCHITECTURE.md and ../docs/DEVELOPMENT_ROADMAP.md for current capabilities and the planned durable coordination phase.

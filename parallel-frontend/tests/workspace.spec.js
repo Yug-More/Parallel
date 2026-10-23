@@ -1,0 +1,54 @@
+import { test, expect } from '@playwright/test';
+
+test('real accounts collaborate, restore sessions, and keep private workspaces separate', async ({ browser }) => {
+  const alice = await browser.newContext();
+  const bob = await browser.newContext();
+  const stranger = await browser.newContext();
+  async function register(context, name, email) {
+    const page = await context.newPage();
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Enter Dashboard' }).click();
+    await page.getByRole('button', { name: 'Create an account' }).click();
+    await page.getByLabel('Full name').fill(name);
+    await page.getByLabel('Email', { exact: true }).fill(email);
+    await page.getByLabel('Password', { exact: true }).fill('browser-test-password');
+    await page.getByRole('button', { name: 'Sign Up', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Personal workspace' })).toBeVisible();
+    return page;
+  }
+  const owner = await register(alice, 'Alice Browser', 'alice-browser@example.test');
+  const member = await register(bob, 'Bob Browser', 'bob-browser@example.test');
+  const outsider = await register(stranger, 'Stranger Browser', 'stranger-browser@example.test');
+  await owner.getByLabel('New workspace').fill('Browser collaboration');
+  await owner.getByRole('button', { name: 'Create', exact: true }).click();
+  await expect(owner.getByRole('heading', { name: 'Browser collaboration' })).toBeVisible();
+  await owner.getByLabel('Add an existing account by email').fill('bob-browser@example.test');
+  await owner.getByRole('button', { name: 'Add member', exact: true }).click();
+  await expect(owner.getByText('Bob Browser · member')).toBeVisible();
+  await owner.getByLabel('Message', { exact: true }).fill('Shared persistent browser message');
+  await owner.getByRole('button', { name: 'Send', exact: true }).click();
+  await expect(owner.getByText('Shared persistent browser message', { exact: true })).toBeVisible();
+  await member.reload();
+  await member.getByLabel('Workspace', { exact: true }).selectOption({ label: 'Browser collaboration' });
+  await expect(member.getByText('Shared persistent browser message', { exact: true })).toBeVisible();
+  await expect(member.getByRole('button', { name: 'Add member' })).toHaveCount(0);
+  await member.getByLabel('Workspace', { exact: true }).selectOption({ label: 'Personal workspace' });
+  await expect(member.getByText('Shared persistent browser message', { exact: true })).toHaveCount(0);
+  await outsider.reload();
+  await expect(outsider.getByRole('option', { name: 'Browser collaboration' })).toHaveCount(0);
+  await owner.reload();
+  await owner.getByLabel('Workspace', { exact: true }).selectOption({ label: 'Browser collaboration' });
+  await expect(owner.getByText('Shared persistent browser message', { exact: true })).toBeVisible();
+  await expect(owner.getByLabel('Message', { exact: true })).toBeInViewport();
+  await owner.screenshot({ path: test.info().outputPath('workspace-desktop.png') });
+  await owner.setViewportSize({ width: 390, height: 844 });
+  await owner.getByLabel('Message', { exact: true }).scrollIntoViewIfNeeded();
+  await expect(owner.getByLabel('Message', { exact: true })).toBeInViewport();
+  expect(await owner.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+  await owner.screenshot({ path: test.info().outputPath('workspace-mobile.png'), fullPage: true });
+  await owner.getByRole('button', { name: 'Ask AI about recent conversation' }).click();
+  await expect(owner.getByRole('alert')).toContainText('AI is not configured');
+  await owner.getByRole('button', { name: 'Log out', exact: true }).click();
+  await expect(owner.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible();
+  await alice.close(); await bob.close(); await stranger.close();
+});

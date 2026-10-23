@@ -10,7 +10,7 @@ export default function ChatPanel({
     { sender: "ai", text: `Hey ${user.name || "there"} — how can I help today?` },
   ]);
   const [input, setInput] = useState("");
-  const [typing, setTyping] = useState(false);
+  const [, setTyping] = useState(false);
   const [status, setStatus] = useState("");
   const [roomError, setRoomError] = useState("");
 

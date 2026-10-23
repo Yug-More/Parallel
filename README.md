@@ -1,166 +1,71 @@
-<p align="center">
-  <img src="parallel-frontend/public/parallel-logo.png" alt="Parallel" width="400" />
-</p>
+# Parallel
 
-<h3 align="center">The AI Operating System for Remote Teams</h3>
+Parallel is a persistent project workspace for humans and AI agents. Its direction is **Project Continuity Intelligence**: keeping decisions, context, ownership, and verified outcomes useful across sessions.
 
-<p align="center">
-  Parallel unifies AI agents, shared workspaces, task management, and real-time collaboration into a single platform — giving every team member their own AI representative.
-</p>
+## Current functionality
 
----
+Phase 1A provides cookie authentication, private workspaces, owner-managed membership for existing accounts, shared workspace messages, scoped activity, optional AI replies, and database migrations. The React application restores sessions after reload. Human messaging works without provider credentials.
 
-## What is Parallel?
+Tasks, decision records, invitation delivery, semantic memory, durable agent workflows, voice/SMS, and external tool execution are not released features. Historical integration code is retained as disabled reference material. Live AI-provider behavior has not been verified in this phase.
 
-Parallel is a collaborative workspace where each team member is paired with a dedicated AI agent. These agents operate inside shared rooms, see the full conversation history, and can take actions on behalf of their human — from answering questions and managing tasks to executing workflows through third-party integrations.
+## Stack
 
-### Key capabilities
+React 19 / Vite frontend; modular FastAPI backend; SQLAlchemy with Alembic; SQLite for local development and PostgreSQL 16 CI coverage. Python 3.12–3.13 and Node 22.12+ are the supported development targets.
 
-- **Per-member AI agents** — Each person gets a dedicated OpenAI-powered agent with their own system prompt and context
-- **Shared rooms** — Collaborative spaces where humans and agents interact together with full message history
-- **Task management** — Create, assign, and track tasks directly from the workspace with automatic notifications
-- **Voice agent** — Pipecat + Gemini Live voice agent with Plivo telephony, call recording, and Whisper transcription
-- **Composio integrations** — Connect agents to external tools (Google Docs, Google Drive, and more) for real action execution
-- **Memory system** — Agents store and retrieve long-term memories with embedding-based semantic search
-- **Real-time updates** — Server-sent events for live status propagation across the workspace
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| **Frontend** | React 19, Vite, Framer Motion, Three.js |
-| **Backend** | FastAPI, SQLAlchemy 2.0, Uvicorn |
-| **Database** | PostgreSQL 16 (production) / SQLite (development) |
-| **AI** | OpenAI GPT-4.1-mini, Gemini Live (voice) |
-| **Voice** | Pipecat, Plivo, Whisper |
-| **Integrations** | Composio (Google Docs, Drive, etc.) |
-| **Auth** | JWT (python-jose), bcrypt |
-| **Infra** | Docker, Docker Compose |
-
-## Getting Started
-
-### Prerequisites
-
-- Python 3.9+
-- Node.js 18+
-- Docker & Docker Compose (optional, for PostgreSQL)
-
-### 1. Clone the repo
-
-```bash
-git clone https://github.com/Yug-More/Parallel-AI.git
-cd Parallel-AI
-```
-
-### 2. Backend setup
+## Local setup
 
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate        # Windows: .\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+cp .env.example .env
+python migrate.py
+uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
-Create a `.env` file in `backend/`:
-
-```env
-OPENAI_API_KEY_A=sk-...        # Team member 1 (Yug)
-OPENAI_API_KEY_B=sk-...        # Team member 2 (Sean)
-OPENAI_MODEL=gpt-4.1-mini
-SECRET_KEY=your-jwt-secret
-
-# Optional
-DATABASE_URL=sqlite:///./parallel.db
-COMPOSIO_API_KEY=...
-PLIVO_AUTH_ID=...
-PLIVO_AUTH_TOKEN=...
-PLIVO_PHONE_NUMBER=...
-GEMINI_API_KEY=...
-AGI_API_KEY=...
-```
-
-Start the backend:
-
-```bash
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### 3. Frontend setup
+In a second terminal:
 
 ```bash
 cd parallel-frontend
-npm install
+npm ci
 npm run dev
 ```
 
-### 4. Docker (alternative)
+Open http://localhost:5174. Register an account; its initial workspace is private. Create another workspace and add a collaborator's existing account by email. Adding membership grants access to that workspace's history.
+
+Development generates a process-local signing secret when none is supplied; set a generated `SECRET_KEY` in `backend/.env` to retain sessions across backend restarts. Production requires an explicit secret and HTTPS origins. Never use a sample password or provider credential.
+
+**Before migrating an existing database, stop the application and create a verified backup.** Legacy records are assigned to private workspaces by original `user_id`; no global sharing is inferred. Do not run historical seed instructions. See [development](docs/DEVELOPMENT.md) for the migration and recovery procedure.
+
+## Verification
 
 ```bash
 cd backend
-docker compose up --build
+ruff check . ../scripts
+ruff format --check . ../scripts
+pytest -q
+cd ../parallel-frontend
+npm run lint
+npm run build
+npx playwright install chromium
+PARALLEL_TEST_PYTHON=../backend/.venv/bin/python npm test
 ```
 
-This starts PostgreSQL and the FastAPI backend together. Then run the frontend separately with `npm run dev`.
+Browser tests use disposable databases and local servers; no provider calls. Run `python scripts/check_secrets.py` from the repository root before commits. GitHub Actions verifies Python 3.12/3.13, PostgreSQL migrations, frontend build/lint, and the browser workflow.
 
-### Access
+## Documentation and roadmap
 
-| Service | URL |
-|---------|-----|
-| Frontend | http://localhost:5173 |
-| Backend API | http://localhost:8000 |
-| API Docs | http://localhost:8000/docs |
+- [Product vision](docs/PRODUCT_VISION.md)
+- [Architecture and authorization](docs/ARCHITECTURE.md)
+- [Development, migrations and Docker](docs/DEVELOPMENT.md)
+- [Security and credential rotation](docs/SECURITY.md)
+- [Audit baseline and remediation](docs/REPOSITORY_AUDIT.md)
+- [Development roadmap](docs/DEVELOPMENT_ROADMAP.md)
+- [Engineering instructions](AGENTS.md)
 
-## Project Structure
+Phase 1B adds complete collaboration flows, tasks, invitations, and membership lifecycle. Later phases add source-linked decisions and evaluated continuity, durable coordination, approved integrations, and release operations.
 
-```
-Parallel-AI/
-├── backend/
-│   ├── main.py              # FastAPI application
-│   ├── config.py            # API keys & client setup
-│   ├── database.py          # SQLAlchemy engine & sessions
-│   ├── models.py            # ORM models
-│   ├── voice_agent.py       # Pipecat + Gemini voice agent
-│   ├── spoon_official.py    # Spoon OS agent graph
-│   ├── seed.py              # Database seeding
-│   ├── docker-compose.yml   # PostgreSQL + backend services
-│   └── Dockerfile
-│
-├── parallel-frontend/
-│   ├── src/
-│   │   ├── App.jsx          # Router & app shell
-│   │   ├── pages/
-│   │   │   ├── Landing.jsx  # Landing page
-│   │   │   ├── Login.jsx    # Authentication
-│   │   │   ├── Signup.jsx   # Registration
-│   │   │   └── Dashboard.jsx# Main workspace
-│   │   ├── components/
-│   │   │   ├── ChatPanel.jsx    # Room chat interface
-│   │   │   ├── ChatBubble.jsx   # Message rendering
-│   │   │   └── ThemeToggle.jsx  # Dark/light mode
-│   │   └── context/
-│   │       └── ThemeContext.jsx
-│   ├── package.json
-│   └── vite.config.js
-│
-└── README.md
-```
+## History and licensing
 
-## API Overview
-
-| Endpoint | Description |
-|----------|-------------|
-| `POST /auth/register` | Create a new account |
-| `POST /auth/login` | Authenticate and receive JWT |
-| `POST /rooms` | Create a shared room |
-| `POST /rooms/{id}/ask` | Send a message to a room (triggers AI agents) |
-| `GET /rooms/{id}/memory` | Retrieve room memory records |
-| `POST /tasks` | Create a task |
-| `PATCH /tasks/{id}` | Update task status |
-| `GET /team` | List team members |
-| `GET /events` | SSE stream for real-time updates |
-
-Full API documentation is available at `/docs` when the backend is running.
-
-## License
-
-This project is not currently licensed for redistribution. All rights reserved.
+This repository preserves the original Parallel hackathon project's history and human contributions. Historical feature descriptions are not evidence of current functionality. No license granting redistribution has been added; existing rights remain unchanged.

@@ -1,0 +1,103 @@
+name: Verify
+on:
+  push:
+    branches: [main, 'feat/**', 'codex/**']
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  dependencies:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pip-audit==2.10.0
+      - run: pip-audit -r backend/requirements-ai.txt --progress-spinner off
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        python: ['3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements*.txt
+            backend/constraints.txt
+      - run: pip install -r backend/requirements-dev.txt -r backend/requirements-ai.txt
+      - run: pip check
+      - run: ruff check backend scripts
+      - run: ruff format --check backend scripts
+      - run: python scripts/check_secrets.py
+      - run: pytest -q backend/tests
+      - name: Fresh database migration and metadata verification
+        working-directory: backend
+        env:
+          DATABASE_URL: sqlite:////tmp/parallel-ci.db
+        run: |
+          python migrate.py
+          python migrate.py
+          alembic check
+  postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: parallel
+          POSTGRES_PASSWORD: test-only-database-password
+          POSTGRES_DB: parallel_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U parallel -d parallel_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg2://parallel:test-only-database-password@localhost:5432/parallel_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r backend/requirements-dev.txt -r backend/requirements-ai.txt
+      - run: python backend/migrate.py
+      - run: python backend/migrate.py
+      - run: cd backend && alembic check
+      - run: python backend/tests/postgres_smoke.py
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: parallel-frontend/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r backend/requirements.txt
+      - run: npm ci
+        working-directory: parallel-frontend
+      - run: npm audit --audit-level=high
+        working-directory: parallel-frontend
+      - run: npm run lint
+        working-directory: parallel-frontend
+      - run: npm run build
+        working-directory: parallel-frontend
+      - run: npx playwright install --with-deps chromium
+        timeout-minutes: 5
+        working-directory: parallel-frontend
+      - run: npm test
+        working-directory: parallel-frontend
