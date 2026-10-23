@@ -30,7 +30,7 @@ Vite uses port 5174; CORS must explicitly include the actual frontend origin. `V
 
 Development can use a random process-local secret. For stable sessions generate a secret with `python -c 'import secrets; print(secrets.token_urlsafe(48))'` and set SECRET_KEY in backend/.env. Production requires at least 32 bytes and explicit HTTPS CORS_ORIGINS; cookies are Secure and HttpOnly. Local HTTP uses HttpOnly/SameSite=Lax cookies. A changed signing key invalidates old sessions.
 
-No provider credentials are required. For optional AI replies install `pip install -r requirements-ai.txt` and set OPENAI_API_KEY explicitly. This is a server-owned model credential, not another user's account fallback. Real requests can incur cost; do not exercise them without authorization. Model selection is OPENAI_MODEL. Voice/SMS/research/external tool execution remains disabled.
+No provider credentials are required. For optional AI replies install `pip install -r requirements-ai.txt` and set OPENAI_API_KEY explicitly. This is a server-owned model credential, not another user's account fallback. Real requests can incur cost; do not exercise them without authorization. Model selection is OPENAI_MODEL. Optional grounded answers additionally require GROUNDED_MODEL_ENABLED=true and explicit model mode. Public read-only GitHub sync requires GITHUB_CONNECTOR_ENABLED=true in HTTP and worker environments; it uses no account token. Voice/SMS/private repository access/external writes remain disabled.
 
 ## Migrating existing databases
 
@@ -38,7 +38,7 @@ No provider credentials are required. For optional AI replies install `pip insta
 2. Make a database-native backup and verify it can be restored. For SQLite use Python's sqlite3 backup API while the application is stopped; preserve WAL state through the backup API rather than copying a live main file. Use pg_dump/restore procedures for PostgreSQL.
 3. Test `python migrate.py` against a disposable copy first.
 4. Inspect account/message/activity counts and ownership. Only then run against the intended database.
-5. Run `alembic current` and `alembic check`; expect 0004_intelligence and no new upgrade operations.
+5. Run `alembic current` and `alembic check`; expect 0009_worker_health and no new upgrade operations.
 
 Revision 0001 adopts known legacy tables or creates an empty schema; it does not stamp a database blindly. Revision 0002 creates one private workspace per original user and assigns that user's message/activity rows there. Credentials, record IDs, existing timestamps and contents are preserved. Missing legacy creation timestamps are filled with the migration time so pagination remains ordered. No other user receives membership. Unknown schemas or orphan ownership stop migration for owner review; never delete records merely to make migration pass.
 
@@ -127,7 +127,9 @@ In Decisions, record a statement, rationale and linked source, revise it with a 
 Additional verification from the repository root:
 
 ```bash
-python backend/evaluation/run.py
+python backend/evaluation/run.py --ranking legacy
+python backend/evaluation/run.py --ranking coverage
+python backend/evaluation/connected.py
 python scripts/check_secrets.py
 ```
 
@@ -138,7 +140,7 @@ Troubleshooting: Queued means check the worker uses the same migrated DATABASE_U
 
 ## Documentation validation
 
-Screenshots are captured by the real `intelligence.spec.js` desktop/mobile scenarios into Playwright test output; curated copies live in `docs/screenshots/` and contain synthetic accounts only. Do not substitute generated mockups. To validate Markdown links and parse/render every Mermaid diagram without adding a runtime dependency:
+Screenshots are captured by the real `intelligence.spec.js` and `connected.spec.js` desktop/mobile scenarios into Playwright test output; curated copies live in `docs/screenshots/` and contain synthetic accounts only. Do not substitute generated mockups. To validate Markdown links and parse/render every Mermaid diagram without adding a runtime dependency:
 
 ```bash
 npm install --prefix /tmp/parallel-doc-tools --no-save --package-lock=false mermaid@11.12.0
@@ -146,3 +148,13 @@ MERMAID_BUNDLE=/tmp/parallel-doc-tools/node_modules/mermaid/dist/mermaid.min.js 
 ```
 
 Run from the repository root after frontend dependency/Chromium installation. The script uses that Playwright browser and checks actual local link/image targets. This validation is optional locally and was executed for the documentation overhaul; the core CI has no Mermaid package dependency.
+
+## Phases 4–6 development
+
+The current migration head is `0009_worker_health`. Use the same backup/disposable-copy procedure before upgrading; new tables and nullable/defaulted epoch metadata preserve existing records. Start the existing HTTP/worker/frontend processes. Upload `.txt`/`.md` in Documents, wait for Ready, then use Ask workspace or Intelligence search. New revisions require the current version; Archive makes all passages unavailable. PDF is explicitly unsupported.
+
+Enable the public connector only when network reads are intended: set `GITHUB_CONNECTOR_ENABLED=true` for both HTTP and worker, restart, and connect `owner/repository` as a workspace owner. It imports a bounded recent snapshot; private/authenticated repositories are unsupported. See [Integrations](INTEGRATIONS.md) for budgets, cooldown, errors and revocation. Browser connector checks use a test-only synthetic provider fixture; production code has no fixture switch.
+
+In Agents & approvals choose Task planner or Delivery coordinator and enter up to five explicit task titles separated by semicolons/newlines. Research uses lexical objective terms. Inspect Native action proposals, approve the exact payload as current owner and wait for an Executed receipt; new tasks remain To do/unassigned, with sequential prerequisites. Changed context requires a fresh plan. Read-only research/status reports still need no approval until publication is requested.
+
+`/ready`, Overview worker health, request IDs and `backup.py` support diagnosis/recovery. [Operations](OPERATIONS.md) explains tested paths and remaining deployment responsibilities. CI adds `postgres_connected.py` for real PostgreSQL document/search/answer/revocation/delegation/native-receipt and competing-worker checks. It is guarded by APP_ENV=test plus the disposable parallel_test service name.

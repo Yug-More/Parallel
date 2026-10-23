@@ -14,7 +14,7 @@ from uuid import uuid4
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 
-def evaluate():
+def evaluate(ranking="coverage"):
     from fastapi.testclient import TestClient
 
     from config import Settings
@@ -145,6 +145,7 @@ def evaluate():
                     if key not in {"name", "expected", "since_marker"}
                 }
                 params["limit"] = 5
+                params["ranking"] = ranking
                 if case.get("since_marker"):
                     params["since"] = marker
                 response = owner.get(f"/workspaces/{wid}/knowledge", params=params)
@@ -204,7 +205,9 @@ def evaluate():
                 row["reciprocal_rank"] for row in metrics if row["reciprocal_rank"] is not None
             ]
             report = {
-                "method": "deterministic_lexical_v1",
+                "method": "deterministic_lexical_v2"
+                if ranking == "coverage"
+                else "deterministic_lexical_v1",
                 "fixture": "synthetic-v1",
                 "query_count": len(metrics),
                 "macro_precision_at_5": sum(row["precision_at_5"] for row in metrics)
@@ -228,8 +231,9 @@ def evaluate():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--ranking", choices=["legacy", "coverage"], default="coverage")
     args = parser.parse_args()
-    report = json.dumps(evaluate(), indent=2)
+    report = json.dumps(evaluate(args.ranking), indent=2)
     if args.output:
         args.output.write_text(report + "\n")
     print(report)

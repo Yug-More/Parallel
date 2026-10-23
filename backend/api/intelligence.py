@@ -1,6 +1,7 @@
 """Authorized source navigation, deterministic search and time-bounded briefings."""
 
 from datetime import datetime
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import Field
@@ -8,6 +9,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import aliased
 
 from collaboration import lock_workspace
+from knowledge_sources import resolve
 from models import (
     Activity,
     Approval,
@@ -18,7 +20,7 @@ from models import (
     WorkspaceVisit,
     utc_now,
 )
-from provenance import SourceKind, source_record
+from provenance import source_record
 from retrieval import naive_utc, retrieve
 from security import DB, CurrentUser, InputModel, as_utc, require_member
 
@@ -26,9 +28,17 @@ router = APIRouter()
 
 
 @router.get("/workspaces/{workspace_id}/sources/{kind}/{source_id}")
-def source(workspace_id: str, kind: SourceKind, source_id: str, user: CurrentUser, db: DB):
+def source(
+    workspace_id: str,
+    kind: Literal[
+        "message", "task", "activity", "decision", "document", "external", "decision_revision"
+    ],
+    source_id: str,
+    user: CurrentUser,
+    db: DB,
+):
     require_member(db, user.id, workspace_id)
-    return source_record(db, workspace_id, kind, source_id)
+    return resolve(db, workspace_id, kind, source_id)
 
 
 @router.get("/workspaces/{workspace_id}/knowledge")
@@ -37,12 +47,16 @@ def search(
     user: CurrentUser,
     db: DB,
     q: str = Query("", max_length=200),
-    kind: SourceKind | None = None,
+    kind: Literal[
+        "message", "task", "activity", "decision", "document", "external", "decision_revision"
+    ]
+    | None = None,
     status: str | None = Query(None, max_length=30),
     since: datetime | None = None,
     until: datetime | None = None,
     include_historical: bool = False,
     include_archived: bool = False,
+    ranking: Literal["legacy", "coverage"] = "coverage",
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0, le=10000),
 ):
@@ -60,6 +74,7 @@ def search(
         until=end,
         include_historical=include_historical,
         include_archived=include_archived,
+        ranking=ranking,
         limit=limit,
         offset=offset,
     )

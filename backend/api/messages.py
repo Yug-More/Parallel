@@ -6,7 +6,7 @@ from sqlalchemy import and_, or_
 
 import providers
 from collaboration import lock_workspace
-from models import Activity, Message
+from models import Activity, Message, Workspace
 from security import DB, CurrentUser, InputModel, as_utc, require_member
 
 router = APIRouter()
@@ -20,14 +20,18 @@ class ReplyInput(InputModel):
     message_id: str = Field(min_length=1, max_length=100)
 
 
-def message_out(message):
+def message_out(message, epoch=None):
     return {
         "id": message.id,
         "workspace_id": message.workspace_id,
         "sender_id": message.sender_id,
         "sender_name": message.sender_name,
         "role": message.role,
-        "content": message.content,
+        "content": (
+            message.content
+            if message.knowledge_epoch is None or message.knowledge_epoch == epoch
+            else "[Report hidden: source knowledge changed or became unavailable.]"
+        ),
         "created_at": as_utc(message.created_at),
     }
 
@@ -35,7 +39,13 @@ def message_out(message):
 def recent_context(db, workspace_id):
     rows = (
         db.query(Message)
-        .filter(Message.workspace_id == workspace_id)
+        .filter(
+            Message.workspace_id == workspace_id,
+            or_(
+                Message.knowledge_epoch.is_(None),
+                Message.knowledge_epoch == db.get(Workspace, workspace_id).knowledge_epoch,
+            ),
+        )
         .order_by(Message.created_at.desc(), Message.id.desc())
         .limit(30)
         .all()
@@ -67,7 +77,10 @@ def list_messages(
             )
         )
     rows = query.order_by(Message.created_at.desc(), Message.id.desc()).limit(limit).all()
-    return [message_out(message) for message in reversed(rows)]
+    return [
+        message_out(message, db.get(Workspace, workspace_id).knowledge_epoch)
+        for message in reversed(rows)
+    ]
 
 
 @router.post("/workspaces/{workspace_id}/messages", status_code=201)
@@ -112,6 +125,7 @@ def agent_reply(
     )
     if source is None:
         raise HTTPException(404, "Source message not found")
+    knowledge_epoch = db.get(Workspace, workspace_id).knowledge_epoch
     try:
         answer = providers.generate_reply(
             request.app.state.settings, recent_context(db, workspace_id)
@@ -123,11 +137,16 @@ def agent_reply(
             502, "AI provider failed. Your message is saved; no reply was created."
         ) from None
     db.rollback()  # end the read snapshot before re-authorizing the completed result
-    lock_workspace(db, workspace_id, user.id)
+    workspace = lock_workspace(db, workspace_id, user.id)
+    if workspace.knowledge_epoch != knowledge_epoch:
+        raise HTTPException(
+            409, "Source knowledge changed during generation; request a fresh reply"
+        )
     message = Message(
         id=str(uuid4()),
         workspace_id=workspace_id,
         user_id=user.id,
+        knowledge_epoch=knowledge_epoch,
         sender_id=f"agent:{user.id}",
         sender_name=f"{user.name}'s Agent",
         role="assistant",
@@ -135,7 +154,7 @@ def agent_reply(
     )
     db.add(message)
     db.commit()
-    return message_out(message)
+    return message_out(message, knowledge_epoch)
 
 
 @router.get("/workspaces/{workspace_id}/activity")

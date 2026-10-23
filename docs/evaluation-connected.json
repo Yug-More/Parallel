@@ -1,0 +1,293 @@
+{
+  "fixture": "connected-synthetic-v1",
+  "judgments": "Frozen author-curated labels; held out from original 11-query fixture, not independently human-adjudicated",
+  "workload": "SQLite; 200 unrelated messages, four documents/five revisions, two tasks, two decisions/three revisions, one imported issue; 10 sequential requests per query per ranking, includes API/session overhead",
+  "rankings": {
+    "legacy": {
+      "query_count": 16,
+      "macro_precision_at_5": 0.734375,
+      "macro_recall_at_5": 0.875,
+      "mean_reciprocal_rank": 0.8333333333333334,
+      "citation_correctness": 1.0,
+      "citations_checked": 16,
+      "latency_samples": 160,
+      "latency_p50_ms": 3.71231249300763,
+      "latency_p95_ms": 7.074290944729,
+      "scenarios": [
+        {
+          "name": "exact document phrase",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 1,
+          "relevant": 1
+        },
+        {
+          "name": "ambiguous document terms",
+          "precision_at_5": 0.5,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 2,
+          "relevant": 1
+        },
+        {
+          "name": "natural wording with stopwords",
+          "precision_at_5": 0.25,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 4,
+          "relevant": 1
+        },
+        {
+          "name": "negation source excerpt",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 1,
+          "relevant": 1
+        },
+        {
+          "name": "English vocabulary gap",
+          "precision_at_5": 0.0,
+          "recall_at_5": 0.0,
+          "reciprocal_rank": 0,
+          "returned": 0,
+          "relevant": 1
+        },
+        {
+          "name": "historical revision evidence",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 1,
+          "relevant": 1
+        },
+        {
+          "name": "current correction excludes old statement",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": null,
+          "returned": 0,
+          "relevant": 0
+        },
+        {
+          "name": "old document passage excluded",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": null,
+          "returned": 0,
+          "relevant": 0
+        },
+        {
+          "name": "explicit document revision history",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 1,
+          "relevant": 1
+        },
+        {
+          "name": "imported issue provenance",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 1,
+          "relevant": 1
+        },
+        {
+          "name": "missing evidence",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": null,
+          "returned": 0,
+          "relevant": 0
+        },
+        {
+          "name": "native launch task",
+          "precision_at_5": 0.5,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 2,
+          "relevant": 1
+        },
+        {
+          "name": "ambiguous native task",
+          "precision_at_5": 0.5,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 2,
+          "relevant": 1
+        },
+        {
+          "name": "Spanish vocabulary gap",
+          "precision_at_5": 0.0,
+          "recall_at_5": 0.0,
+          "reciprocal_rank": 0,
+          "returned": 0,
+          "relevant": 1
+        },
+        {
+          "name": "stopword-only abstention",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": null,
+          "returned": 0,
+          "relevant": 0
+        },
+        {
+          "name": "specific source phrase",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 1,
+          "relevant": 1
+        }
+      ]
+    },
+    "coverage": {
+      "query_count": 16,
+      "macro_precision_at_5": 0.875,
+      "macro_recall_at_5": 0.875,
+      "mean_reciprocal_rank": 0.8333333333333334,
+      "citation_correctness": 1.0,
+      "citations_checked": 10,
+      "latency_samples": 160,
+      "latency_p50_ms": 3.3643959905020893,
+      "latency_p95_ms": 6.692583032418042,
+      "scenarios": [
+        {
+          "name": "exact document phrase",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 1,
+          "relevant": 1
+        },
+        {
+          "name": "ambiguous document terms",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 1,
+          "relevant": 1
+        },
+        {
+          "name": "natural wording with stopwords",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 1,
+          "relevant": 1
+        },
+        {
+          "name": "negation source excerpt",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 1,
+          "relevant": 1
+        },
+        {
+          "name": "English vocabulary gap",
+          "precision_at_5": 0.0,
+          "recall_at_5": 0.0,
+          "reciprocal_rank": 0,
+          "returned": 0,
+          "relevant": 1
+        },
+        {
+          "name": "historical revision evidence",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 1,
+          "relevant": 1
+        },
+        {
+          "name": "current correction excludes old statement",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": null,
+          "returned": 0,
+          "relevant": 0
+        },
+        {
+          "name": "old document passage excluded",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": null,
+          "returned": 0,
+          "relevant": 0
+        },
+        {
+          "name": "explicit document revision history",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 1,
+          "relevant": 1
+        },
+        {
+          "name": "imported issue provenance",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 1,
+          "relevant": 1
+        },
+        {
+          "name": "missing evidence",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": null,
+          "returned": 0,
+          "relevant": 0
+        },
+        {
+          "name": "native launch task",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 1,
+          "relevant": 1
+        },
+        {
+          "name": "ambiguous native task",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 1,
+          "relevant": 1
+        },
+        {
+          "name": "Spanish vocabulary gap",
+          "precision_at_5": 0.0,
+          "recall_at_5": 0.0,
+          "reciprocal_rank": 0,
+          "returned": 0,
+          "relevant": 1
+        },
+        {
+          "name": "stopword-only abstention",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": null,
+          "returned": 0,
+          "relevant": 0
+        },
+        {
+          "name": "specific source phrase",
+          "precision_at_5": 1.0,
+          "recall_at_5": 1.0,
+          "reciprocal_rank": 1.0,
+          "returned": 1,
+          "relevant": 1
+        }
+      ]
+    }
+  },
+  "safety_checks_passed": 6,
+  "safety_checks_total": 6,
+  "unauthorized_retrieval_count": 0,
+  "limitations": "Synthetic workload; no semantic embeddings, multilingual normalization or model quality evaluation. Latency is local, not a production capacity claim."
+}

@@ -53,3 +53,31 @@ Each run has at most one `approvals` record. It stores the exact action/payload/
 `0004_intelligence` adds seven tables and their indexes/constraints; it does not rewrite any Phase 1B table. Tests populate and compare users, credentials, workspaces, memberships, invitations, messages, tasks/dependencies, activity and sessions before/after upgrade, then repeat the migration. CI also tests populated PostgreSQL Phase 1B upgrades. Existing sessions remain valid across this migration; unlike 0003, 0004 does not force a new login.
 
 Before upgrading user data, stop HTTP and worker writers, verify a native backup, and test a disposable copy. Startup refuses a mismatched revision. Downgrade is deliberately blocked; recovery uses a reviewed restore, not data deletion. See [Development](DEVELOPMENT.md).
+
+## Connected knowledge and native actions (0005–0009)
+
+```mermaid
+erDiagram
+    workspaces ||--o{ documents : owns
+    documents ||--|{ document_revisions : versions
+    document_revisions ||--o{ document_passages : extracts
+    users ||--o{ document_revisions : uploads
+    workspaces ||--o{ repository_connections : authorizes
+    repository_connections ||--o{ repository_syncs : queues
+    repository_connections ||--o{ imported_records : imports
+    workspaces ||--o{ knowledge_answers : retains
+    agent_runs ||--o| action_proposals : proposes
+    action_proposals ||--o{ tasks : creates_with_receipt
+```
+
+`documents` has an optimistic current version and archive state. `document_revisions` preserves uploader, filename, title, content hash, durable state/lease and nullable raw bytes; its same-workspace FK and unique document/version prevent mixed ownership/duplicate revisions. `document_passages` stores stable revision/ordinal text with a composite same-workspace FK. Raw content becomes null after terminal extraction. Current visibility is enforced by joins to the ready revision and unarchived parent, not a stale client index.
+
+`repository_connections` records public repository, creating owner, active state/version and workspace. It contains no token. `repository_syncs` records initiating owner, connection version, lease, bounded attempt/backoff, safe error and count. `imported_records` stores provider ID/type, original URL, current availability, bounded text, version/hash and timestamps; `(connection, provider_id)` is unique. Composite FKs enforce workspace/connection relationships. Stored older snapshots can remain unavailable without deleting history.
+
+`knowledge_answers` stores question, mode/provider model, request idempotency, state, bounded claims and exact evidence reference fingerprints. Reads re-resolve evidence before displaying claims. No stored evidence snapshot bypasses source authorization/revocation.
+
+`action_proposals` is separate from legacy `approvals`; its only enabled action is `create_task_plan`. The run FK is same-workspace and unique. Exact payload/hash, owner, expiry, state and JSON resource receipt support at-most-once execution under the workspace lock. The relationship to created tasks in the diagram represents immutable receipt IDs, not an additional task FK column. Task creation does not alter any existing task status.
+
+`workspaces.knowledge_epoch` defaults to zero; generated `messages.knowledge_epoch` is nullable so preexisting/human messages retain compatibility. Run contexts bind an epoch in JSON. `worker_heartbeats` stores opaque worker ID, running/stopped state and last seen time; it is operational telemetry rather than workspace content.
+
+The current schema head is `0009_worker_health`. Additive migrations preserve original columns/records, including completed publication receipts and existing sessions. SQLite populated Phase 1B and Phase 3 comparisons, repeated upgrades, FK checks, offline PostgreSQL DDL compilation and CI PostgreSQL execution protect migration compatibility. Destructive downgrades remain disabled.

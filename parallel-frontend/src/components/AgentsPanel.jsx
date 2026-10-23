@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { api } from "../api";
+import NativeActions from "./NativeActions";
 import ConfirmDialog from "./ConfirmDialog";
 import { SourceLink, SourcePicker, SourceViewer } from "./ProjectSources";
 import { useProjectAction, useWorkspaceQuery } from "./projectHooks";
@@ -390,6 +391,12 @@ export default function AgentsPanel({
                   </p>
                 </div>
               )}
+              {run.evidence_unavailable && (
+                <p className="feedback">
+                  Source knowledge changed or became unavailable. The saved
+                  report and context are hidden. Start a fresh run.
+                </p>
+              )}
               {run.outcome && (
                 <>
                   <h4>Saved result</h4>
@@ -461,6 +468,11 @@ export default function AgentsPanel({
           )}
         </article>
       </div>
+      <NativeActions
+        workspaceId={workspaceId}
+        owner={workspace.role === "owner"}
+        onAccessLost={onAccessLost}
+      />
       <section
         className="approval-section surface"
         aria-label="Publication approvals"
@@ -487,7 +499,8 @@ export default function AgentsPanel({
             <details open={item.state === "pending"}>
               <summary>Exact proposed content</summary>
               <p className="source-body approval-preview">
-                {item.payload.content}
+                {item.payload?.content ||
+                  "Report hidden: source knowledge changed or became unavailable."}
               </p>
               <small className="hash-label">
                 Payload SHA-256: {item.payload_hash}

@@ -19,9 +19,9 @@ export default function Landing({ goLogin }) {
           <br />A clear way back.
         </h1>
         <p className="landing-subtitle">
-          Bring conversations, tasks, and source-linked decisions into one
-          private workspace. Return to what changed, inspect the evidence, and
-          prepare a handoff you can verify.
+          Bring conversations, tasks, documents, and source-linked decisions
+          into one private workspace. Return to what changed, inspect the
+          evidence, and review a plan before it becomes real project work.
         </p>
         <button onClick={goLogin} className="cta-button">
           Enter Dashboard →
@@ -48,16 +48,17 @@ export default function Landing({ goLogin }) {
           <h2>Preserve the reasoning.</h2>
           <p>
             Link decisions to actual records. Inspect revisions, follow
-            replacements, and find current evidence through deterministic
-            search.
+            replacements, upload project context, and inspect citations in
+            source-grounded answers.
           </p>
         </article>
         <article>
           <span>03 / Coordinate</span>
           <h2>Review what really ran.</h2>
           <p>
-            Local agents compute status and dependency reports, coordinate a
-            handoff, and request owner approval before publishing it.
+            Local agents research project context and coordinate explicit task
+            plans. Owners approve exact native actions and inspect execution
+            receipts.
           </p>
         </article>
       </section>

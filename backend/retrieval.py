@@ -4,13 +4,26 @@ Title term matches score 3, body matches 1; a complete title phrase adds 4.
 Terms are OR candidates. Ties sort by event time, kind and immutable ID.
 """
 
+import math
 import re
 from datetime import timezone
 
 from fastapi import HTTPException
 from sqlalchemy import String, case, cast, func, literal, or_, select, union_all
 
-from models import Activity, Decision, Message, Task
+from models import (
+    Activity,
+    Decision,
+    DecisionRevision,
+    Document,
+    DocumentPassage,
+    DocumentRevision,
+    ImportedRecord,
+    Message,
+    RepositoryConnection,
+    Task,
+    Workspace,
+)
 from provenance import iso
 
 
@@ -39,8 +52,43 @@ def retrieve(
     include_archived=False,
     limit=20,
     offset=0,
+    ranking="coverage",
 ):
     terms = list(dict.fromkeys(re.findall(r"\w+", q.lower())))[:12]
+    if ranking not in {"legacy", "coverage"}:
+        raise ValueError("unsupported_ranking")
+    if ranking == "coverage":
+        stopwords = {
+            "a",
+            "an",
+            "the",
+            "is",
+            "are",
+            "was",
+            "were",
+            "what",
+            "which",
+            "how",
+            "why",
+            "of",
+            "for",
+            "to",
+            "in",
+            "on",
+            "and",
+            "with",
+        }
+        terms = [term for term in terms if term not in stopwords]
+        # Stopword-only questions abstain rather than treating an empty query as all records.
+        if q.strip() and not terms:
+            return {
+                "items": [],
+                "total": 0,
+                "limit": limit,
+                "offset": offset,
+                "method": "deterministic_lexical_v2",
+                "evidence": "no_matching_evidence",
+            }
     branches = []
     configs = [
         (
@@ -95,12 +143,60 @@ def retrieve(
             literal(False),
             literal("event_record"),
         ),
+        (
+            DocumentPassage,
+            "document",
+            DocumentPassage.title,
+            DocumentPassage.body,
+            DocumentPassage.created_at,
+            case((DocumentRevision.version == Document.version, "current"), else_="historical"),
+            DocumentRevision.version,
+            literal(False),
+            literal("untrusted_document"),
+        ),
+        (
+            ImportedRecord,
+            "external",
+            ImportedRecord.title,
+            ImportedRecord.body,
+            ImportedRecord.updated_at,
+            ImportedRecord.status,
+            ImportedRecord.version,
+            literal(False),
+            literal("untrusted_import"),
+        ),
     ]
+    if include_historical or kind == "decision_revision":
+        configs.append(
+            (
+                DecisionRevision,
+                "decision_revision",
+                DecisionRevision.snapshot["title"].as_string(),
+                DecisionRevision.snapshot["context"].as_string()
+                + " "
+                + DecisionRevision.snapshot["statement"].as_string()
+                + " "
+                + DecisionRevision.snapshot["rationale"].as_string()
+                + " "
+                + DecisionRevision.snapshot["alternatives"].as_string()
+                + " "
+                + DecisionRevision.snapshot["tradeoffs"].as_string(),
+                DecisionRevision.created_at,
+                DecisionRevision.snapshot["status"].as_string(),
+                DecisionRevision.version,
+                literal(False),
+                literal("historical_decision_revision"),
+            )
+        )
     for model, name, title, body, event_at, state, version, archived, authority in configs:
         if kind and name != kind:
             continue
         stmt = select(
-            model.id.label("id"),
+            (
+                DecisionRevision.decision_id + "@" + cast(DecisionRevision.version, String)
+                if name == "decision_revision"
+                else model.id
+            ).label("id"),
             literal(name).label("kind"),
             title.label("title"),
             func.substr(body, 1, 2000).label("excerpt"),
@@ -110,7 +206,33 @@ def retrieve(
             archived.label("archived"),
             authority.label("authority"),
         )
+        if name == "document":
+            stmt = stmt.join(
+                DocumentRevision, DocumentRevision.id == DocumentPassage.revision_id
+            ).join(Document, Document.id == DocumentRevision.document_id)
+        if name == "decision_revision":
+            stmt = stmt.join(Decision, Decision.id == DecisionRevision.decision_id)
+        if name == "external":
+            stmt = stmt.join(
+                RepositoryConnection, RepositoryConnection.id == ImportedRecord.connection_id
+            )
         conditions = [model.workspace_id == workspace_id]
+        if name == "decision_revision":
+            conditions.append(DecisionRevision.version < Decision.version)
+        if name == "message":
+            epoch = db.get(Workspace, workspace_id).knowledge_epoch
+            conditions.append(
+                or_(Message.knowledge_epoch.is_(None), Message.knowledge_epoch == epoch)
+            )
+        if name == "external":
+            conditions.extend(
+                [RepositoryConnection.active.is_(True), ImportedRecord.available.is_(True)]
+            )
+        if name == "document":
+            # Archive is a revocation boundary, including explicit history/archive searches.
+            conditions.extend([Document.archived.is_(False), DocumentRevision.state == "ready"])
+            if not include_historical:
+                conditions.append(DocumentRevision.version == Document.version)
         if name == "decision" and not include_historical:
             conditions.append(Decision.status.in_(["proposed", "accepted"]))
         if name == "task" and not include_archived:
@@ -123,16 +245,20 @@ def retrieve(
             conditions.append(event_at <= until)
         score = literal(0)
         matches = []
+        coverage = literal(0)
         for term in terms:
             title_match = func.lower(title).like(pattern(term), escape="\\")
             body_match = func.lower(body).like(pattern(term), escape="\\")
             matches.extend([title_match, body_match])
+            coverage = coverage + case((or_(title_match, body_match), 1), else_=0)
             score = score + case((title_match, 3), else_=0) + case((body_match, 1), else_=0)
         if terms:
             score = score + case(
                 (func.lower(title).like(pattern(q.lower()), escape="\\"), 4), else_=0
             )
-            conditions.append(or_(*matches))
+            conditions.append(
+                coverage >= math.ceil(len(terms) * 0.6) if ranking == "coverage" else or_(*matches)
+            )
         branches.append(stmt.add_columns(score.label("score")).where(*conditions))
     combined = union_all(*branches).subquery()
     total = db.execute(select(func.count()).select_from(combined)).scalar()
@@ -157,6 +283,8 @@ def retrieve(
         "total": total,
         "limit": limit,
         "offset": offset,
-        "method": "deterministic_lexical_v1",
+        "method": "deterministic_lexical_v2"
+        if ranking == "coverage"
+        else "deterministic_lexical_v1",
         "evidence": "matching_sources" if total else "no_matching_evidence",
     }

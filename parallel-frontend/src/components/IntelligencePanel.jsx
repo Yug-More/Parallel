@@ -305,7 +305,15 @@ export default function IntelligencePanel({
                 onChange={(e) => setKind(e.target.value)}
               >
                 <option value="">All sources</option>
-                {["decision", "task", "message", "activity"].map((x) => (
+                {[
+                  "decision",
+                  "task",
+                  "message",
+                  "activity",
+                  "document",
+                  "external",
+                  "decision_revision",
+                ].map((x) => (
                   <option key={x} value={x}>
                     {x}
                   </option>

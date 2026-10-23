@@ -7,6 +7,7 @@ A crashed lease fails visibly; only an explicit bounded retry creates new work.
 
 import hashlib
 import json
+import re
 import time
 from datetime import timedelta
 from uuid import uuid4
@@ -14,7 +15,9 @@ from uuid import uuid4
 from fastapi import HTTPException
 
 from collaboration import lock_workspace, record_activity
+from knowledge_sources import resolve
 from models import (
+    ActionProposal,
     AgentRun,
     Approval,
     Decision,
@@ -24,9 +27,11 @@ from models import (
     Task,
     TaskDependency,
     User,
+    Workspace,
     utc_now,
 )
 from provenance import source_record
+from retrieval import retrieve
 from security import as_utc
 
 CONTRACTS = {
@@ -49,6 +54,33 @@ CONTRACTS = {
         "output": "Handoff report with child run provenance",
     },
 }
+CONTRACTS.update(
+    {
+        "local.plan.v1": {
+            "name": "Task planner",
+            "description": "Turns up to five explicit objective steps into a reviewable native task plan; skips existing titles.",
+            "input": "Semicolon or newline-separated task titles and current workspace state",
+            "output": "Exact create-task proposal; human owner approval required",
+        },
+        "local.research.v1": {
+            "name": "Context researcher",
+            "description": "Retrieves up to eight source excerpts, preserves citations and abstains without matching evidence.",
+            "input": "Objective terms and authorized current/historical project knowledge",
+            "output": "Source-linked context report, not a correctness guarantee",
+        },
+        "local.delivery.v1": {
+            "name": "Delivery coordinator",
+            "description": "Delegates a bounded task plan and context research, then composes consistent child reports.",
+            "input": "Explicit objective steps and workspace context",
+            "output": "Two child runs, reviewable plan and context evidence",
+        },
+    }
+)
+DELEGATES = {
+    "local.handoff.v1": ["local.status.v1", "local.dependencies.v1"],
+    "local.delivery.v1": ["local.plan.v1", "local.research.v1"],
+}
+KNOWLEDGE_CONTRACTS = {"local.plan.v1", "local.research.v1", "local.delivery.v1"}
 TERMINAL = {"completed", "failed", "cancelled"}
 
 
@@ -126,7 +158,7 @@ def create_run(
             AgentRun.state.in_(["queued", "running", "waiting_for_approval"]),
         )
         .count()
-        + (3 if agent_type == "local.handoff.v1" else 1)
+        + (3 if agent_type in DELEGATES else 1)
         > 100
     ):
         raise HTTPException(409, "Workspace has too many outstanding runs")
@@ -154,9 +186,9 @@ def create_run(
     db.add(run)
     db.flush()
     event(db, run, "queued", contract=agent_type, task_id=task_id)
-    if agent_type == "local.handoff.v1":
+    if agent_type in DELEGATES:
         children = []
-        for contract in ["local.status.v1", "local.dependencies.v1"]:
+        for contract in DELEGATES[agent_type]:
             child = AgentRun(
                 id=str(uuid4()),
                 workspace_id=workspace_id,
@@ -179,7 +211,7 @@ def create_run(
             db,
             run,
             "plan_saved",
-            steps=["Compute status", "Analyze dependency graph", "Compose handoff"],
+            steps=[*DELEGATES[agent_type], "Compose verified child results"],
             child_run_ids=children,
         )
     record_activity(
@@ -219,13 +251,44 @@ def capture_context(db, run):
     decision_data = [source_record(db, run.workspace_id, "decision", row.id) for row in decisions]
     graph = [{"task_id": row.task_id, "depends_on_id": row.depends_on_id} for row in edges]
     inputs = [source_record(db, run.workspace_id, ref["kind"], ref["id"]) for ref in run.input_refs]
-    fingerprint = digest(
-        {"tasks": task_data, "decisions": decision_data, "edges": graph, "inputs": inputs}
-    )
+    knowledge = []
+    if run.agent_type in KNOWLEDGE_CONTRACTS:
+        matches = []
+        for kind in ["decision", "decision_revision", "task", "document", "external", "message"]:
+            matches.extend(
+                item
+                for item in retrieve(
+                    db,
+                    run.workspace_id,
+                    q=run.objective[:200],
+                    kind=kind,
+                    limit=8,
+                    include_historical=kind in {"document", "decision_revision"},
+                )["items"]
+                if item["authority"] != "interpretation"
+            )
+        matches.sort(key=lambda item: (-item["score"], item["kind"], item["id"]))
+        for item in matches[:8]:
+            knowledge.append(resolve(db, run.workspace_id, item["kind"], item["id"]))
+    epoch = db.get(Workspace, run.workspace_id).knowledge_epoch
+    fingerprint_data = {
+        "tasks": task_data,
+        "decisions": decision_data,
+        "edges": graph,
+        "inputs": inputs,
+    }
+    if run.agent_type in KNOWLEDGE_CONTRACTS:
+        fingerprint_data.update(knowledge=knowledge, knowledge_epoch=epoch)
+    # Keep the original contracts' fingerprint format compatible with Phase 3
+    # pending approvals/children; epoch checks below independently gate new reports.
+    fingerprint = digest(fingerprint_data)
     return {
         "as_of": as_utc(utc_now()).isoformat(),
         "workspace_id": run.workspace_id,
         "tasks": task_data,
+        "objective": run.objective,
+        "knowledge_sources": knowledge,
+        "knowledge_epoch": epoch,
         "decisions": decision_data,
         "edges": graph,
         "input_sources": inputs,
@@ -245,6 +308,7 @@ def compute(contract, context, children=None):
     facts = []
     chains = []
     ready = []
+    proposal = None
     if contract == "local.status.v1":
         counts = {
             state: sum(row["status"] == state for row in active)
@@ -304,19 +368,107 @@ def compute(contract, context, children=None):
             else:
                 ready.append(reference(row))
         summary = f"{len(facts)} open tasks have blockers; {len(ready)} open tasks are ready by dependency state. Readiness is not a completion claim."
-    elif contract == "local.handoff.v1":
+    elif contract == "local.plan.v1":
+        titles, seen = [], set()
+        for part in re.split(r"[;\n]+", context["objective"]):
+            title = re.sub(r"^(?:[-•]\s+|\d+[.)]\s+)", "", part.strip(), count=1)[:200].strip()
+            if title and title.casefold() not in seen:
+                titles.append(title)
+                seen.add(title.casefold())
+        if len(titles) > 5:
+            raise ExecutionError("plan_step_limit")
+        existing = {row["title"].casefold() for row in active}
+        steps = [
+            {
+                "title": title,
+                "description": "Proposed from explicit objective. Human review and execution required.",
+                "status": "todo",
+                "priority": "medium",
+                "assignee_id": None,
+            }
+            for title in titles
+            if title and title.casefold() not in existing
+        ]
+        dependency_report = compute("local.dependencies.v1", context)
+        chains, ready = (
+            dependency_report["dependency_chains"][:100],
+            dependency_report["ready_tasks"][:20],
+        )
+        blocker_ids = {
+            ref["id"] for fact in dependency_report["facts"][:10] for ref in fact["sources"]
+        }
+        plan_sources = [
+            *context["knowledge_sources"],
+            *[row for row in context["tasks"] if row["id"] in blocker_ids][:10],
+            *context["decisions"][:3],
+        ]
+        evidence, seen_refs = [], set()
+        for source in plan_sources:
+            key = (source["kind"], source["id"])
+            if key not in seen_refs and len(evidence) < 20:
+                evidence.append(reference(source))
+                seen_refs.add(key)
+        if steps:
+            proposal = {
+                "action": "create_task_plan",
+                "tasks": steps,
+                "sequential_dependencies": True,
+                "evidence": evidence,
+            }
+        summary = f"{len(dependency_report['facts'])} existing blocked task(s); {len(ready)} existing ready task(s). {len(steps)} proposed task(s); {len(titles) - len(steps)} existing or empty title(s) skipped. Objective steps preserve your wording. No work was executed."
+        facts = [
+            {"text": "Existing task: " + row["title"], "sources": [reference(row)]}
+            for row in active
+            if row["title"].casefold() in {title.casefold() for title in titles}
+        ]
+        facts.extend(dependency_report["facts"][:10])
+        facts.extend(
+            {"text": "Accepted decision to review: " + row["title"], "sources": [reference(row)]}
+            for row in context["decisions"][:3]
+        )
+    elif contract == "local.research.v1":
+        sources = context["knowledge_sources"]
+        facts = [
+            {
+                "text": f"{row['kind']} · {row['status'] or 'record'}"
+                + (f" · version {row['version']}" if row["version"] else "")
+                + ":\n"
+                + (row["body"][:1500] or row["title"]),
+                "sources": [reference(row)],
+            }
+            for row in sources
+        ]
+        historical = sum(
+            row["kind"] == "decision_revision" or row["status"] == "historical" for row in sources
+        )
+        summary = (
+            f"{len(sources)} matching source excerpt(s), including {historical} historical snapshot(s). Check current decisions and inspect each source; lexical matches can be incomplete or contradictory."
+            if sources
+            else "Abstained: no matching project evidence. Try specific terms or add context."
+        )
+    elif contract in {"local.handoff.v1", "local.delivery.v1"}:
         if not children or any(
             child["context"]["fingerprint"] != context["fingerprint"] for child in children
         ):
             raise ExecutionError("context_changed")
         facts = [fact for child in children for fact in child["outcome"]["facts"]]
         summary = "\n".join(child["outcome"]["summary"] for child in children)
+        if contract == "local.delivery.v1":
+            proposal = next(
+                (
+                    child["outcome"].get("proposal")
+                    for child in children
+                    if child["outcome"].get("proposal")
+                ),
+                None,
+            )
     else:
         raise ExecutionError("unsupported_contract")
     return {
         "contract": contract,
         "summary": summary,
         "facts": facts,
+        "proposal": proposal,
         "dependency_chains": chains,
         "ready_tasks": ready,
         "as_of": context["as_of"],
@@ -350,6 +502,13 @@ def cancel_tree(db, run, actor_id):
         )
         if approval and approval.state in {"pending", "approved"}:
             approval.state = "cancelled"
+        proposal = (
+            db.query(ActionProposal)
+            .filter_by(workspace_id=item.workspace_id, run_id=item.id)
+            .first()
+        )
+        if proposal and proposal.state in {"pending", "approved"}:
+            proposal.state = "cancelled"
         event(db, item, "cancelled", actor_id=actor_id)
 
 
@@ -391,7 +550,12 @@ def execute_approval(db, approval, run):
             or approval.payload != publication_payload(run)
         ):
             raise ExecutionError("approval_payload_mismatch")
-        if capture_context(db, run)["fingerprint"] != run.context["fingerprint"]:
+        current_context = capture_context(db, run)
+        if (
+            current_context["fingerprint"] != run.context["fingerprint"]
+            or run.context.get("knowledge_epoch", current_context["knowledge_epoch"])
+            != current_context["knowledge_epoch"]
+        ):
             raise ExecutionError("context_changed")
         message = Message(
             id=str(uuid4()),
@@ -401,6 +565,7 @@ def execute_approval(db, approval, run):
             sender_name=CONTRACTS[run.agent_type]["name"],
             role="assistant",
             content=approval.payload["content"],
+            knowledge_epoch=(run.context or {}).get("knowledge_epoch"),
         )
         db.add(message)
         db.flush()
@@ -528,11 +693,39 @@ def run_once(session_factory, compute_fn=compute):
                     raise ExecutionError("execution_timeout")
                 if not db.get(Membership, (workspace_id, run.initiator_id)):
                     raise ExecutionError("initiator_removed")
-                if capture_context(db, run)["fingerprint"] != context["fingerprint"]:
+                current_context = capture_context(db, run)
+                if (
+                    current_context["fingerprint"] != context["fingerprint"]
+                    or current_context["knowledge_epoch"] != context["knowledge_epoch"]
+                ):
                     raise ExecutionError("context_changed")
                 if code:
                     raise ExecutionError(code)
                 run.outcome, run.lease_token, run.lease_until = outcome, None, None
+                if outcome.get("proposal") and run.parent_id is None:
+                    action_payload = {
+                        "run_id": run.id,
+                        "context_fingerprint": context["fingerprint"],
+                        "proposal": outcome["proposal"],
+                    }
+                    proposal = ActionProposal(
+                        id=str(uuid4()),
+                        workspace_id=workspace_id,
+                        run_id=run.id,
+                        action=outcome["proposal"]["action"],
+                        payload=action_payload,
+                        payload_hash=digest(action_payload),
+                        state="pending",
+                        expires_at=utc_now() + timedelta(hours=24),
+                    )
+                    db.add(proposal)
+                    event(
+                        db,
+                        run,
+                        "native_action_proposed",
+                        proposal_id=proposal.id,
+                        payload_hash=proposal.payload_hash,
+                    )
                 if run.publish:
                     payload = publication_payload(run)
                     approval = Approval(

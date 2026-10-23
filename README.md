@@ -2,25 +2,29 @@
 
 **A collaborative workspace that keeps the reasoning behind the work.**
 
-Parallel brings conversations, tasks, decisions and verifiable local agent reports into private project workspaces. Return to what changed, follow the evidence behind a decision, and inspect what an agent actually computed before approving its publication.
+Parallel brings conversations, tasks, decisions, documents and connected repository context into private project workspaces. Return to what changed, ask source-linked questions, and inspect a delegated plan before approving the exact native tasks it will create.
 
-The current implementation combines human collaboration with **Project Continuity Intelligence**: revisioned decisions, permission-aware lexical retrieval, visit-relative briefings, and durable coordination between bounded local agents. These capabilities work without paid provider credentials.
+The current implementation combines human collaboration with **Project Continuity Intelligence**: revisioned decisions, permission-aware lexical retrieval, visit-relative briefings, grounded answers, and durable coordination between bounded local agents. These capabilities work without paid provider credentials.
 
 ## See the product
 
 The screenshots below come from real desktop Chromium workflows against FastAPI, SQLite and the local worker. Accounts and project content are synthetic demonstration data; these are application captures, not UI mockups.
 
-![Continuity briefing with current project state and source-linked changes](docs/screenshots/continuity-desktop.png)
+![Live project overview with native task outcomes and worker health](docs/screenshots/connected-overview-1440.png)
 
 <details>
-<summary>Inspect decisions, tasks, agent outcomes and approval previews</summary>
+<summary>Inspect connected knowledge, decisions and verified outcomes</summary>
+
+![Uploaded document and durable extraction state](docs/screenshots/connected-documents-1440.png)
+![Saved source excerpts with navigable document citations](docs/screenshots/connected-answers-1440.png)
+![Approved native task plan with atomic resource receipt](docs/screenshots/connected-native-actions-1440.png)
 
 ![Decision supersession and preserved reasoning](docs/screenshots/decisions-desktop.png)
 ![Persistent task assignment](docs/screenshots/tasks-desktop.png)
 ![Completed coordinator and delegated execution records](docs/screenshots/agents-desktop.png)
 ![Exact report publication approval preview](docs/screenshots/approval-desktop.png)
 
-The same end-to-end journey is tested at 390 × 844. [Mobile approval capture](docs/screenshots/approval-mobile.png).
+The connected workflow is tested at 390 × 844. [Mobile overview](docs/screenshots/connected-overview-390.png).
 
 </details>
 
@@ -38,9 +42,11 @@ Parallel keeps source records, structured team decisions and derived reports sep
 
 **Return to real project state.** Search authorized records with deterministic lexical ranking and status/time filters. Open a continuity briefing for changes since a saved visit or selected timestamp. See decision revisions, task state, prerequisites, activity and pending approvals. Missing evidence is shown explicitly.
 
-**Coordinate bounded local work.** A status agent computes task/decision facts; a dependency analyst traverses prerequisites. A handoff coordinator delegates both jobs and composes their persisted results. Inspect plans, source snapshots, timelines, failures and retries. Owner approval is required to publish the exact report to Conversation; reports never mark tasks Done.
+**Connect useful context.** Upload UTF-8 text/Markdown, preserve revisions and stable passages, and archive documents to remove every passage from retrieval. An explicitly enabled public GitHub connector imports a bounded read-only repository/issue/PR snapshot with original links and owner revocation. Ask workspace saves local source excerpts, or separately enabled model interpretation with allowlisted citations and explicit abstention. Changed/revoked evidence hides saved answers and derived reports.
 
-This is a local/team engineering foundation. Semantic search, model-backed planning/execution, external integrations and production hosting are not claimed complete. The optional conversation AI adapter remains separately configured and unverified against a live provider in this phase.
+**Coordinate bounded local work.** Status and dependency contracts retain their handoff coordinator. A task planner preserves explicit objective steps; a context researcher retrieves authorized excerpts; a delivery coordinator delegates both and checks consistent context. Inspect child results, timelines, failures and retries. Owners can approve an exact sequential task plan; the worker rechecks context/authority and atomically creates To do tasks with a receipt. Report publication remains a separate approval. Reports never mark tasks Done.
+
+This is a local/team engineering foundation. PDF/OCR, private GitHub authentication, semantic embeddings, general model planning, external writes and production hosting are not implemented. Public GitHub reads were live-tested; optional model answers were tested with fake adapters only. No paid model calls or live model-quality verification are claimed.
 
 ## Architecture
 
@@ -53,9 +59,10 @@ flowchart TB
     Collaboration --> SQL[(SQLAlchemy / SQLite or PostgreSQL)]
     Knowledge --> SQL
     Control --> SQL
-    Worker[Leased local agent worker] <--> SQL
+    Worker[Leased worker: runs, documents and approved native plans] <--> SQL
+    Worker -. explicitly enabled GET only .-> GitHub[Public GitHub REST API]
     Migration[Alembic migrations] --> SQL
-    API -. optional conversation reply .-> AI[Provider adapter]
+    API -. optional bounded model answers .-> AI[Provider adapter]
 ```
 
 FastAPI domain routers share a workspace mutation lock and backend membership checks. Retrieval is workspace-scoped SQL; source text cannot grant permissions. The separate worker shares the migrated database, performs local computation, and rechecks membership, dependencies and its lease before saving results. [Architecture](docs/ARCHITECTURE.md) explains these boundaries; [Data model](docs/DATA_MODEL.md) includes the entity diagram and constraints.
@@ -131,11 +138,11 @@ source .venv/bin/activate
 python worker.py
 ```
 
-Open **http://localhost:5174** and register. Create a workspace, invite another registered account through Members, then use Tasks, Decisions, Intelligence, and Agents & approvals. The worker must be running for queued jobs and approved publications to execute. Workspace/section navigation survives refresh; credentials stay in HttpOnly cookies.
+Open **http://localhost:5174** and register. Create a workspace and open Overview for next steps. Invite another registered account through Members; use Tasks and Decisions, upload a document, ask a question, then try Delivery coordinator with semicolon-separated task titles. Inspect Native action proposals before approving. The worker must be running for uploads, runs, syncs and approved actions to execute. Workspace/section navigation survives refresh; credentials stay in HttpOnly cookies.
 
 The relative SQLite URL resolves from the backend working directory. Keep frontend/API hostnames consistent for cookies. The Vite port can change if occupied; align `CORS_ORIGINS` with the actual origin. Windows users activate with `.venv\Scripts\Activate.ps1`. See [Development](docs/DEVELOPMENT.md) for settings, troubleshooting, optional PostgreSQL/Docker and provider setup.
 
-**Existing database:** stop HTTP and worker writers, verify a restorable backup, and test a disposable copy before migrating. Revision `0004_intelligence` preserves Phase 1B tables and live sessions. Never reset user data or run historical destructive seed instructions.
+**Existing database:** stop HTTP and worker writers, verify a restorable backup, and test a disposable copy before migrating. The current head is `0009_worker_health`; revisions 0004–0009 preserve existing collaboration records and live session data. Never reset user data or run historical destructive seed instructions.
 
 ## Verification
 
@@ -145,7 +152,9 @@ From the repository root with the backend environment active:
 ruff check backend scripts
 ruff format --check backend scripts
 pytest -q backend/tests
-python backend/evaluation/run.py
+python backend/evaluation/run.py --ranking legacy
+python backend/evaluation/run.py --ranking coverage
+python backend/evaluation/connected.py
 python scripts/check_secrets.py
 ```
 
@@ -161,7 +170,7 @@ PARALLEL_TEST_PYTHON=../backend/.venv/bin/python npm test
 
 Browser tests start disposable real HTTP/database/worker services with separate account contexts on desktop and mobile. They cover collaboration, decision sources/supersession, retrieval, persisted delegated reports, approvals, refresh and access removal. CI also runs Python 3.12/3.13, PostgreSQL fresh/populated upgrades and concurrency, migration drift, dependency audits and the source secret guard. Exact test counts and remote status belong to each PR/run, rather than a permanently stale README badge.
 
-The reproducible eleven-query synthetic retrieval baseline measured returned-set precision **0.864**, recall **0.909**, MRR **0.889**, and **12/12 correct citations**. Six unauthorized requests were denied. Ambiguous OR matching and vocabulary mismatch remain visible failures. [Evaluation](docs/EVALUATION.md) defines every metric, fixture, threshold and limitation; these are not real-user benchmarks or a semantic-search comparison.
+Coverage-based lexical ranking measured precision **0.909** versus the original **0.864**, with unchanged **0.909 recall** on the eleven-query fixture. On sixteen additional frozen author-curated queries, precision rose **0.734 → 0.875** with recall **0.875** unchanged; checked citations and authorization gates passed. English paraphrase and Spanish vocabulary misses remain. [Evaluation](docs/EVALUATION.md) records labels, latency workload, raw results and limitations; these are not independent human judgments, real-user benchmarks or a semantic-search comparison.
 
 ## Security and deployment status
 
@@ -177,6 +186,8 @@ There is no production deployment claim. Public release still needs trusted TLS 
 - [Decision provenance, retrieval and continuity](docs/PROJECT_CONTINUITY.md)
 - [Agent contracts, approvals and recovery](docs/AGENT_ORCHESTRATION.md)
 - [Retrieval evaluation and measured limitations](docs/EVALUATION.md)
+- [Documents, public GitHub and grounded-answer boundaries](docs/INTEGRATIONS.md)
+- [Readiness, logs, backup and recovery](docs/OPERATIONS.md)
 - [Engineering decisions and alternatives](docs/ENGINEERING_DECISIONS.md)
 - [Development, migration and verification commands](docs/DEVELOPMENT.md)
 - [Security boundaries and remaining risks](docs/SECURITY.md)
@@ -184,6 +195,6 @@ There is no production deployment claim. Public release still needs trusted TLS 
 
 ## History, contributions and licensing
 
-Parallel began as a hackathon project. The project owner's supplied history records recognition at the **Global Scoop AI Hackathon** and **Continual Learning Hackathon**, with approximately **$20,000 combined awards**. That recognition concerns the original work, not the later Phase 1–3 implementation or a production deployment. Historical commits and human contributors are preserved.
+Parallel began as a hackathon project. The project owner's supplied history records recognition at the **Global Scoop AI Hackathon** and **Continual Learning Hackathon**, with approximately **$20,000 combined awards**. That recognition concerns the original work, not the later Phase 1–6 implementation or a production deployment. Historical commits and human contributors are preserved.
 
 Contributors should follow [AGENTS.md](AGENTS.md), use focused PRs with actual verification evidence, and preserve data and authorization boundaries. This repository contains **no license granting redistribution**; no new license or legal permission is implied by public source visibility.

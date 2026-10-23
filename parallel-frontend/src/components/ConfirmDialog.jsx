@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useId } from "react";
 
 export default function ConfirmDialog({
   confirmation,
@@ -8,6 +8,7 @@ export default function ConfirmDialog({
   onConfirm,
 }) {
   const dialog = useRef(null);
+  const titleId = useId();
   useEffect(() => {
     if (confirmation && !dialog.current.open) dialog.current.showModal();
     if (!confirmation && dialog.current.open) dialog.current.close();
@@ -16,13 +17,13 @@ export default function ConfirmDialog({
     <dialog
       ref={dialog}
       className="confirm-dialog"
-      aria-labelledby="confirm-title"
+      aria-labelledby={titleId}
       onCancel={(event) => {
         event.preventDefault();
         if (!busy) onCancel();
       }}
     >
-      <h2 id="confirm-title">{confirmation?.title}</h2>
+      <h2 id={titleId}>{confirmation?.title}</h2>
       <p>{confirmation?.message}</p>
       {error && <p role="alert">{error}</p>}
       <div className="button-row">

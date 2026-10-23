@@ -14,6 +14,7 @@ from provenance import (
     decision_out,
     revision_sources,
     save_revision,
+    source_preview,
     validate_sources,
 )
 from security import DB, CurrentUser, InputModel, as_utc, require_member
@@ -120,7 +121,8 @@ def history(
                 "created_at": as_utc(row.created_at),
                 "snapshot": row.snapshot,
                 "sources": [
-                    source.snapshot for source in revision_sources(db, decision, row.version)
+                    source_preview(db, workspace_id, source)["cited"]
+                    for source in revision_sources(db, decision, row.version)
                 ],
             }
             for row in query.order_by(DecisionRevision.version.desc()).offset(offset).limit(limit)

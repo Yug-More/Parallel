@@ -35,3 +35,11 @@ Baseline 426306235cfc127287e58d6efb989555a8d5491a was clean, including models.py
 ## Phases 2 + 3 evolution
 
 The verified starting main was d3bd47543da51a147cdfb7f4f6e171fbdd1ecac2 with a clean working tree. New modules add revisioned decisions/provenance, authorized lexical retrieval, explicit visit markers, current-state/change briefings, deterministic status/dependency agents, a fixed handoff coordinator and exact owner-approved local publication. Migration 0004 adds seven tables without rewriting existing records. Backend tests include competing revisions/workers/approvals and interrupted execution. Retrieval fixtures deliberately expose ambiguity and vocabulary gaps. Real browser workflows produce the documentation screenshots. Optional model replies remain separate and live-unverified; no external execution or production claims are added.
+
+## Phases 4–6 evolution
+
+The verified baseline was clean local/remote main at `fe49e06f183cde8ae914771e481ad83315cc3ce6` (Phase 2/3 PR #3). This cycle adds durable text/Markdown ingestion, revocable public GitHub imports, grounded answer persistence/citation checks, explicit historical revision search, measured lexical coverage filtering, three additional local contracts, exact native task-plan proposals/receipts and an integrated overview/knowledge UI.
+
+Revocation was reviewed across direct sources, retrieval, answers, run context/outcomes, publication previews, generated messages and decision-source snapshots. Conservative epochs hide older derived reports; human-authored native text remains authored data. Existing collaboration APIs and the legacy publication approval constraint are retained. Migration tests now populate historical schemas through their actual columns rather than using newer ORM columns against older schemas; they still compare every original field and record.
+
+Verification includes isolated backend storage/worker races, real desktop/mobile workflows and screenshots, frozen author-curated retrieval labels, SQLite backup restoration and PostgreSQL CI checks. Public GitHub reads were live exercised without credentials; model behavior uses fake adapters and no paid calls. No real user database, production deployment, external write, credential rotation or historical commit was changed. Exact final counts/remote status belong to the delivery PR.

@@ -4,13 +4,13 @@ The supported agents perform real deterministic computation over persisted works
 
 ## Contracts
 
-`GET /agent-contracts` describes the three versioned identities:
+`GET /agent-contracts` describes six versioned identities. The original three are:
 
 - **`local.status.v1`** counts active task states, records task facts and accepted decisions with source IDs, and saves a status report.
 - **`local.dependencies.v1`** traverses prerequisite chains, identifies unfinished prerequisites and explicit Blocked states, and lists work ready by dependency state. It can analyze a blocked task.
 - **`local.handoff.v1`** is a coordinator: its persisted plan delegates to the status and dependency contracts, waits for both child outcomes, verifies context fingerprints and composes a handoff. The child runs have distinct computation and inspectable outcomes.
 
-An objective is a human label, not executable instructions. Explicit input references are resolved in the same workspace and retained in the context snapshot. Their text cannot expand capabilities or grant permissions. Publication is a separate local action.
+Status/dependency objectives are human labels. Planner objectives preserve explicit task-title steps; neither form is executable instructions. Explicit input references are resolved in the same workspace and retained in the context snapshot. Their text cannot expand capabilities or grant permissions. Publication is a separate local action.
 
 ## Run lifecycle
 
@@ -107,3 +107,33 @@ The requesting user's logout does not cancel already authorized durable work; me
 `GET /runs`, `/runs/{id}`, and `/approvals` are workspace-authorized and bounded. Run detail includes the objective, initiating ID, source snapshot/scope, plan/children, timeline, outcome, error code, attempt chain and approval. Worker exceptions become safe public codes; raw provider/exception payloads are not stored or exposed. Events are append-only through application APIs, not tamper-proof against administrators.
 
 Not implemented: LLM agent execution, external integrations, arbitrary tools, dynamic delegation graphs, distributed queue infrastructure, automatic compensation, durable streaming, or production monitoring. These need separate capability and approval designs.
+
+## Connected research and exact native task plans
+
+Three additional identities preserve the original contracts:
+
+- **`local.plan.v1`** analyzes the existing dependency graph/blockers and accepted decisions, splits up to five explicit semicolon/newline-separated objective steps into task titles, skips existing active titles and proposes a sequential task plan with evidence references. It does not invent a software implementation or claim general-language planning.
+- **`local.research.v1`** retrieves up to eight authorized native/document/import sources and prior decision/document revisions using objective terms, returns cited excerpts with current/historical labels and abstains without matches. It excludes self-generated activity/assistant messages from automatic research to avoid self-referential context changes. Explicit original source references retain the original native source types.
+- **`local.delivery.v1`** persists a fixed plan with planner/research children and composes their reports only when fingerprints match. Its root creates one native proposal; child runs do not independently create duplicate proposals.
+
+These contracts remain deterministic and have no model/tools/external calls. The separate public connector fills imported records; local agents read only the authorized stored snapshot. Optional model answers are a separate API, not a hidden model-agent capability.
+
+`GET /workspaces/{w}/action-proposals` exposes recent exact plans and receipts. An owner approves/rejects with the displayed payload hash. Before execution, `actions.py` checks initiating membership, current owner, expiry, run state, context/epoch and exact recomputed plan/hash. It creates one to five To do/unassigned/medium tasks and their sequential prerequisites in the same transaction as the unique resource receipt and activity. The legacy `publish_report` action/constraint remains separate.
+
+```mermaid
+stateDiagram-v2
+    [*] --> pending: root saves exact task plan
+    pending --> approved: current owner approves hash
+    pending --> rejected: current owner rejects
+    pending --> expired: deadline passes
+    approved --> executed: revalidate and commit resources plus receipt
+    approved --> failed: changed context or authority
+    executed --> [*]
+    rejected --> [*]
+    expired --> [*]
+    failed --> [*]
+```
+
+A Completed planner/coordinator means its computation completed. Pending proposals and Approved proposals have not created tasks; only Executed carries actual task IDs. Created tasks are unfinished work. Any task/decision/context change before execution can fail the entire proposal without partial resources. After execution, another proposal must be computed from the new context.
+
+Document/import changes advance a conservative knowledge epoch. Stale run contexts/outcomes and publication content/messages become unavailable across APIs/search/model context. Native task-plan payloads are also hidden after knowledge change, and execution rejects them. Existing human-authored native text and resource receipts remain. See [Integrations](INTEGRATIONS.md) for the privacy boundary and [Operations](OPERATIONS.md) for health, recovery and scheduling limits.

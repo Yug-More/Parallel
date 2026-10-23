@@ -1,0 +1,18 @@
+[
+  {"name":"exact document phrase","q":"exponential backoff","kind":"document","expected":["retry_doc"]},
+  {"name":"ambiguous document terms","q":"Harbor retry","kind":"document","expected":["retry_doc"]},
+  {"name":"natural wording with stopwords","q":"What is the Harbor retry policy","kind":"document","expected":["retry_doc"]},
+  {"name":"negation source excerpt","q":"do not cache","kind":"document","expected":["cache_doc"]},
+  {"name":"English vocabulary gap","q":"signout defense","kind":"decision","expected":["session_decision"]},
+  {"name":"historical revision evidence","q":"SQLite","kind":"decision_revision","expected":["storage_revision"]},
+  {"name":"current correction excludes old statement","q":"SQLite","kind":"decision","expected":[]},
+  {"name":"old document passage excluded","q":"legacybudget","kind":"document","expected":[]},
+  {"name":"explicit document revision history","q":"legacybudget","kind":"document","include_historical":true,"expected":["old_budget_doc"]},
+  {"name":"imported issue provenance","q":"Harbor retry","kind":"external","expected":["retry_issue"]},
+  {"name":"missing evidence","q":"quantum kumquat","expected":[]},
+  {"name":"native launch task","q":"Harbor launch","kind":"task","expected":["launch_task"]},
+  {"name":"ambiguous native task","q":"Harbor retry","kind":"task","expected":["retry_task"]},
+  {"name":"Spanish vocabulary gap","q":"sesiones revocables","kind":"decision","expected":["session_decision"]},
+  {"name":"stopword-only abstention","q":"what is the","kind":"task","expected":[]},
+  {"name":"specific source phrase","q":"privacy reviewers","kind":"document","expected":["launch_doc"]}
+]

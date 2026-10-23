@@ -7,7 +7,9 @@ The evaluation exercises the real authenticated HTTP retrieval/source APIs again
 From the repository root, using the backend development environment:
 
 ```bash
-python backend/evaluation/run.py
+python backend/evaluation/run.py --ranking legacy
+python backend/evaluation/run.py --ranking coverage
+python backend/evaluation/connected.py
 python backend/evaluation/run.py --output /tmp/parallel-evaluation.json
 ```
 
@@ -33,12 +35,31 @@ The full machine-readable run is stored in [evaluation-baseline.json](evaluation
 
 ## What the failures mean
 
-The ambiguous query `release UI` returns both release tasks because candidates match any term: precision is 0.5 while recall remains 1. The vocabulary query `sign-out security` misses the relevant authentication decision: precision/recall are 0. Current lexical scoring does not understand synonyms or paraphrases. Contradictory conversation assertions are both retrieved as raw messages; the system does not determine which assertion is true.
+The ambiguous query `release UI` returns both release tasks because candidates match any term: precision is 0.5 while recall remains 1. The vocabulary query `sign-out security` misses the relevant authentication decision: precision/recall are 0. The legacy method does not understand synonyms or paraphrases; neither does the new coverage filter. Contradictory conversation assertions are both retrieved as raw messages; the system does not determine which assertion is true.
 
 The regression command requires macro precision at least 0.85, recall at least 0.90, all checked citations/current-state judgments correct, and no unauthorized access. Thresholds preserve this observed baseline; they do not certify semantic understanding. Authorization failures always fail the command. More fixtures should precede threshold changes.
 
 ## Limits and next experiments
 
-There is one lexical method; no semantic-vs-lexical improvement is claimed. Add independently judged paraphrases, negation, domain vocabulary, larger histories, revision-heavy projects, multilingual text, task/decision relevance and more time boundaries. Evaluate retrieval latency and indexing costs on a stated workload before choosing SQLite FTS, PostgreSQL text search or optional versioned embeddings. Any future index must handle correction, archival, membership changes and reproducible rebuilds without exposing other workspaces.
+Both methods are lexical; no semantic-vs-lexical improvement is claimed. Add independently judged paraphrases, negation, domain vocabulary, larger histories, revision-heavy projects, multilingual text, task/decision relevance and more time boundaries. Evaluate retrieval latency and indexing costs on a stated workload before choosing SQLite FTS, PostgreSQL text search or optional versioned embeddings. Any future index must handle correction, archival, membership changes and reproducible rebuilds without exposing other workspaces.
 
 Unit/browser tests complement the benchmark with pagination, temporal boundaries, stale versions, source correction snapshots, private identifiers, session revocation, migration integrity, concurrent workers, approval races and recovery. Test counts are execution evidence, not retrieval quality scores.
+
+## Measured coverage filter and frozen connected queries
+
+The v2 candidate was chosen from the original fixture's ambiguity failure: remove a small explicit stopword set and require `ceil(0.6 × term_count)` title/body coverage. Scores/tie ordering remain explainable SQL. Legacy remains reproducible with `--ranking legacy`; default coverage reports `deterministic_lexical_v2`.
+
+On the original eleven scenarios, v2 measured precision **0.909091** versus **0.863636**, unchanged recall **0.909091** and MRR **0.888889**; **11/11 citations**, **5/5 current-state checks** and **6/6 denials** passed. The ambiguous task query now excludes the partial match; the vocabulary miss remains. See [evaluation-lexical-v2.json](evaluation-lexical-v2.json); the historical v1 result is retained above.
+
+`connected_queries.json` freezes sixteen additional relevance sets before comparing the candidate on connected sources. They were held out from the original eleven-query tuning fixture, but **are author-curated and not independently human-adjudicated**. They cover document phrases/ambiguity/negation excerpts, question stopwords, current and old revisions, imported issues, missing evidence, native tasks and English/Spanish vocabulary gaps. Retrieving a negated source does not prove semantic negation understanding.
+
+Observed connected-fixture results:
+
+- Legacy precision **0.734375**, coverage precision **0.875000**.
+- Recall **0.875000** and MRR **0.833333** for both; English paraphrase and Spanish misses remain.
+- All **16 legacy / 10 coverage** returned citations resolved to the correct scoped source.
+- **6/6** additional source/archive/connection/answer/outsider checks passed; zero unauthorized retrievals.
+
+The local SQLite workload contains 200 unrelated messages, four documents/five revisions, two tasks, two decisions/three revisions and one synthetic imported issue. Ten sequential HTTP requests per query/method produced 160 latency samples each, including TestClient/session/API/SQL overhead: legacy p50 **3.71 ms**, p95 **7.07 ms**; coverage p50 **3.36 ms**, p95 **6.69 ms**. This small single-process sample is not a capacity, concurrency or production-latency claim. Raw measurements and every scenario are in [evaluation-connected.json](evaluation-connected.json).
+
+The connected gate requires no recall/precision regression versus legacy and all lifecycle/access checks passing; both original fixture gates remain. CI uses no model/network calls. Connector fixture tests are distinct from the separately observed live public GitHub read. No model factuality, entailment, independent human judgments, semantic embedding comparison or user-impact improvement was measured.

@@ -11,6 +11,7 @@ from sqlalchemy import (
     ForeignKeyConstraint,
     Index,
     Integer,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -58,6 +59,7 @@ class Message(Base):
     sender_name = Column(String, nullable=False)
     role = Column(String, nullable=False)  # "user" | "assistant"
     content = Column(Text, nullable=False)
+    knowledge_epoch = Column(Integer)
     created_at = Column(DateTime, default=utc_now, index=True)
     __table_args__ = (Index("ix_messages_workspace_created", "workspace_id", "created_at", "id"),)
 
@@ -80,6 +82,7 @@ class Workspace(Base):
     id = Column(String, primary_key=True)
     name = Column(String(120), nullable=False)
     revision = Column(Integer, nullable=False, server_default="0")
+    knowledge_epoch = Column(Integer, nullable=False, server_default="0")
     owner_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
     created_at = Column(DateTime, default=utc_now, nullable=False)
 
@@ -372,3 +375,211 @@ class Approval(Base):
         CheckConstraint("action='publish_report'", name="ck_approval_action"),
         Index("ix_approvals_workspace_state", "workspace_id", "state", "created_at"),
     )
+
+
+class Document(Base):
+    __tablename__ = "documents"
+    id = Column(String, primary_key=True)
+    workspace_id = Column(String, ForeignKey("workspaces.id"), nullable=False)
+    creator_id = Column(String, ForeignKey("users.id"), nullable=False)
+    filename = Column(String(200), nullable=False)
+    title = Column(String(200), nullable=False)
+    version = Column(Integer, nullable=False, default=1)
+    archived = Column(Boolean, nullable=False, server_default=false())
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    updated_at = Column(DateTime, nullable=False, default=utc_now)
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "id", name="uq_document_workspace"),
+        CheckConstraint("version >= 1", name="ck_document_version"),
+        Index("ix_documents_workspace", "workspace_id", "created_at", "id"),
+    )
+
+
+class DocumentRevision(Base):
+    __tablename__ = "document_revisions"
+    id = Column(String, primary_key=True)
+    workspace_id = Column(String, nullable=False)
+    document_id = Column(String, nullable=False)
+    creator_id = Column(String, ForeignKey("users.id"), nullable=False)
+    filename = Column(String(200), nullable=False)
+    title = Column(String(200), nullable=False)
+    version = Column(Integer, nullable=False)
+    content_hash = Column(String(64), nullable=False)
+    state = Column(String(16), nullable=False)
+    raw_content = Column(LargeBinary)
+    error_code = Column(String(64))
+    lease_token = Column(String)
+    lease_until = Column(DateTime)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    completed_at = Column(DateTime)
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "id", name="uq_document_revision_workspace"),
+        UniqueConstraint("document_id", "version", name="uq_document_revision_number"),
+        ForeignKeyConstraint(
+            ["workspace_id", "document_id"],
+            ["documents.workspace_id", "documents.id"],
+            name="fk_document_revision",
+        ),
+        CheckConstraint("version >= 1", name="ck_document_revision_version"),
+        CheckConstraint(
+            "state IN ('queued','processing','ready','failed','cancelled')",
+            name="ck_document_revision_state",
+        ),
+        Index("ix_document_queue", "state", "created_at"),
+    )
+
+
+class DocumentPassage(Base):
+    __tablename__ = "document_passages"
+    id = Column(String, primary_key=True)
+    workspace_id = Column(String, nullable=False)
+    revision_id = Column(String, nullable=False)
+    ordinal = Column(Integer, nullable=False)
+    title = Column(String(200), nullable=False)
+    body = Column(Text, nullable=False)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "revision_id"],
+            ["document_revisions.workspace_id", "document_revisions.id"],
+            name="fk_document_passage_revision",
+        ),
+        UniqueConstraint("revision_id", "ordinal", name="uq_document_passage_ordinal"),
+        Index("ix_document_passages_workspace", "workspace_id", "revision_id"),
+    )
+
+
+class RepositoryConnection(Base):
+    __tablename__ = "repository_connections"
+    id = Column(String, primary_key=True)
+    workspace_id = Column(String, ForeignKey("workspaces.id"), nullable=False)
+    creator_id = Column(String, ForeignKey("users.id"), nullable=False)
+    repository = Column(String(200), nullable=False)
+    active = Column(Boolean, nullable=False, server_default=false())
+    version = Column(Integer, nullable=False, default=1)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "id", name="uq_connection_workspace"),
+        Index("ix_connections_workspace", "workspace_id", "created_at"),
+    )
+
+
+class RepositorySync(Base):
+    __tablename__ = "repository_syncs"
+    id = Column(String, primary_key=True)
+    workspace_id = Column(String, nullable=False)
+    connection_id = Column(String, nullable=False)
+    initiator_id = Column(String, ForeignKey("users.id"), nullable=False)
+    connection_version = Column(Integer, nullable=False)
+    state = Column(String(16), nullable=False)
+    attempt = Column(Integer, nullable=False, default=0)
+    lease_token = Column(String)
+    lease_until = Column(DateTime)
+    next_attempt_at = Column(DateTime, nullable=False, default=utc_now)
+    error_code = Column(String(64))
+    record_count = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    completed_at = Column(DateTime)
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "connection_id"],
+            ["repository_connections.workspace_id", "repository_connections.id"],
+            name="fk_sync_connection",
+        ),
+        CheckConstraint(
+            "state IN ('queued','running','completed','failed','cancelled')", name="ck_sync_state"
+        ),
+        CheckConstraint("attempt BETWEEN 0 AND 3", name="ck_sync_attempt"),
+        Index("ix_sync_queue", "state", "next_attempt_at"),
+    )
+
+
+class ImportedRecord(Base):
+    __tablename__ = "imported_records"
+    id = Column(String, primary_key=True)
+    workspace_id = Column(String, nullable=False)
+    connection_id = Column(String, nullable=False)
+    provider_id = Column(String(100), nullable=False)
+    available = Column(Boolean, nullable=False, server_default=false())
+    record_type = Column(String(32), nullable=False)
+    title = Column(String(200), nullable=False)
+    body = Column(Text, nullable=False)
+    original_url = Column(String(500), nullable=False)
+    status = Column(String(30), nullable=False)
+    version = Column(Integer, nullable=False, default=1)
+    content_hash = Column(String(64), nullable=False)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    updated_at = Column(DateTime, nullable=False, default=utc_now)
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "connection_id"],
+            ["repository_connections.workspace_id", "repository_connections.id"],
+            name="fk_import_connection",
+        ),
+        UniqueConstraint("connection_id", "provider_id", name="uq_import_provider"),
+        Index("ix_import_workspace", "workspace_id", "updated_at", "id"),
+    )
+
+
+class KnowledgeAnswer(Base):
+    __tablename__ = "knowledge_answers"
+    id = Column(String, primary_key=True)
+    workspace_id = Column(String, ForeignKey("workspaces.id"), nullable=False)
+    creator_id = Column(String, ForeignKey("users.id"), nullable=False)
+    question = Column(String(200), nullable=False)
+    mode = Column(String(16), nullable=False)
+    provider_model = Column(String(200))
+    idempotency_key = Column(String(100), nullable=False)
+    state = Column(String(16), nullable=False)
+    claims = Column(JSON, nullable=False)
+    evidence = Column(JSON, nullable=False)
+    error_code = Column(String(64))
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    completed_at = Column(DateTime)
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "creator_id", "idempotency_key", name="uq_answer_request"),
+        CheckConstraint(
+            "state IN ('processing','completed','abstained','failed')", name="ck_answer_state"
+        ),
+        CheckConstraint("mode IN ('extractive','model')", name="ck_answer_mode"),
+        Index("ix_answers_workspace", "workspace_id", "created_at", "id"),
+    )
+
+
+class ActionProposal(Base):
+    __tablename__ = "action_proposals"
+    id = Column(String, primary_key=True)
+    workspace_id = Column(String, nullable=False)
+    run_id = Column(String, nullable=False, unique=True)
+    action = Column(String(32), nullable=False)
+    payload = Column(JSON, nullable=False)
+    payload_hash = Column(String(64), nullable=False)
+    state = Column(String(16), nullable=False)
+    approver_id = Column(String, ForeignKey("users.id"))
+    receipt = Column(JSON)
+    error_code = Column(String(64))
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    expires_at = Column(DateTime, nullable=False)
+    responded_at = Column(DateTime)
+    executed_at = Column(DateTime)
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "run_id"],
+            ["agent_runs.workspace_id", "agent_runs.id"],
+            name="fk_action_run",
+        ),
+        CheckConstraint("action='create_task_plan'", name="ck_action_kind"),
+        CheckConstraint(
+            "state IN ('pending','approved','rejected','expired','executed','failed','cancelled')",
+            name="ck_action_state",
+        ),
+        Index("ix_action_workspace", "workspace_id", "state", "created_at"),
+    )
+
+
+class WorkerHeartbeat(Base):
+    __tablename__ = "worker_heartbeats"
+    id = Column(String, primary_key=True)
+    state = Column(String(16), nullable=False)
+    last_seen_at = Column(DateTime, nullable=False, default=utc_now)
+    __table_args__ = (CheckConstraint("state IN ('running','stopped')", name="ck_worker_state"),)
