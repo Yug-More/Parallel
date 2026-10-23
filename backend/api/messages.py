@@ -5,6 +5,7 @@ from pydantic import Field
 from sqlalchemy import and_, or_
 
 import providers
+from collaboration import lock_workspace
 from models import Activity, Message
 from security import DB, CurrentUser, InputModel, as_utc, require_member
 
@@ -71,7 +72,7 @@ def list_messages(
 
 @router.post("/workspaces/{workspace_id}/messages", status_code=201)
 def post_message(workspace_id: str, payload: MessageInput, user: CurrentUser, db: DB):
-    require_member(db, user.id, workspace_id)
+    lock_workspace(db, workspace_id, user.id)
     message = Message(
         id=str(uuid4()),
         workspace_id=workspace_id,
@@ -121,6 +122,8 @@ def agent_reply(
         raise HTTPException(
             502, "AI provider failed. Your message is saved; no reply was created."
         ) from None
+    db.rollback()  # end the read snapshot before re-authorizing the completed result
+    lock_workspace(db, workspace_id, user.id)
     message = Message(
         id=str(uuid4()),
         workspace_id=workspace_id,

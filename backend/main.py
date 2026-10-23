@@ -9,11 +9,12 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import sessionmaker
 
-from api import auth, messages, workspaces
+from api import auth, invitations, messages, tasks, workspaces
 from config import load_settings
 from database import create_db_engine
+from rate_limit import AuthRateLimiter
 
-SCHEMA_REVISION = "0002_workspaces"
+SCHEMA_REVISION = "0003_collaboration"
 
 
 def create_app(settings=None):
@@ -38,12 +39,13 @@ def create_app(settings=None):
 
     app = FastAPI(title="Parallel", version="2.0.0", lifespan=lifespan)
     app.state.settings = settings
+    app.state.auth_limiter = AuthRateLimiter()
     app.state.session_factory = sessionmaker(bind=engine, expire_on_commit=False)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.allowed_origins),
         allow_credentials=True,
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "PATCH", "DELETE"],
         allow_headers=["Content-Type"],
     )
 
@@ -79,6 +81,8 @@ def create_app(settings=None):
     app.include_router(auth.router)
     app.include_router(workspaces.router)
     app.include_router(messages.router)
+    app.include_router(invitations.router)
+    app.include_router(tasks.router)
 
     @app.websocket("/voice/ws")
     async def disabled_voice(websocket: WebSocket):
