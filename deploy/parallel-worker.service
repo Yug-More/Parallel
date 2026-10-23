@@ -1,0 +1,26 @@
+# Operator template only: create the user, edit paths and verify configuration.
+[Unit]
+Description=Parallel durable workspace worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=parallel
+Group=parallel
+WorkingDirectory=/srv/parallel/backend
+EnvironmentFile=/etc/parallel/backend.env
+ExecStart=/srv/parallel/.venv/bin/python worker.py
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGINT
+TimeoutStopSec=15
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/parallel
+MemoryMax=768M
+
+[Install]
+WantedBy=multi-user.target

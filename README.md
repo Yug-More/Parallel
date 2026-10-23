@@ -42,11 +42,11 @@ Parallel keeps source records, structured team decisions and derived reports sep
 
 **Return to real project state.** Search authorized records with deterministic lexical ranking and status/time filters. Open a continuity briefing for changes since a saved visit or selected timestamp. See decision revisions, task state, prerequisites, activity and pending approvals. Missing evidence is shown explicitly.
 
-**Connect useful context.** Upload UTF-8 text/Markdown, preserve revisions and stable passages, and archive documents to remove every passage from retrieval. An explicitly enabled public GitHub connector imports a bounded read-only repository/issue/PR snapshot with original links and owner revocation. Ask workspace saves local source excerpts, or separately enabled model interpretation with allowlisted citations and explicit abstention. Changed/revoked evidence hides saved answers and derived reports.
+**Connect useful context.** Upload UTF-8 text/Markdown or extractable-text PDFs, preserve revisions and stable passages, and archive documents to remove every passage from retrieval. An explicitly enabled public GitHub connector imports a bounded read-only repository/issue/PR snapshot with original links and owner revocation. Ask workspace saves local source excerpts, or separately enabled model interpretation with allowlisted citations and explicit abstention. Changed/revoked evidence hides saved answers and derived reports.
 
 **Coordinate bounded local work.** Status and dependency contracts retain their handoff coordinator. A task planner preserves explicit objective steps; a context researcher retrieves authorized excerpts; a delivery coordinator delegates both and checks consistent context. Inspect child results, timelines, failures and retries. Owners can approve an exact sequential task plan; the worker rechecks context/authority and atomically creates To do tasks with a receipt. Report publication remains a separate approval. Reports never mark tasks Done.
 
-This is a local/team engineering foundation. PDF/OCR, private GitHub authentication, semantic embeddings, general model planning, external writes and production hosting are not implemented. Public GitHub reads were live-tested; optional model answers were tested with fake adapters only. No paid model calls or live model-quality verification are claimed.
+This is a local/team engineering foundation. Extractable PDFs now preserve page citations; an optional GitHub App flow supports selected private repositories with encrypted expiring grants. The shipped optional index uses local character similarity, not a trained semantic model. OCR, general model planning, external writes and production hosting remain unimplemented. Public GitHub reads were live-tested in the previous cycle; private authorization and optional model calls are fixture-tested only. No live private access or paid model-quality verification is claimed.
 
 ## Architecture
 
@@ -65,9 +65,11 @@ flowchart TB
     API -. optional bounded model answers .-> AI[Provider adapter]
 ```
 
-FastAPI domain routers share a workspace mutation lock and backend membership checks. Retrieval is workspace-scoped SQL; source text cannot grant permissions. The separate worker shares the migrated database, performs local computation, and rechecks membership, dependencies and its lease before saving results. [Architecture](docs/ARCHITECTURE.md) explains these boundaries; [Data model](docs/DATA_MODEL.md) includes the entity diagram and constraints.
+FastAPI domain routers share a workspace mutation lock and backend membership checks. Retrieval is workspace-scoped SQL; source text cannot grant permissions. The separate worker shares the migrated database, performs bounded computation and explicitly authorized repository reads, and rechecks membership, dependencies and its lease before saving results. [Architecture](docs/ARCHITECTURE.md) explains these boundaries; [Data model](docs/DATA_MODEL.md) includes the entity diagram and constraints.
 
-The stack is React 19/Vite, FastAPI, SQLAlchemy/Alembic, bcrypt/PyJWT, SQLite for local development and PostgreSQL 16 in CI. Polling keeps the interface simple. No vector database, external queue or distributed service framework is required.
+The stack is React 19/Vite, FastAPI, SQLAlchemy/Alembic, bcrypt/PyJWT, SQLite for local development and PostgreSQL 16 in CI. Polling keeps the interface simple. No vector database, external queue or distributed service framework is required. Private credentials use a separate server-side Fernet key; see [configuration](docs/INTEGRATIONS.md).
+
+![PDF extraction with persisted state and bounded local index](docs/screenshots/pilot-documents-1440.png)
 
 ## Three connected workflows
 
@@ -142,7 +144,7 @@ Open **http://localhost:5174** and register. Create a workspace and open Overvie
 
 The relative SQLite URL resolves from the backend working directory. Keep frontend/API hostnames consistent for cookies. The Vite port can change if occupied; align `CORS_ORIGINS` with the actual origin. Windows users activate with `.venv\Scripts\Activate.ps1`. See [Development](docs/DEVELOPMENT.md) for settings, troubleshooting, optional PostgreSQL/Docker and provider setup.
 
-**Existing database:** stop HTTP and worker writers, verify a restorable backup, and test a disposable copy before migrating. The current head is `0009_worker_health`; revisions 0004–0009 preserve existing collaboration records and live session data. Never reset user data or run historical destructive seed instructions.
+**Existing database:** stop HTTP and worker writers, verify a restorable backup, and test a disposable copy before migrating. The current head is `0013_shared_limits`; revisions 0004–0013 preserve existing collaboration records and live session data. Never reset user data or run historical destructive seed instructions.
 
 ## Verification
 
@@ -155,6 +157,7 @@ pytest -q backend/tests
 python backend/evaluation/run.py --ranking legacy
 python backend/evaluation/run.py --ranking coverage
 python backend/evaluation/connected.py
+python backend/evaluation/pilot.py
 python scripts/check_secrets.py
 ```
 
@@ -172,11 +175,13 @@ Browser tests start disposable real HTTP/database/worker services with separate 
 
 Coverage-based lexical ranking measured precision **0.909** versus the original **0.864**, with unchanged **0.909 recall** on the eleven-query fixture. On sixteen additional frozen author-curated queries, precision rose **0.734 → 0.875** with recall **0.875** unchanged; checked citations and authorization gates passed. English paraphrase and Spanish vocabulary misses remain. [Evaluation](docs/EVALUATION.md) records labels, latency workload, raw results and limitations; these are not independent human judgments, real-user benchmarks or a semantic-search comparison.
 
+The additional 40-query developer-created holdout measured MRR **0.818 → 0.839** for optional phrase/current-state ranking versus coverage, with recall **0.900** and returned-result precision **0.773** unchanged. Coverage remains the default. Strict precision@5, every case and known misses are recorded in [evaluation-pilot.json](docs/evaluation-pilot.json). [Pilot boundaries and walkthrough](docs/PILOT_READINESS.md) distinguish implemented controls from deployment gaps.
+
 ## Security and deployment status
 
 Authentication requires both a valid signed cookie and a live unrevoked database session. Owners control membership/ownership and report publication. Source resolution and every intelligence/run/approval endpoint enforce workspace membership. Worker finalization rechecks authority and context; approved publication binds the exact payload and receipt atomically.
 
-There is no production deployment claim. Public release still needs trusted TLS ingress, shared abuse controls, verification/recovery flows, backup/restore drills, worker supervision, monitoring and retention policies. Historical Plivo credential exposure remains an **owner-side revocation/rotation action**; removing source text did not revoke it. See [Security](docs/SECURITY.md).
+There is no production deployment claim. Public release still needs trusted TLS ingress, ingress abuse protection, verification/recovery flows, PostgreSQL restore drills, installed worker supervision, monitoring and retention policies. Shared authentication/model counters, fair queue rotation and an isolated SQLite restore drill are implemented. Historical Plivo credential exposure remains an **owner-side revocation/rotation action**; removing source text did not revoke it. See [Security](docs/SECURITY.md).
 
 ## Documentation
 
@@ -186,7 +191,7 @@ There is no production deployment claim. Public release still needs trusted TLS 
 - [Decision provenance, retrieval and continuity](docs/PROJECT_CONTINUITY.md)
 - [Agent contracts, approvals and recovery](docs/AGENT_ORCHESTRATION.md)
 - [Retrieval evaluation and measured limitations](docs/EVALUATION.md)
-- [Documents, public GitHub and grounded-answer boundaries](docs/INTEGRATIONS.md)
+- [PDFs, public/private GitHub and grounded-answer boundaries](docs/INTEGRATIONS.md)
 - [Readiness, logs, backup and recovery](docs/OPERATIONS.md)
 - [Engineering decisions and alternatives](docs/ENGINEERING_DECISIONS.md)
 - [Development, migration and verification commands](docs/DEVELOPMENT.md)

@@ -158,8 +158,15 @@ for (const width of [1440, 390]) {
       page.getByRole("button", { name: "Check GitHub authorization" }),
     );
     await expect(
-      page.getByRole("region", { name: "Connections" }),
-    ).toContainText("completed", { timeout: 15000 });
+      page
+        .getByRole("article")
+        .filter({
+          has: page.getByRole("heading", {
+            name: "parallel-example/private",
+            exact: true,
+          }),
+        }),
+    ).toContainText("completed · attempt 1/3", { timeout: 15000 });
     await expect(
       page.getByRole("region", { name: "Connections" }),
     ).toContainText("Read-only selected GitHub App connection");

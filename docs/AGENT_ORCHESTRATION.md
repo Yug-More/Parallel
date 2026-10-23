@@ -106,7 +106,7 @@ The requesting user's logout does not cancel already authorized durable work; me
 
 `GET /runs`, `/runs/{id}`, and `/approvals` are workspace-authorized and bounded. Run detail includes the objective, initiating ID, source snapshot/scope, plan/children, timeline, outcome, error code, attempt chain and approval. Worker exceptions become safe public codes; raw provider/exception payloads are not stored or exposed. Events are append-only through application APIs, not tamper-proof against administrators.
 
-Not implemented: LLM agent execution, external integrations, arbitrary tools, dynamic delegation graphs, distributed queue infrastructure, automatic compensation, durable streaming, or production monitoring. These need separate capability and approval designs.
+Not implemented: unrestricted LLM agent execution, arbitrary tools, dynamic delegation graphs, distributed queue infrastructure, automatic compensation, durable streaming, or production monitoring. These need separate capability and approval designs.
 
 ## Connected research and exact native task plans
 
@@ -137,3 +137,9 @@ stateDiagram-v2
 A Completed planner/coordinator means its computation completed. Pending proposals and Approved proposals have not created tasks; only Executed carries actual task IDs. Created tasks are unfinished work. Any task/decision/context change before execution can fail the entire proposal without partial resources. After execution, another proposal must be computed from the new context.
 
 Document/import changes advance a conservative knowledge epoch. Stale run contexts/outcomes and publication content/messages become unavailable across APIs/search/model context. Native task-plan payloads are also hidden after knowledge change, and execution rejects them. Existing human-authored native text and resource receipts remain. See [Integrations](INTEGRATIONS.md) for the privacy boundary and [Operations](OPERATIONS.md) for health, recovery and scheduling limits.
+
+## GitHub issue triage and optional reasoning
+
+The exact objective `triage github issues` on planner or delivery coordinator selects bounded authorized open imported issues and proposes up to five `Review issue: …` tasks, retaining original URL, source ID and version in the description. Existing active titles are skipped. Issues stay untrusted imported records; no dependency is inferred between separate issues. The owner sees exact To do/unassigned payloads and citations; execution recomputes the same plan and verifies the source/context epoch before atomically creating tasks and one receipt. Public and private imports use the same stored-source boundary. Revocation/expiry hides the derived run and fails stale proposals. The deterministic researcher also retains historical labels and explicit uncertainty.
+
+When separately configured, an explicit Request cited model interpretation action re-retrieves current evidence for a short run objective and saves a cited model answer. It uses the same one-call/20-second/1,600-token/no-tools schema and citation gate as Ask workspace, plus shared model request budget. It does not change the durable run, deterministic plan, approval payload or task status. This is bounded optional reasoning alongside agents, not general model planning or autonomous implementation. Fake-provider tests reject extra action fields and prove no native state change; no live model-quality claim follows.

@@ -1,0 +1,1129 @@
+{
+  "judgments": "developer-created frozen holdout; not independent human judgments",
+  "queries": 40,
+  "cutoff": 5,
+  "methods": {
+    "legacy": {
+      "precision_returned_at_5": 0.6183333333333334,
+      "precision_at_5": 0.165,
+      "recall_at_5": 0.85,
+      "mrr": 0.7708333333333334,
+      "citations_resolved": 76,
+      "cases": [
+        {
+          "name": "session exact",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "copied tokens",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "database sessions",
+          "precision_returned_at_5": 0.3333333333333333,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 3,
+          "expected": 1
+        },
+        {
+          "name": "natural question",
+          "precision_returned_at_5": 0.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 0.0,
+          "rr": 0,
+          "returned": 5,
+          "expected": 1
+        },
+        {
+          "name": "paraphrase gap",
+          "precision_returned_at_5": 0.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 0.0,
+          "rr": 0,
+          "returned": 0,
+          "expected": 1
+        },
+        {
+          "name": "Spanish gap",
+          "precision_returned_at_5": 0.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 0.0,
+          "rr": 0,
+          "returned": 0,
+          "expected": 1
+        },
+        {
+          "name": "rollback exact",
+          "precision_returned_at_5": 0.5,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 2,
+          "expected": 1
+        },
+        {
+          "name": "rollback phrase",
+          "precision_returned_at_5": 0.3333333333333333,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 3,
+          "expected": 1
+        },
+        {
+          "name": "multi source",
+          "precision_returned_at_5": 0.6666666666666666,
+          "precision_at_5": 0.4,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 3,
+          "expected": 2
+        },
+        {
+          "name": "multi project evidence",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.6,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 3,
+          "expected": 3
+        },
+        {
+          "name": "long document middle",
+          "precision_returned_at_5": 0.2,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 5,
+          "expected": 1
+        },
+        {
+          "name": "long document tail",
+          "precision_returned_at_5": 0.5,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 0.5,
+          "returned": 2,
+          "expected": 1
+        },
+        {
+          "name": "current launch choice",
+          "precision_returned_at_5": 0.3333333333333333,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 0.3333333333333333,
+          "returned": 3,
+          "expected": 1
+        },
+        {
+          "name": "old choice default",
+          "precision_returned_at_5": 0.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 0.0,
+          "rr": null,
+          "returned": 3,
+          "expected": 0
+        },
+        {
+          "name": "old choice history",
+          "precision_returned_at_5": 0.2,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 0.5,
+          "returned": 5,
+          "expected": 1
+        },
+        {
+          "name": "decision correction",
+          "precision_returned_at_5": 0.25,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 0.3333333333333333,
+          "returned": 4,
+          "expected": 1
+        },
+        {
+          "name": "conflicting excerpts",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.4,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 2,
+          "expected": 2
+        },
+        {
+          "name": "negative wording",
+          "precision_returned_at_5": 0.5,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 2,
+          "expected": 1
+        },
+        {
+          "name": "positive wording",
+          "precision_returned_at_5": 0.5,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 0.5,
+          "returned": 2,
+          "expected": 1
+        },
+        {
+          "name": "ambiguous release",
+          "precision_returned_at_5": 0.3333333333333333,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 3,
+          "expected": 1
+        },
+        {
+          "name": "imported pull",
+          "precision_returned_at_5": 0.25,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 4,
+          "expected": 1
+        },
+        {
+          "name": "imported issue",
+          "precision_returned_at_5": 0.3333333333333333,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 3,
+          "expected": 1
+        },
+        {
+          "name": "open issue filter",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "closed pull filter",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "document filter",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "native task",
+          "precision_returned_at_5": 0.5,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 0.5,
+          "returned": 2,
+          "expected": 1
+        },
+        {
+          "name": "task filter",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "missing price",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "missing owner",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "missing feature",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "stop words",
+          "precision_returned_at_5": 0.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 0.0,
+          "rr": null,
+          "returned": 5,
+          "expected": 0
+        },
+        {
+          "name": "revoked import",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "archived PDF",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "history archive boundary",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "punctuation",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "case",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "source injection text",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "synonym gap",
+          "precision_returned_at_5": 0.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 0.0,
+          "rr": 0,
+          "returned": 0,
+          "expected": 1
+        },
+        {
+          "name": "decision current status",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "cross document approval",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.4,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 2,
+          "expected": 2
+        }
+      ]
+    },
+    "coverage": {
+      "precision_returned_at_5": 0.7729166666666667,
+      "precision_at_5": 0.17,
+      "recall_at_5": 0.9,
+      "mrr": 0.8177083333333334,
+      "citations_resolved": 49,
+      "cases": [
+        {
+          "name": "session exact",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "copied tokens",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "database sessions",
+          "precision_returned_at_5": 0.5,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 2,
+          "expected": 1
+        },
+        {
+          "name": "natural question",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "paraphrase gap",
+          "precision_returned_at_5": 0.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 0.0,
+          "rr": 0,
+          "returned": 0,
+          "expected": 1
+        },
+        {
+          "name": "Spanish gap",
+          "precision_returned_at_5": 0.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 0.0,
+          "rr": 0,
+          "returned": 0,
+          "expected": 1
+        },
+        {
+          "name": "rollback exact",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "rollback phrase",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "multi source",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.4,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 2,
+          "expected": 2
+        },
+        {
+          "name": "multi project evidence",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.6,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 3,
+          "expected": 3
+        },
+        {
+          "name": "long document middle",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "long document tail",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "current launch choice",
+          "precision_returned_at_5": 0.3333333333333333,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 0.3333333333333333,
+          "returned": 3,
+          "expected": 1
+        },
+        {
+          "name": "old choice default",
+          "precision_returned_at_5": 0.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 0.0,
+          "rr": null,
+          "returned": 2,
+          "expected": 0
+        },
+        {
+          "name": "old choice history",
+          "precision_returned_at_5": 0.25,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 0.5,
+          "returned": 4,
+          "expected": 1
+        },
+        {
+          "name": "decision correction",
+          "precision_returned_at_5": 0.3333333333333333,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 0.3333333333333333,
+          "returned": 3,
+          "expected": 1
+        },
+        {
+          "name": "conflicting excerpts",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.4,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 2,
+          "expected": 2
+        },
+        {
+          "name": "negative wording",
+          "precision_returned_at_5": 0.5,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 2,
+          "expected": 1
+        },
+        {
+          "name": "positive wording",
+          "precision_returned_at_5": 0.5,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 0.5,
+          "returned": 2,
+          "expected": 1
+        },
+        {
+          "name": "ambiguous release",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "imported pull",
+          "precision_returned_at_5": 0.5,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 2,
+          "expected": 1
+        },
+        {
+          "name": "imported issue",
+          "precision_returned_at_5": 0.5,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 2,
+          "expected": 1
+        },
+        {
+          "name": "open issue filter",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "closed pull filter",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "document filter",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "native task",
+          "precision_returned_at_5": 0.5,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 0.5,
+          "returned": 2,
+          "expected": 1
+        },
+        {
+          "name": "task filter",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "missing price",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "missing owner",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "missing feature",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "stop words",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "revoked import",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "archived PDF",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "history archive boundary",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "punctuation",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "case",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "source injection text",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "synonym gap",
+          "precision_returned_at_5": 0.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 0.0,
+          "rr": 0,
+          "returned": 0,
+          "expected": 1
+        },
+        {
+          "name": "decision current status",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "cross document approval",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.4,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 2,
+          "expected": 2
+        }
+      ]
+    },
+    "focused": {
+      "precision_returned_at_5": 0.7729166666666667,
+      "precision_at_5": 0.17,
+      "recall_at_5": 0.9,
+      "mrr": 0.8385416666666666,
+      "citations_resolved": 49,
+      "cases": [
+        {
+          "name": "session exact",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "copied tokens",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "database sessions",
+          "precision_returned_at_5": 0.5,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 2,
+          "expected": 1
+        },
+        {
+          "name": "natural question",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "paraphrase gap",
+          "precision_returned_at_5": 0.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 0.0,
+          "rr": 0,
+          "returned": 0,
+          "expected": 1
+        },
+        {
+          "name": "Spanish gap",
+          "precision_returned_at_5": 0.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 0.0,
+          "rr": 0,
+          "returned": 0,
+          "expected": 1
+        },
+        {
+          "name": "rollback exact",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "rollback phrase",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "multi source",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.4,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 2,
+          "expected": 2
+        },
+        {
+          "name": "multi project evidence",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.6,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 3,
+          "expected": 3
+        },
+        {
+          "name": "long document middle",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "long document tail",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "current launch choice",
+          "precision_returned_at_5": 0.3333333333333333,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 0.3333333333333333,
+          "returned": 3,
+          "expected": 1
+        },
+        {
+          "name": "old choice default",
+          "precision_returned_at_5": 0.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 0.0,
+          "rr": null,
+          "returned": 2,
+          "expected": 0
+        },
+        {
+          "name": "old choice history",
+          "precision_returned_at_5": 0.25,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 0.5,
+          "returned": 4,
+          "expected": 1
+        },
+        {
+          "name": "decision correction",
+          "precision_returned_at_5": 0.3333333333333333,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 3,
+          "expected": 1
+        },
+        {
+          "name": "conflicting excerpts",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.4,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 2,
+          "expected": 2
+        },
+        {
+          "name": "negative wording",
+          "precision_returned_at_5": 0.5,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 2,
+          "expected": 1
+        },
+        {
+          "name": "positive wording",
+          "precision_returned_at_5": 0.5,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 0.5,
+          "returned": 2,
+          "expected": 1
+        },
+        {
+          "name": "ambiguous release",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "imported pull",
+          "precision_returned_at_5": 0.5,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 2,
+          "expected": 1
+        },
+        {
+          "name": "imported issue",
+          "precision_returned_at_5": 0.5,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 2,
+          "expected": 1
+        },
+        {
+          "name": "open issue filter",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "closed pull filter",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "document filter",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "native task",
+          "precision_returned_at_5": 0.5,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 0.5,
+          "returned": 2,
+          "expected": 1
+        },
+        {
+          "name": "task filter",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "missing price",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "missing owner",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "missing feature",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "stop words",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "revoked import",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "archived PDF",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "history archive boundary",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 1.0,
+          "rr": null,
+          "returned": 0,
+          "expected": 0
+        },
+        {
+          "name": "punctuation",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "case",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "source injection text",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "synonym gap",
+          "precision_returned_at_5": 0.0,
+          "precision_at_5": 0.0,
+          "recall_at_5": 0.0,
+          "rr": 0,
+          "returned": 0,
+          "expected": 1
+        },
+        {
+          "name": "decision current status",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.2,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 1,
+          "expected": 1
+        },
+        {
+          "name": "cross document approval",
+          "precision_returned_at_5": 1.0,
+          "precision_at_5": 0.4,
+          "recall_at_5": 1.0,
+          "rr": 1.0,
+          "returned": 2,
+          "expected": 2
+        }
+      ]
+    }
+  },
+  "authorization_denials": 7,
+  "unauthorized_leaks": 0,
+  "unsupported_questions_abstained": 3,
+  "state_checks": {
+    "superseded_default_hidden": true,
+    "archive_hidden": true,
+    "revoked_hidden": true
+  },
+  "focused_vs_coverage": {
+    "improved_mrr_cases": [
+      "decision correction"
+    ],
+    "regressed_mrr_cases": []
+  },
+  "limitations": "Synthetic local dataset; no live private/model calls. Returned precision uses actual returned count; strict precision@5 divides by five, including empty slots. Lexical paraphrase and multilingual misses remain; conflicts are quoted, not resolved."
+}

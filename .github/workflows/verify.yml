@@ -43,6 +43,7 @@ jobs:
       - run: python backend/evaluation/run.py --ranking legacy
       - run: python backend/evaluation/run.py --ranking coverage
       - run: python backend/evaluation/connected.py
+      - run: python backend/evaluation/pilot.py
       - name: Fresh database migration and metadata verification
         working-directory: backend
         env:

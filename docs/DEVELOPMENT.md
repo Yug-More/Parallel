@@ -38,7 +38,7 @@ No provider credentials are required. For optional AI replies install `pip insta
 2. Make a database-native backup and verify it can be restored. For SQLite use Python's sqlite3 backup API while the application is stopped; preserve WAL state through the backup API rather than copying a live main file. Use pg_dump/restore procedures for PostgreSQL.
 3. Test `python migrate.py` against a disposable copy first.
 4. Inspect account/message/activity counts and ownership. Only then run against the intended database.
-5. Run `alembic current` and `alembic check`; expect 0009_worker_health and no new upgrade operations.
+5. Run `alembic current` and `alembic check`; expect 0013_shared_limits and no new upgrade operations.
 
 Revision 0001 adopts known legacy tables or creates an empty schema; it does not stamp a database blindly. Revision 0002 creates one private workspace per original user and assigns that user's message/activity rows there. Credentials, record IDs, existing timestamps and contents are preserved. Missing legacy creation timestamps are filled with the migration time so pagination remains ordered. No other user receives membership. Unknown schemas or orphan ownership stop migration for owner review; never delete records merely to make migration pass.
 
@@ -151,10 +151,18 @@ Run from the repository root after frontend dependency/Chromium installation. Th
 
 ## Phases 4–6 development
 
-The current migration head is `0009_worker_health`. Use the same backup/disposable-copy procedure before upgrading; new tables and nullable/defaulted epoch metadata preserve existing records. Start the existing HTTP/worker/frontend processes. Upload `.txt`/`.md` in Documents, wait for Ready, then use Ask workspace or Intelligence search. New revisions require the current version; Archive makes all passages unavailable. PDF is explicitly unsupported.
+The current migration head is `0013_shared_limits`. Use the same backup/disposable-copy procedure before upgrading; new tables and nullable/defaulted epoch metadata preserve existing records. Start the existing HTTP/worker/frontend processes. Upload `.txt`/`.md` in Documents, wait for Ready, then use Ask workspace or Intelligence search. New revisions require the current version; Archive makes all passages unavailable. PDF is explicitly unsupported.
 
 Enable the public connector only when network reads are intended: set `GITHUB_CONNECTOR_ENABLED=true` for both HTTP and worker, restart, and connect `owner/repository` as a workspace owner. It imports a bounded recent snapshot; private/authenticated repositories are unsupported. See [Integrations](INTEGRATIONS.md) for budgets, cooldown, errors and revocation. Browser connector checks use a test-only synthetic provider fixture; production code has no fixture switch.
 
 In Agents & approvals choose Task planner or Delivery coordinator and enter up to five explicit task titles separated by semicolons/newlines. Research uses lexical objective terms. Inspect Native action proposals, approve the exact payload as current owner and wait for an Executed receipt; new tasks remain To do/unassigned, with sequential prerequisites. Changed context requires a fresh plan. Read-only research/status reports still need no approval until publication is requested.
 
 `/ready`, Overview worker health, request IDs and `backup.py` support diagnosis/recovery. [Operations](OPERATIONS.md) explains tested paths and remaining deployment responsibilities. CI adds `postgres_connected.py` for real PostgreSQL document/search/answer/revocation/delegation/native-receipt and competing-worker checks. It is guarded by APP_ENV=test plus the disposable parallel_test service name.
+
+## Pilot verification and optional configuration
+
+Run `python backend/evaluation/pilot.py` from the root for the frozen 40-query developer holdout; it creates only temporary synthetic storage and calls no providers. Existing baseline/connected commands remain required. PDF extraction needs the pinned pypdf runtime dependency; Linux supplies the strongest memory bound. Private App configuration, encryption-key backup and opt-in local index are described in [Integrations](INTEGRATIONS.md). Keep secrets server-side and keep HTTP/worker configuration identical.
+
+The new browser journey reads `parallel-frontend/tests/fixtures/pilot-notes.pdf`, runs real HTTP/worker/SQLite persistence, and uses an explicit test-only GitHub App transport. It does not prove a live grant. Chromium attachments capture interaction counts, refresh checks, completion, duration and layout; they are automated usability evidence with zero human participants. Existing seven journeys remain. Restore to a new path with `python backend/restore.py --source /private/backup.db --output /private/NEW-copy.db`; do not overwrite live data.
+
+Local Phase 7–9 verification ran **183 backend tests**, retained all original seven Chromium journeys and added two persisted pilot workflows. Ruff, frontend lint/build, all three retrieval evaluations, fresh/repeated migrations and metadata drift checks are part of the delivery verification. Exact remote Python/PostgreSQL/browser results belong to the PR and CI run; these local counts do not by themselves certify a green remote run.

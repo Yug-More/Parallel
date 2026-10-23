@@ -63,3 +63,20 @@ Observed connected-fixture results:
 The local SQLite workload contains 200 unrelated messages, four documents/five revisions, two tasks, two decisions/three revisions and one synthetic imported issue. Ten sequential HTTP requests per query/method produced 160 latency samples each, including TestClient/session/API/SQL overhead: legacy p50 **3.71 ms**, p95 **7.07 ms**; coverage p50 **3.36 ms**, p95 **6.69 ms**. This small single-process sample is not a capacity, concurrency or production-latency claim. Raw measurements and every scenario are in [evaluation-connected.json](evaluation-connected.json).
 
 The connected gate requires no recall/precision regression versus legacy and all lifecycle/access checks passing; both original fixture gates remain. CI uses no model/network calls. Connector fixture tests are distinct from the separately observed live public GitHub read. No model factuality, entailment, independent human judgments, semantic embedding comparison or user-impact improvement was measured.
+
+## Phase 7 holdout: 40 frozen developer-created questions
+
+`python backend/evaluation/pilot.py --output docs/evaluation-pilot.json` creates a disposable migrated SQLite workspace. `pilot_development.json` contains separate smoke prompts; `pilot_holdout.json` freezes 40 relevance sets before the comparison. Labels are **developer-created, not independently human-adjudicated**. Long documents, exact/paraphrased/Spanish queries, multiple sources, superseded choices, conflicting billing excerpts, revoked imports, archived documents, unsupported questions, issue/PR imports and outsider endpoints are included. PDF parsing/page provenance are verified separately by real-parser unit and Chromium journeys; the retrieval fixture documents are Markdown. No paid/network/model calls occur.
+
+At cutoff five, observed legacy / coverage / optional focused results are:
+
+- Macro returned-result precision: **0.618333 / 0.772917 / 0.772917**. Denominator is the number actually returned (up to five); an empty expected/returned set contributes one.
+- Strict precision@5: **0.165 / 0.170 / 0.170**. Denominator is always five, including empty result slots; these sparse relevance sets make it much lower than returned precision. Do not conflate the two measures.
+- Macro recall@5: **0.850 / 0.900 / 0.900**.
+- MRR over queries with nonempty relevance labels: **0.770833 / 0.817708 / 0.838542**.
+
+The focused option adds body phrase weight, a small question-word normalization extension and a current/accepted-record preference. One case, `decision correction`, improves first relevant rank from three to one versus coverage. No MRR case regressed in this run; aggregate precision/recall did not improve. Coverage therefore remains default. Paraphrase and multilingual misses persist; no synonym, semantic-understanding or conflict-resolution claim is supported. Raw per-case gains/misses and source-resolution counts are in [evaluation-pilot.json](evaluation-pilot.json).
+
+Every returned citation was resolved through the same authenticated workspace source API; this checks existence/scope, **not factual entailment**. Seven outsider requests were denied, zero unauthorized retrievals observed, and three unsupported saved-answer questions explicitly abstained. Separate current-state checks assert default superseded decisions, archived passages and revoked imports stay hidden. Regression gates preserve coverage precision/recall versus legacy and focused recall versus coverage, with lifecycle/access failures always fatal. These developer holdout gates are reproducibility checks, not independent quality certification.
+
+The optional character index has lifecycle/provider/failure/fallback tests but no held-out trained-semantic-quality claim. No human usability participants were involved; [pilot browser evidence](PILOT_READINESS.md) reports actual persisted completion and interaction metrics separately from retrieval scores. Original eleven- and sixteen-query baselines remain available and required in CI.
