@@ -1,0 +1,18 @@
+[
+  {
+    "q": "release plan",
+    "purpose": "phrase bonus smoke check"
+  },
+  {
+    "q": "what do we deploy",
+    "purpose": "question word normalization smoke check"
+  },
+  {
+    "q": "backup",
+    "purpose": "field weighting inspection"
+  },
+  {
+    "q": "what is the",
+    "purpose": "stopword abstention"
+  }
+]

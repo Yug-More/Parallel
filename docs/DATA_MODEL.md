@@ -80,4 +80,13 @@ erDiagram
 
 `workspaces.knowledge_epoch` defaults to zero; generated `messages.knowledge_epoch` is nullable so preexisting/human messages retain compatibility. Run contexts bind an epoch in JSON. `worker_heartbeats` stores opaque worker ID, running/stopped state and last seen time; it is operational telemetry rather than workspace content.
 
-The current schema head is `0009_worker_health`. Additive migrations preserve original columns/records, including completed publication receipts and existing sessions. SQLite populated Phase 1B and Phase 3 comparisons, repeated upgrades, FK checks, offline PostgreSQL DDL compilation and CI PostgreSQL execution protect migration compatibility. Destructive downgrades remain disabled.
+The current schema head is `0013_shared_limits`. Additive migrations preserve original columns/records, including completed publication receipts and existing sessions. SQLite populated Phase 1B and Phase 3 comparisons, repeated upgrades, FK checks, offline PostgreSQL DDL compilation and CI PostgreSQL execution protect migration compatibility. Destructive downgrades remain disabled.
+
+## Additive pilot migrations (0010–0013)
+
+- `0010_pdf_pages`: nullable `document_passages.page_number`; existing rows, IDs and original columns remain unchanged.
+- `0011_retrieval_index`: bounded durable `retrieval_indexes` with workspace/creator, epoch/provider/model, state, JSON fingerprint/vector entries, lease and safe error metadata. APIs never return vectors/raw private context.
+- `0012_private_github`: default public auth mode and nullable installation/repository IDs, encrypted credential and expiry/verification timestamps on existing connections; `github_authorizations` records session-bound device exchanges with encrypted pending secrets and terminal states.
+- `0013_shared_limits`: `abuse_counters` with HMAC key, fixed-minute window and count, used by atomic SQLite/PostgreSQL upserts. This table is operational telemetry, not project history.
+
+Populated Phase 6 upgrades compare every original column in every historical table before and after repeated upgrades, including ready passages and public connections. Fresh/repeated migrations, metadata drift and portable PostgreSQL DDL are checked. Existing document passages remain null-page; existing connections become explicitly public without acquiring any credential. Existing sessions and native receipts are preserved. Downgrades remain blocked.

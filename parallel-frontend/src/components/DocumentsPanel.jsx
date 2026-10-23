@@ -18,12 +18,20 @@ export default function DocumentsPanel({
     onAccessLost,
     2000,
   );
+  const index = useWorkspaceQuery(
+    `/workspaces/${workspaceId}/retrieval-index`,
+    workspaceId,
+    onAccessLost,
+    3000,
+  );
   const actions = useProjectAction(workspaceId, onAccessLost);
   async function upload(event) {
     event.preventDefault();
     const result = await actions.act(async () => {
-      if (!file || file.size > 524288 || !/\.(txt|md)$/i.test(file.name))
-        throw new Error("Choose a .txt or .md file up to 512 KiB.");
+      if (!file || file.size > 524288 || !/\.(txt|md|pdf)$/i.test(file.name))
+        throw new Error(
+          "Choose a .txt, .md or extractable-text .pdf file up to 512 KiB.",
+        );
       const bytes = new Uint8Array(await file.arrayBuffer());
       let binary = "";
       for (const byte of bytes) binary += String.fromCharCode(byte);
@@ -48,8 +56,8 @@ export default function DocumentsPanel({
         <div>
           <h2>Workspace documents</h2>
           <p>
-            Local UTF-8 text and Markdown. Searchable after extraction; source
-            text is untrusted evidence.
+            UTF-8 text, Markdown and extractable-text PDFs. Searchable after
+            extraction; source text is untrusted evidence.
           </p>
         </div>
       </div>
@@ -68,17 +76,18 @@ export default function DocumentsPanel({
           />
         </label>
         <label>
-          Text or Markdown file
+          Text, Markdown or PDF file
           <input
             type="file"
             required
-            accept=".txt,.md,text/plain,text/markdown"
+            accept=".txt,.md,.pdf,text/plain,text/markdown,application/pdf"
             onChange={(e) => setFile(e.target.files[0] || null)}
           />
         </label>
         <p>
-          Maximum 512 KiB and 200,000 extracted characters. No PDF support yet.
-          Run the backend worker to process uploads.
+          Maximum 512 KiB, 200,000 extracted characters and 30 PDF pages.
+          Encrypted files and scanned-image PDFs without text are rejected. No
+          OCR. Run the backend worker to process uploads.
         </p>
         <div className="button-row">
           <button disabled={actions.busy}>
@@ -91,6 +100,37 @@ export default function DocumentsPanel({
           )}
         </div>
       </form>
+      {index.data?.enabled && (
+        <article className="surface">
+          <h3>Optional passage index</h3>
+          <p>
+            Local character similarity; not a trained semantic model. Rebuild
+            after source changes. Search falls back to lexical results when
+            unavailable.
+          </p>
+          <button
+            disabled={actions.busy}
+            onClick={async () => {
+              await actions.act(
+                () =>
+                  api(`/workspaces/${workspaceId}/retrieval-index`, {
+                    method: "POST",
+                  }),
+                "Index requested.",
+              );
+              index.reload();
+            }}
+          >
+            Build local passage index
+          </button>
+          {index.data.items.map((item) => (
+            <p key={item.id}>
+              {item.state} · {item.passage_count} passages · {item.model}
+              {item.error_code ? ` · ${item.error_code}` : ""}
+            </p>
+          ))}
+        </article>
+      )}
       {!query.data && !query.error && <p role="status">Loading documents…</p>}
       {query.data?.items.length === 0 && (
         <p>No documents yet. Add project context to make it searchable.</p>

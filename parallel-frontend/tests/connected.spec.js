@@ -33,7 +33,7 @@ for (const width of [1440, 390]) {
     await section("Documents");
     await page.getByLabel("Document title").fill("Release context");
     await page
-      .getByLabel("Text or Markdown file")
+      .getByLabel("Text, Markdown or PDF file")
       .setInputFiles({
         name: "release.md",
         mimeType: "text/markdown",

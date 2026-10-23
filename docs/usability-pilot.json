@@ -1,0 +1,40 @@
+{
+  "method": "Automated browser interaction counts against persisted synthetic HTTP/SQLite/worker state; fixture private provider; not human usability research",
+  "human_participants": 0,
+  "runs": [
+    {
+      "viewport": 1440,
+      "humanParticipants": 0,
+      "interactions": 31,
+      "sectionChanges": 7,
+      "refreshChecks": 3,
+      "navigationErrors": 0,
+      "tasksCompleted": [
+        "PDF upload, durable extraction, indexed passage and page citation",
+        "Private authorization, refresh persistence and imported evidence via fixture transport",
+        "Delegated issue triage, exact owner approval and persisted unfinished native task"
+      ],
+      "unexpectedResponses": [],
+      "expectedAnonymousChecks": 1,
+      "horizontalOverflow": false,
+      "durationMs": 18842
+    },
+    {
+      "viewport": 390,
+      "humanParticipants": 0,
+      "interactions": 31,
+      "sectionChanges": 7,
+      "refreshChecks": 3,
+      "navigationErrors": 0,
+      "tasksCompleted": [
+        "PDF upload, durable extraction, indexed passage and page citation",
+        "Private authorization, refresh persistence and imported evidence via fixture transport",
+        "Delegated issue triage, exact owner approval and persisted unfinished native task"
+      ],
+      "unexpectedResponses": [],
+      "expectedAnonymousChecks": 1,
+      "horizontalOverflow": false,
+      "durationMs": 19016
+    }
+  ]
+}

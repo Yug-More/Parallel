@@ -27,3 +27,7 @@ Before expanding capability, gather representative relevance judgments and usabi
 Overview joins live task/blocker and decision counts, current pending approvals, connected knowledge, recent changes/runs, next actions and worker polling health. Documents and revocable public repository imports feed source previews, search, saved excerpts and context research. A delivery coordinator combines research with a deterministic plan of explicit user steps. Owners review the exact native task graph; an execution receipt proves task creation, not completion of the work.
 
 Core workflows need no paid keys. PDF/OCR, private GitHub authentication, semantic embeddings, general model planning and production hosting remain outside the implemented scope. [Integrations](INTEGRATIONS.md) and [Evaluation](EVALUATION.md) define the actual boundaries and observed evidence.
+
+## Current pilot foundation
+
+Project continuity now includes extractable PDF page provenance, selected private GitHub App authorization, bounded optional local character indexing, source conflict/history warnings and evidence-linked issue triage through existing local agents. Every native change still needs exact owner approval and an execution receipt. [Pilot readiness](PILOT_READINESS.md) distinguishes fixture-tested private/model flows and automated browser evidence from live authorization, human usability or production operations. Trained semantics, OCR, general model planning and external writes remain future work.

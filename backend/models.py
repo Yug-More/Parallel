@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (
     JSON,
+    BigInteger,
     Boolean,
     CheckConstraint,
     Column,
@@ -437,6 +438,7 @@ class DocumentPassage(Base):
     ordinal = Column(Integer, nullable=False)
     title = Column(String(200), nullable=False)
     body = Column(Text, nullable=False)
+    page_number = Column(Integer)
     created_at = Column(DateTime, nullable=False, default=utc_now)
     __table_args__ = (
         ForeignKeyConstraint(
@@ -455,6 +457,12 @@ class RepositoryConnection(Base):
     workspace_id = Column(String, ForeignKey("workspaces.id"), nullable=False)
     creator_id = Column(String, ForeignKey("users.id"), nullable=False)
     repository = Column(String(200), nullable=False)
+    auth_mode = Column(String(32), nullable=False, server_default="public_unauthenticated")
+    installation_id = Column(BigInteger)
+    repository_id = Column(BigInteger)
+    credential = Column(Text)
+    credential_expires_at = Column(DateTime)
+    access_verified_until = Column(DateTime)
     active = Column(Boolean, nullable=False, server_default=false())
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime, nullable=False, default=utc_now)
@@ -583,3 +591,55 @@ class WorkerHeartbeat(Base):
     state = Column(String(16), nullable=False)
     last_seen_at = Column(DateTime, nullable=False, default=utc_now)
     __table_args__ = (CheckConstraint("state IN ('running','stopped')", name="ck_worker_state"),)
+
+
+class RetrievalIndex(Base):
+    __tablename__ = "retrieval_indexes"
+    id = Column(String, primary_key=True)
+    workspace_id = Column(String, ForeignKey("workspaces.id"), nullable=False)
+    creator_id = Column(String, ForeignKey("users.id"), nullable=False)
+    epoch = Column(Integer, nullable=False)
+    provider = Column(String(100), nullable=False)
+    model = Column(String(200), nullable=False)
+    state = Column(String(16), nullable=False)
+    entries = Column(JSON, nullable=False, default=list)
+    error_code = Column(String(64))
+    lease_token = Column(String)
+    lease_until = Column(DateTime)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    completed_at = Column(DateTime)
+    __table_args__ = (
+        CheckConstraint(
+            "state IN ('queued','running','ready','failed','cancelled')",
+            name="ck_retrieval_index_state",
+        ),
+        Index("ix_retrieval_index_queue", "workspace_id", "state", "created_at"),
+    )
+
+
+class GitHubAuthorization(Base):
+    __tablename__ = "github_authorizations"
+    id = Column(String, primary_key=True)
+    workspace_id = Column(String, ForeignKey("workspaces.id"), nullable=False)
+    creator_id = Column(String, ForeignKey("users.id"), nullable=False)
+    repository = Column(String(200), nullable=False)
+    installation_id = Column(BigInteger, nullable=False)
+    device_secret = Column(Text)
+    state = Column(String(16), nullable=False)
+    interval = Column(Integer, nullable=False)
+    next_poll_at = Column(DateTime, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    error_code = Column(String(64))
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    __table_args__ = (
+        CheckConstraint(
+            "state IN ('pending','completed','failed','expired')", name="ck_github_auth_state"
+        ),
+    )
+
+
+class AbuseCounter(Base):
+    __tablename__ = "abuse_counters"
+    key = Column(String(64), primary_key=True)
+    window = Column(BigInteger, nullable=False)
+    count = Column(Integer, nullable=False)

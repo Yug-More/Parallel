@@ -1,0 +1,391 @@
+[
+  {
+    "name": "session exact",
+    "q": "revocable sessions",
+    "relevant": [
+      "auth"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "copied tokens",
+    "q": "copied tokens logout",
+    "relevant": [
+      "auth"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "database sessions",
+    "q": "server session database",
+    "relevant": [
+      "auth"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "natural question",
+    "q": "how do we revoke copied tokens",
+    "relevant": [
+      "auth"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "paraphrase gap",
+    "q": "invalidate stolen credentials",
+    "relevant": [
+      "auth"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "Spanish gap",
+    "q": "cerrar sesiones robadas",
+    "relevant": [
+      "auth"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "rollback exact",
+    "q": "deployment rollback",
+    "relevant": [
+      "rollback"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "rollback phrase",
+    "q": "backup verification owner approval",
+    "relevant": [
+      "rollback"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "multi source",
+    "q": "session database",
+    "relevant": [
+      "auth",
+      "issue"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "multi project evidence",
+    "q": "release",
+    "relevant": [
+      "launch",
+      "issue",
+      "pull"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "long document middle",
+    "q": "incident runbook recovery",
+    "relevant": [
+      "long"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "long document tail",
+    "q": "canary rollback checklist",
+    "relevant": [
+      "long"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "current launch choice",
+    "q": "launch gate",
+    "relevant": [
+      "launch"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "old choice default",
+    "q": "obsolete stateless policy",
+    "relevant": [],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "old choice history",
+    "q": "obsolete stateless policy",
+    "relevant": [
+      "old"
+    ],
+    "history": true,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "decision correction",
+    "q": "launch gate telemetry",
+    "relevant": [
+      "launch"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "conflicting excerpts",
+    "q": "billing payments",
+    "relevant": [
+      "billing_yes",
+      "billing_no"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "negative wording",
+    "q": "billing payments disabled",
+    "relevant": [
+      "billing_no"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "positive wording",
+    "q": "billing payments enabled",
+    "relevant": [
+      "billing_yes"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "ambiguous release",
+    "q": "release blocker",
+    "relevant": [
+      "issue"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "imported pull",
+    "q": "telemetry release validation",
+    "relevant": [
+      "pull"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "imported issue",
+    "q": "session database failure",
+    "relevant": [
+      "issue"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "open issue filter",
+    "q": "session database",
+    "relevant": [
+      "issue"
+    ],
+    "history": false,
+    "kind": "external",
+    "status": "open"
+  },
+  {
+    "name": "closed pull filter",
+    "q": "telemetry",
+    "relevant": [
+      "pull"
+    ],
+    "history": false,
+    "kind": "external",
+    "status": "closed"
+  },
+  {
+    "name": "document filter",
+    "q": "revocable",
+    "relevant": [
+      "auth"
+    ],
+    "history": false,
+    "kind": "document",
+    "status": null
+  },
+  {
+    "name": "native task",
+    "q": "restore drill",
+    "relevant": [
+      "task"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "task filter",
+    "q": "restore",
+    "relevant": [
+      "task"
+    ],
+    "history": false,
+    "kind": "task",
+    "status": null
+  },
+  {
+    "name": "missing price",
+    "q": "quantum pricing forecast",
+    "relevant": [],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "missing owner",
+    "q": "who owns zephyr",
+    "relevant": [],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "missing feature",
+    "q": "kubernetes autoscaler setting",
+    "relevant": [],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "stop words",
+    "q": "what is the",
+    "relevant": [],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "revoked import",
+    "q": "removed webhook secret",
+    "relevant": [],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "archived PDF",
+    "q": "retired audit blueprint",
+    "relevant": [],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "history archive boundary",
+    "q": "retired audit blueprint",
+    "relevant": [],
+    "history": true,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "punctuation",
+    "q": "revocable-sessions",
+    "relevant": [
+      "auth"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "case",
+    "q": "REVOCABLE SESSIONS",
+    "relevant": [
+      "auth"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "source injection text",
+    "q": "ignore previous instructions",
+    "relevant": [
+      "injection"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "synonym gap",
+    "q": "contingency reversal procedure",
+    "relevant": [
+      "rollback"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  },
+  {
+    "name": "decision current status",
+    "q": "launch gate",
+    "relevant": [
+      "launch"
+    ],
+    "history": false,
+    "kind": "decision",
+    "status": "accepted"
+  },
+  {
+    "name": "cross document approval",
+    "q": "owner approval",
+    "relevant": [
+      "rollback",
+      "launch"
+    ],
+    "history": false,
+    "kind": null,
+    "status": null
+  }
+]

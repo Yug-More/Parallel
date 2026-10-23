@@ -34,7 +34,7 @@ Rejected alternatives: silently editing accepted records; treating every convers
 
 ## ADR 006 — Bounded stored sources before a vector service
 
-**Accepted.** Text/Markdown extraction and public GitHub imports use SQL tables and the existing worker. Stable passages and explicit source kinds preserve provenance; archive/revocation gates live joins. Coverage-based lexical retrieval improves measured fixture precision without introducing embeddings, model downloads or another index lifecycle. PDF/private authentication remain separate follow-ups.
+**Accepted.** Text/Markdown extraction and public GitHub imports use SQL tables and the existing worker. Stable passages and explicit source kinds preserve provenance; archive/revocation gates live joins. Coverage-based lexical retrieval improves measured fixture precision without introducing embeddings, model downloads or another index lifecycle. PDF/private authentication were separate follow-ups at that checkpoint; ADRs below record current support.
 
 ## ADR 007 — Conservative invalidation for derived knowledge
 
@@ -43,3 +43,23 @@ Rejected alternatives: silently editing accepted records; treating every convers
 ## ADR 008 — Small exact native action surface
 
 **Accepted.** A deterministic planner preserves explicit user steps, with at most five To do/unassigned tasks and sequential prerequisites. A separate proposal record protects the legacy publication action constraint. Owner review binds exact payload/hash/context, and task creation plus receipt is atomic. General coding tools, unconstrained model actions and external writes were rejected for this cycle because their execution and independent outcome verification require a broader authorization design.
+
+## ADR 009 — Resource-bounded PDF subprocess
+
+**Accepted.** Reuse the document lease/revision/archive boundary, with pinned pypdf parsing only stdin bytes in a separate isolated interpreter. Bound file/pages/text/CPU/time, add Linux memory limits and nullable page provenance. Do not claim OCR or a complete OS sandbox. Avoid running an untrusted parser in the HTTP/worker interpreter.
+
+## ADR 010 — Selected GitHub App user grants
+
+**Accepted.** Choose fine-grained App user authorization/device flow over broad OAuth-app repo scope. Require selected installations with metadata/issues/pulls read only; map verified repository IDs to owner-authorized workspaces. Store expiring grants under a separate Fernet key, renew explicitly and persist rotation before further I/O. Poll bounded snapshots with incremental upserts; ten-minute freshness fails closed. Webhooks, live authorization and cursor-based deltas remain future verification/work.
+
+## ADR 011 — Honest optional similarity and measured ranking
+
+**Accepted.** SQL durable index jobs expose a replaceable provider interface without another database or silent model calls. The shipped adapter is deterministic character similarity, not trained semantics. Revalidate epoch/fingerprints and fall back to lexical filtering. A frozen 40-query developer holdout measured one current-decision ranking improvement (MRR 0.818 to 0.839), unchanged precision/recall and remaining vocabulary misses. Coverage stays default. Independent human evaluation is still required.
+
+## ADR 012 — Exact issue triage, separate optional interpretation
+
+**Accepted.** Improve existing planner/research/delivery contracts rather than add personas. The explicit triage objective proposes up to five internal issue-review tasks with source IDs/URLs/versions; independent issues receive no inferred dependencies. Existing exact approval/recompute/receipt logic remains authoritative. Optional model interpretation saves a cited answer and cannot edit plans or grant capabilities.
+
+## ADR 013 — Shared counters and new-path recovery
+
+**Accepted.** Atomic SQL upserts share fixed-minute HMAC counters across processes without raw IP storage. Bound model requests in addition to workspace quotas; this is not an organization spend cap. Rotate worker queues locally and provide an operator supervision template. Restore backups only to exclusively new private paths, migrate the copy and check integrity/FKs; never reset live data. PostgreSQL production recovery, ingress controls and account recovery remain deployment gates.

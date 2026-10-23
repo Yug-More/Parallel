@@ -134,6 +134,14 @@ def require_member(db, user_id, workspace_id, owner=False):
         raise HTTPException(404, "Workspace not found")
     if owner and membership.role != "owner":
         raise HTTPException(403, "Workspace owner required")
+    from github_app import expire_workspace
+
+    expire_workspace(db, workspace_id)
+    membership = db.get(Membership, (workspace_id, user_id), populate_existing=True)
+    if membership is None:
+        raise HTTPException(404, "Workspace not found")
+    if owner and membership.role != "owner":
+        raise HTTPException(403, "Workspace owner required")
     return membership
 
 

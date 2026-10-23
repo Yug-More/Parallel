@@ -126,10 +126,11 @@ def agent_reply(
     if source is None:
         raise HTTPException(404, "Source message not found")
     knowledge_epoch = db.get(Workspace, workspace_id).knowledge_epoch
+    context = recent_context(db, workspace_id)
+    db.rollback()
+    request.app.state.auth_limiter.check("provider-global-budget", limit=30)
     try:
-        answer = providers.generate_reply(
-            request.app.state.settings, recent_context(db, workspace_id)
-        )
+        answer = providers.generate_reply(request.app.state.settings, context)
     except providers.ProviderUnavailable:
         raise HTTPException(503, "AI is not configured. Your message is saved.") from None
     except providers.ProviderFailure:

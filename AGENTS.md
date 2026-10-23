@@ -2,7 +2,7 @@
 
 ## Product and architecture
 - Build a persistent collaborative project workspace for humans and AI agents.
-- Project Continuity Intelligence means source-linked decisions, useful project context, safe handoffs, and verifiable outcomes across sessions. The implemented baseline is source-linked decisions, lexical retrieval/continuity and deterministic local agents; semantic memory and external execution remain roadmap work.
+- Project Continuity Intelligence means source-linked decisions, useful project context, safe handoffs, and verifiable outcomes across sessions. The implemented baseline is source-linked decisions, lexical retrieval/continuity and deterministic local agents; optional local character similarity is not a trained semantic model; external execution remains roadmap work.
 - Evolve React/Vite and FastAPI/SQLAlchemy as a modular monolith. Preserve useful existing work; avoid unnecessary frameworks and rewrites.
 - Keep configuration, authentication, workspace authorization, persistence, providers, and external execution separate.
 - Runtime code is in backend/*.py and backend/api; backend/legacy contains non-executable historical references. Do not reactivate it without a security review.
@@ -44,16 +44,21 @@
 ## Intelligence and execution invariants
 - Decision corrections require a reason and current version. Preserve revision/source snapshots; supersession only links distinct current accepted decisions in the same workspace.
 - Resolve every source by immutable kind/ID inside the authorized workspace. Raw messages, structured choices, derived reports and interpretations are distinct; never promote model text into truth automatically.
-- Describe retrieval as deterministic lexical search. Run backend/evaluation/run.py and report actual fixture metrics and vocabulary/ambiguity limits before changing ranking.
-- Local agent contracts cannot execute shell, tools, models or external writes. Preserve lease tokens, bounded scope, explicit attempts, cancellation and failure records; queue insertion is never completion.
+- Describe default retrieval as deterministic lexical search; label the optional local index as character similarity, never trained semantic understanding. Run backend/evaluation/run.py and report actual fixture metrics and vocabulary/ambiguity limits before changing ranking.
+- Local agent contracts cannot execute shell, tools, models or external writes. Optional explicit run reasoning is a separate cited-answer API and never controls native actions. Preserve lease tokens, bounded scope, explicit attempts, cancellation and failure records; queue insertion is never completion.
 - Recheck initiating membership, task dependencies and context before committing worker results. Bind publication approval to exact action/payload/hash, current owner, expiry and atomic message receipt.
 - Worker and HTTP processes share a migrated database. Test interrupted leases, competing workers, approval replay/tampering, changed context and populated Phase 1B upgrades.
 - Keep docs screenshots captured from actual synthetic browser workflows. Diagrams must match implemented modules and states; do not present local computation as autonomous software execution.
 
 ## Connected knowledge and native actions
-- Keep public GitHub reads opt-in, owner-authorized, fixed-host, GET-only and bounded. Never reuse CLI/account credentials or add a private/token fallback. Recheck connection version/current ownership before committing syncs.
+- Keep public GitHub reads opt-in, owner-authorized, fixed-host, GET-only and bounded. Private access uses only the explicit configured GitHub App device flow, selected repositories, encrypted expiring user grants and read-only permissions. Never reuse CLI credentials or accept pasted browser tokens. Revalidate installation/repository IDs, creator ownership, grant freshness and connection version; persist refresh rotation before later network reads. Repository writes remain unavailable.
 - Document filenames are metadata only; cap uploads/extracted text and use durable leases. Preserve revision uploader/filename/title and stable passage IDs. Archive/revocation denies current and historical retrieval; discard late results and terminal raw uploads.
 - Advance knowledge epochs on revocable source changes. Hide stale derived run/context/publication/message text across APIs, search, model context and decision-source previews. Revalidate answer evidence/fingerprints on every read. Human-authored native text cannot be automatically erased.
 - Optional grounded model answers require a separate opt-in and explicit request. Bound evidence/tokens/time/calls, forbid tools, validate allowlisted citations, recheck authority after latency and sanitize failures. Citation validity is not semantic correctness; never present fake-adapter tests as live model evidence.
 - Native proposals accept only code-defined exact task plans. Owner approval binds the payload/hash, context and expiry; recompute before execution and atomically commit To do tasks/prerequisites plus one receipt. Never infer Done or external work from reports or approvals.
-- Run both lexical rankings and backend/evaluation/connected.py before ranking changes. Disclose author-curated versus independent judgments and stated latency workloads. Keep production, PDF/private-auth/semantic/model-quality gaps explicit.
+- Run both lexical rankings and backend/evaluation/connected.py before ranking changes. Disclose author-curated versus independent judgments and stated latency workloads. Keep production, OCR/live-private-auth/trained-semantic/model-quality gaps explicit.
+
+## Pilot ingestion and operational boundaries
+- Parse untrusted PDFs only in the isolated subprocess: signature, 512 KiB, 30 pages, 200k characters, 8-second wall deadline and 4-second CPU limit; Linux adds 512 MiB address-space bounds. No OCR, scripts, attachments or remote content. Preserve nullable page provenance for old passages.
+- Optional retrieval indexes bind provider/model, epoch and source fingerprints, with bounded jobs and lexical fallback. Never bypass filters or treat similarity scores as confidence. Keep development and frozen developer-created holdout labels separate.
+- Shared authentication/model quotas use atomic database counters and HMAC keys; never log raw credentials/IPs. Restore only to an exclusive new path; preserve live data and backups. Worker supervision templates require operator installation and are not a production-readiness claim.

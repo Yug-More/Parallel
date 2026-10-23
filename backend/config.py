@@ -17,12 +17,38 @@ class Settings:
     secret_key: str
     environment: str = "development"
     allowed_origins: tuple[str, ...] = ("http://localhost:5174", "http://127.0.0.1:5174")
+    github_app_enabled: bool = False
+    github_app_client_id: str | None = None
+    github_app_client_secret: str | None = None
+    github_app_id: int | None = None
+    credential_encryption_key: str | None = None
+    local_index_enabled: bool = False
     grounded_model_enabled: bool = False
     github_connector_enabled: bool = False
     openai_api_key: str | None = None
     openai_model: str = "gpt-4.1-mini"
 
     def __post_init__(self):
+        if self.github_app_enabled:
+            if not all(
+                (
+                    self.github_connector_enabled,
+                    self.github_app_client_id,
+                    self.github_app_client_secret,
+                    self.github_app_id,
+                    self.credential_encryption_key,
+                )
+            ):
+                raise ValueError(
+                    "GitHub App requires connector opt-in, app/client IDs, client secret and separate encryption key"
+                )
+            from cryptography.fernet import Fernet
+
+            try:
+                Fernet(self.credential_encryption_key.encode())
+            except Exception:
+                raise ValueError("CREDENTIAL_ENCRYPTION_KEY must be a Fernet key") from None
+
         if (
             not self.openai_model
             or len(self.openai_model) > 200
@@ -66,6 +92,12 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
             ).split(",")
             if origin.strip()
         ),
+        github_app_enabled=environ.get("GITHUB_APP_ENABLED", "false").lower() == "true",
+        github_app_client_id=environ.get("GITHUB_APP_CLIENT_ID") or None,
+        github_app_client_secret=environ.get("GITHUB_APP_CLIENT_SECRET") or None,
+        github_app_id=int(environ["GITHUB_APP_ID"]) if environ.get("GITHUB_APP_ID") else None,
+        credential_encryption_key=environ.get("CREDENTIAL_ENCRYPTION_KEY") or None,
+        local_index_enabled=environ.get("LOCAL_INDEX_ENABLED", "false").lower() == "true",
         grounded_model_enabled=environ.get("GROUNDED_MODEL_ENABLED", "false").lower() == "true",
         github_connector_enabled=environ.get("GITHUB_CONNECTOR_ENABLED", "false").lower() == "true",
         openai_api_key=environ.get("OPENAI_API_KEY") or None,

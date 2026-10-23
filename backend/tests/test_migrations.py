@@ -521,6 +521,10 @@ def test_populated_phase3_upgrade_preserves_records_and_receipts(tmp_path):
         "0007_answers.py",
         "0008_actions.py",
         "0009_worker_health.py",
+        "0010_pdf_pages.py",
+        "0011_retrieval_index.py",
+        "0012_private_github.py",
+        "0013_shared_limits.py",
     ],
 )
 def test_connected_migrations_compile_portable_postgres_ddl(filename):
@@ -542,4 +546,107 @@ def test_connected_migrations_compile_portable_postgres_ddl(filename):
     with Operations.context(context):
         migration.upgrade()
     assert "BOOLEAN DEFAULT 0" not in sql.getvalue()
-    assert "CREATE TABLE" in sql.getvalue()
+    assert "CREATE TABLE" in sql.getvalue() or "ALTER TABLE" in sql.getvalue()
+
+
+def test_phase6_populated_connected_upgrade_preserves_original_fields(tmp_path):
+    from datetime import datetime
+
+    from sqlalchemy import MetaData, select
+
+    url = f"sqlite:///{tmp_path / 'connected-upgrade.db'}"
+    upgrade_database(url, "0009_worker_health")
+    engine = create_db_engine(url)
+    metadata = MetaData()
+    metadata.reflect(engine)
+    now = datetime(2026, 10, 23)
+    with engine.begin() as db:
+        db.execute(
+            metadata.tables["users"].insert(),
+            {"id": "owner", "email": "owner@example.test", "name": "Owner"},
+        )
+        db.execute(
+            metadata.tables["workspaces"].insert(),
+            {
+                "id": "w",
+                "owner_id": "owner",
+                "name": "Preserved",
+                "created_at": now,
+                "revision": 1,
+                "knowledge_epoch": 7,
+            },
+        )
+        db.execute(
+            metadata.tables["documents"].insert(),
+            {
+                "id": "d",
+                "workspace_id": "w",
+                "creator_id": "owner",
+                "filename": "old.md",
+                "title": "Original",
+                "version": 1,
+                "archived": False,
+                "created_at": now,
+                "updated_at": now,
+            },
+        )
+        db.execute(
+            metadata.tables["document_revisions"].insert(),
+            {
+                "id": "r",
+                "workspace_id": "w",
+                "document_id": "d",
+                "creator_id": "owner",
+                "filename": "old.md",
+                "title": "Original",
+                "version": 1,
+                "content_hash": "a" * 64,
+                "state": "ready",
+                "created_at": now,
+            },
+        )
+        db.execute(
+            metadata.tables["document_passages"].insert(),
+            {
+                "id": "p",
+                "workspace_id": "w",
+                "revision_id": "r",
+                "ordinal": 0,
+                "title": "Original",
+                "body": "Keep original passage and stable ID",
+                "created_at": now,
+            },
+        )
+        db.execute(
+            metadata.tables["repository_connections"].insert(),
+            {
+                "id": "c",
+                "workspace_id": "w",
+                "creator_id": "owner",
+                "repository": "example/repo",
+                "active": True,
+                "version": 1,
+                "created_at": now,
+            },
+        )
+
+    def snapshot():
+        with engine.connect() as db:
+            return {
+                name: db.execute(select(table).order_by(*table.primary_key.columns)).all()
+                for name, table in metadata.tables.items()
+                if name != "alembic_version"
+            }
+
+    before = snapshot()
+    upgrade_database(url)
+    upgrade_database(url)
+    assert snapshot() == before
+    with engine.connect() as db:
+        assert db.execute(text("SELECT page_number FROM document_passages")).scalar() is None
+        assert (
+            db.execute(text("SELECT auth_mode FROM repository_connections")).scalar()
+            == "public_unauthenticated"
+        )
+        assert db.execute(text("PRAGMA foreign_key_check")).all() == []
+    engine.dispose()

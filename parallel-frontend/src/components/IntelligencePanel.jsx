@@ -15,6 +15,7 @@ export default function IntelligencePanel({
   const [kind, setKind] = useState("");
   const [historical, setHistorical] = useState(false);
   const [archived, setArchived] = useState(false);
+  const [ranking, setRanking] = useState("coverage");
   const [searchParams, setSearchParams] = useState("");
   const [offset, setOffset] = useState(0);
   const [since, setSince] = useState("");
@@ -279,6 +280,7 @@ export default function IntelligencePanel({
               e.preventDefault();
               const p = new URLSearchParams({
                 q: query,
+                ranking,
                 include_historical: historical,
                 include_archived: archived,
               });
@@ -296,6 +298,21 @@ export default function IntelligencePanel({
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="authentication, milestone, handoff…"
               />
+            </label>
+            <label>
+              Retrieval method
+              <select
+                value={ranking}
+                onChange={(e) => setRanking(e.target.value)}
+              >
+                <option value="coverage">Lexical coverage · default</option>
+                <option value="focused">
+                  Lexical phrases and current decisions
+                </option>
+                <option value="hybrid">
+                  Optional local similarity + lexical fallback
+                </option>
+              </select>
             </label>
             <label>
               Record type

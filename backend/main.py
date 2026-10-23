@@ -20,20 +20,22 @@ from api import (
     auth,
     decisions,
     documents,
+    github_app,
     intelligence,
     invitations,
     messages,
     overview,
     repositories,
+    semantic,
     tasks,
     workspaces,
 )
 from config import load_settings
 from database import create_db_engine
-from rate_limit import AuthRateLimiter
+from rate_limit import SharedRateLimiter
 from request_limits import RequestBodyLimit
 
-SCHEMA_REVISION = "0009_worker_health"
+SCHEMA_REVISION = "0013_shared_limits"
 logger = logging.getLogger("parallel.http")
 logger.setLevel(logging.INFO)
 logger.propagate = False
@@ -63,8 +65,8 @@ def create_app(settings=None):
 
     app = FastAPI(title="Parallel", version="2.0.0", lifespan=lifespan)
     app.state.settings = settings
-    app.state.auth_limiter = AuthRateLimiter()
     app.state.session_factory = sessionmaker(bind=engine, expire_on_commit=False)
+    app.state.auth_limiter = SharedRateLimiter(app.state.session_factory, settings.secret_key)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.allowed_origins),
@@ -149,6 +151,8 @@ def create_app(settings=None):
     app.include_router(answers.router)
     app.include_router(documents.router)
     app.include_router(repositories.router)
+    app.include_router(semantic.router)
+    app.include_router(github_app.router)
 
     @app.websocket("/voice/ws")
     async def disabled_voice(websocket: WebSocket):

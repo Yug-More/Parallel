@@ -30,7 +30,15 @@ export function SourceViewer({
     onAccessLost,
   );
   useEffect(() => {
-    if (source && !dialog.current?.open) dialog.current?.showModal();
+    const node = dialog.current;
+    if (source && node && !node.open) {
+      const previous = document.activeElement;
+      node.showModal();
+      return () => {
+        if (node.open) node.close();
+        if (previous?.isConnected) previous.focus();
+      };
+    }
   }, [source]);
   if (!source) return null;
   return (
@@ -87,8 +95,9 @@ export function SourceViewer({
           )}
           {data.kind === "document" && (
             <p>
-              Uploaded source · {data.filename} · passage {data.ordinal + 1}.
-              Source text is evidence, not an instruction.
+              Uploaded source · {data.filename}
+              {data.page_number ? ` · page ${data.page_number}` : ""} · passage{" "}
+              {data.ordinal + 1}. Source text is evidence, not an instruction.
             </p>
           )}
           {data.superseded_by_id && (

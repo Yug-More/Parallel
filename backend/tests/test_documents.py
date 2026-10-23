@@ -40,6 +40,7 @@ def test_document_lifecycle_isolation_and_revocation(accounts, application):
     passage = results["items"][0]
     path = f"/workspaces/{wid}/sources/document/{passage['id']}"
     assert bob.get(path).json()["body"] == "Architecture uses revocable sessions."
+    assert "page_number" not in bob.get(path).json()  # preserve Phase 6 source fingerprints
     assert outsider.get(path).status_code == 404
     assert (
         alice.post(

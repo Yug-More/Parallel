@@ -55,9 +55,9 @@ def retrieve(
     ranking="coverage",
 ):
     terms = list(dict.fromkeys(re.findall(r"\w+", q.lower())))[:12]
-    if ranking not in {"legacy", "coverage"}:
+    if ranking not in {"legacy", "coverage", "focused"}:
         raise ValueError("unsupported_ranking")
-    if ranking == "coverage":
+    if ranking in {"coverage", "focused"}:
         stopwords = {
             "a",
             "an",
@@ -78,6 +78,8 @@ def retrieve(
             "and",
             "with",
         }
+        if ranking == "focused":
+            stopwords.update({"do", "does", "we", "our", "please", "tell", "me"})
         terms = [term for term in terms if term not in stopwords]
         # Stopword-only questions abstain rather than treating an empty query as all records.
         if q.strip() and not terms:
@@ -257,8 +259,17 @@ def retrieve(
                 (func.lower(title).like(pattern(q.lower()), escape="\\"), 4), else_=0
             )
             conditions.append(
-                coverage >= math.ceil(len(terms) * 0.6) if ranking == "coverage" else or_(*matches)
+                coverage >= math.ceil(len(terms) * 0.6)
+                if ranking in {"coverage", "focused"}
+                else or_(*matches)
             )
+        if ranking == "focused" and terms:
+            phrase = " ".join(terms)
+            score = score + case((func.lower(body).like(pattern(phrase), escape="\\"), 2), else_=0)
+            if name == "decision":
+                score = score + case((Decision.status == "accepted", 2), else_=0)
+            if name == "document":
+                score = score + case((DocumentRevision.version == Document.version, 1), else_=0)
         branches.append(stmt.add_columns(score.label("score")).where(*conditions))
     combined = union_all(*branches).subquery()
     total = db.execute(select(func.count()).select_from(combined)).scalar()
@@ -283,7 +294,9 @@ def retrieve(
         "total": total,
         "limit": limit,
         "offset": offset,
-        "method": "deterministic_lexical_v2"
+        "method": "deterministic_lexical_v3"
+        if ranking == "focused"
+        else "deterministic_lexical_v2"
         if ranking == "coverage"
         else "deterministic_lexical_v1",
         "evidence": "matching_sources" if total else "no_matching_evidence",

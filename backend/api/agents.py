@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import Field
 
 from collaboration import lock_workspace, record_activity
@@ -310,3 +310,25 @@ def respond(
     record_activity(db, workspace_id, user, f"{item.state.title()} publication: {run.objective}")
     db.commit()
     return approval_out(item, db)
+
+
+@router.post("/workspaces/{workspace_id}/runs/{run_id}/reasoning", status_code=201)
+def reasoning(
+    workspace_id: str, run_id: str, payload: RetryInput, user: CurrentUser, db: DB, request: Request
+):
+    """Explicit optional cited interpretation; never changes a run/proposal/action."""
+    from api.answers import Question, answer
+
+    require_member(db, user.id, workspace_id)
+    run = db.query(AgentRun).filter_by(id=run_id, workspace_id=workspace_id).first()
+    if not run or not visible(db, run):
+        raise HTTPException(404, "Run evidence unavailable")
+    if not 3 <= len(run.objective) <= 200:
+        raise HTTPException(422, "Use Ask workspace for a shorter evidence question")
+    return answer(
+        workspace_id,
+        Question(question=run.objective, mode="model", idempotency_key=payload.idempotency_key),
+        user,
+        db,
+        request,
+    )

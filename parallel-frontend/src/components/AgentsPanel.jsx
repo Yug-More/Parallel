@@ -10,6 +10,7 @@ export default function AgentsPanel({
   user,
   workspace,
   onAccessLost,
+  onNavigate,
 }) {
   const base = `/workspaces/${workspaceId}`;
   const [contract, setContract] = useState("local.handoff.v1");
@@ -55,6 +56,12 @@ export default function AgentsPanel({
     onAccessLost,
     1500,
   );
+  const modelConfig = useWorkspaceQuery(
+    selected ? `${base}/answers` : null,
+    workspaceId,
+    onAccessLost,
+  );
+  const reasoningKeys = useRef({});
   const run = detail.data;
   function refresh() {
     listing.reload();
@@ -450,6 +457,37 @@ export default function AgentsPanel({
                   </small>
                 </details>
               )}
+              {modelConfig.data?.model_enabled &&
+                !run.evidence_unavailable &&
+                run.objective.length >= 3 &&
+                run.objective.length <= 200 && (
+                  <div>
+                    <p>
+                      Optional paid model interpretation retrieves current
+                      evidence for this objective. It cannot change the run or
+                      its approved plan.
+                    </p>
+                    <button
+                      disabled={actions.busy}
+                      onClick={async () => {
+                        reasoningKeys.current[run.id] ||= crypto.randomUUID();
+                        const result = await actions.act(
+                          () =>
+                            api(`${base}/runs/${run.id}/reasoning`, {
+                              method: "POST",
+                              body: {
+                                idempotency_key: reasoningKeys.current[run.id],
+                              },
+                            }),
+                          "Cited interpretation saved in Ask workspace.",
+                        );
+                        if (result) onNavigate?.("answers");
+                      }}
+                    >
+                      Request cited model interpretation
+                    </button>
+                  </div>
+                )}
               <h4>Execution timeline</h4>
               <ol className="activity-timeline">
                 {run.events.map((item) => (

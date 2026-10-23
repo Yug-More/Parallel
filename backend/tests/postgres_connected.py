@@ -136,8 +136,79 @@ def main():
                 owner.get(f"/workspaces/{wid}/answers").json()["items"][0]["state"]
                 == "evidence_unavailable"
             )
+            # Exercise the new schema and transport boundaries on real PostgreSQL,
+            # with synthetic PDF bytes and an explicit private-provider fixture.
+            from dataclasses import replace
+            from unittest.mock import patch
+
+            from test_pdf import pdf_bytes
+            from test_private_github import authorize, configure, transport
+
+            from rate_limit import SharedRateLimiter
+            from semantic import index_once
+
+            configure(app)
+            app.state.settings = replace(app.state.settings, local_index_enabled=True)
+            pdf = owner.post(
+                f"/workspaces/{wid}/documents",
+                json={
+                    "filename": "pilot.pdf",
+                    "title": "PDF pilot",
+                    "content_base64": base64.b64encode(pdf_bytes()).decode(),
+                },
+            )
+            assert pdf.status_code == 202, pdf.text
+            assert ingest_once(app.state.session_factory)
+            passages = owner.get(f"/workspaces/{wid}/knowledge?kind=document&q=page").json()[
+                "items"
+            ]
+            assert {
+                owner.get(f"/workspaces/{wid}/sources/document/{p['id']}").json()["page_number"]
+                for p in passages
+            } == {1, 2}
+            assert owner.post(f"/workspaces/{wid}/retrieval-index").status_code == 202
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                list(pool.map(lambda _: index_once(app.state.session_factory), range(2)))
+            assert (
+                owner.get(
+                    f"/workspaces/{wid}/knowledge?kind=document&q=revocable&ranking=hybrid"
+                ).json()["index_status"]
+                == "ready"
+            )
+            with patch("github_app.request_json", transport):
+                private = authorize(owner, wid, app)["connection"]
+                assert sync_once(app.state.session_factory, settings=app.state.settings)
+                assert (
+                    owner.get(f"/workspaces/{wid}/knowledge?kind=external&q=authentication").json()[
+                        "total"
+                    ]
+                    == 1
+                )
+                assert (
+                    owner.post(
+                        f"/workspaces/{wid}/connections/{private['id']}/revoke", json={"version": 1}
+                    ).status_code
+                    == 200
+                )
+                assert owner.get(f"/workspaces/{wid}/knowledge?kind=external").json()["total"] == 0
+            limits = [
+                SharedRateLimiter(app.state.session_factory, "test-only-postgres-quota", limit=3)
+                for _ in range(2)
+            ]
+            from fastapi import HTTPException
+
+            def count_attempt(n):
+                try:
+                    limits[n % 2].check("synthetic-peer")
+                    return 1
+                except HTTPException as error:
+                    assert error.status_code == 429
+                    return 0
+
+            with ThreadPoolExecutor(max_workers=4) as pool:
+                assert sum(pool.map(count_attempt, range(8))) == 3
         print(
-            "PostgreSQL connected sources, citations, revocation, coordinator and competing native action workers passed"
+            "PostgreSQL sources, PDF pages, private authorization, hybrid indexing, shared quotas and competing native action workers passed"
         )
     finally:
         with service.begin() as db:

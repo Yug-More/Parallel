@@ -66,7 +66,7 @@ Polling remains the transport: approximately two seconds for workspace data, 1.5
 
 ## Data and time
 
-[Data model](DATA_MODEL.md) describes decision/run provenance from `0004_intelligence` and the document/import/answer/action/heartbeat additions through `0009_worker_health`. Existing Phase 1B records and session validity are preserved. Decisions have full revisions; task history before/after this phase is represented by versions, current state and activity rather than a complete point-in-time task ledger. Briefing event time is distinct from retrieval time; live counts are not historical reconstruction.
+[Data model](DATA_MODEL.md) describes decision/run provenance from `0004_intelligence` and the document/import/answer/action/heartbeat additions through `0013_shared_limits`. Existing Phase 1B records and session validity are preserved. Decisions have full revisions; task history before/after this phase is represented by versions, current state and activity rather than a complete point-in-time task ledger. Briefing event time is distinct from retrieval time; live counts are not historical reconstruction.
 
 ## Deployment assumptions and tradeoffs
 
@@ -81,3 +81,24 @@ Optional providers require separate installation/configuration and can incur cos
 Knowledge epochs conservatively invalidate derived run contexts, outcomes, publication previews and generated messages after document/import changes or revocation. Unavailable generated-message previews are redacted from decision source history. Human-authored native records remain authored data. No archive/history flag bypasses a document/connection revocation boundary.
 
 `actions.py` separately executes exact native task-plan proposals; the legacy publish_report approval constraint remains unchanged. The worker recomputes the plan, compares context/payload/hash, verifies current ownership and initiating membership, then commits the complete task graph and resource receipt atomically. Local plan completion means computation completed; the proposed work is still To do. Worker health/readiness/backup behavior and scheduling limits are documented in [Operations](OPERATIONS.md).
+
+## Pilot knowledge and authorization boundaries
+
+New PDF passages use the same document/revision lifecycle plus nullable page numbers. The worker launches a resource-bounded parser subprocess; no new service is required. Optional retrieval-index jobs store provider/model/epoch and fingerprinted vectors in SQL, with explicit lexical fallback. The shipped provider is local character similarity rather than a trained semantic model.
+
+GitHub App device flow binds an expiring encrypted user grant to the current workspace owner and a verified selected repository/installation. Fixed-host authentication POSTs are separate from GET-only repository reads. Revalidation/expiry advances the existing knowledge epoch. Private refresh rotation is persisted before further network reads. A five-minute worker sync schedule and ten-minute authorization freshness window are explicit limits, not a remote webhook guarantee.
+
+```mermaid
+flowchart LR
+    Upload[Authorized PDF bytes] --> Queue[Document revision lease]
+    Queue --> Parser[Isolated parser with resource bounds]
+    Parser --> Passage[Stable passages with page provenance]
+    Passage --> SQL[(Workspace SQL)]
+    SQL --> Lexical[Coverage or optional phrase ranking]
+    SQL --> Index[Opt-in versioned character index]
+    Index --> Hybrid[Authorized reciprocal-rank fusion]
+    Lexical --> Hybrid
+    Hybrid --> Evidence[Citations and separately optional model interpretation]
+```
+
+Agent issue triage remains inside the existing plan/research/delivery contracts; it proposes unfinished native tasks from stored open issue evidence. Separate issues acquire no inferred dependency. Exact approval/recomputation/receipt boundaries remain unchanged. Optional run reasoning reuses the cited-answer provider and cannot control the action executor. Shared HMAC request counters and rotating worker queues strengthen local operation without introducing distributed infrastructure.
