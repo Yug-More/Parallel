@@ -200,3 +200,53 @@ def test_conversation_provider_late_result_cannot_outlive_revocation(
     response = owner.post(f"/workspaces/{wid}/agent-replies", json={"message_id": question["id"]})
     assert response.status_code == 409
     assert all(m["role"] != "assistant" for m in owner.get(f"/workspaces/{wid}/messages").json())
+
+
+def test_grounded_provider_adapter_bounds_and_sanitizes_transport(application, monkeypatch):
+    import json
+    import sys
+    from types import SimpleNamespace
+
+    import pytest
+
+    import providers
+
+    calls = []
+
+    class Transport:
+        def __init__(self, **options):
+            calls.append(options)
+            self.responses = SimpleNamespace(create=self.create)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            calls.append({"closed": True})
+
+        def create(self, **options):
+            calls.append(options)
+            return SimpleNamespace(status="completed", output_text=json.dumps({"claims": []}))
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=Transport))
+    settings = replace(
+        application.state.settings,
+        grounded_model_enabled=True,
+        openai_api_key="test-only-adapter-key-not-a-real-credential",
+    )
+    assert providers.generate_grounded(
+        settings, "Question", [{"ref": "task:one", "body": "Untrusted"}]
+    ) == {"claims": []}
+    assert calls[0]["timeout"] == 20 and calls[0]["max_retries"] == 0
+    request = calls[1]
+    assert request["store"] is False and request["max_output_tokens"] == 1600
+    assert "tools" not in request and request["text"]["format"]["strict"] is True
+    assert calls[-1] == {"closed": True}
+
+    def broken(_self, **_options):
+        raise RuntimeError("private-provider-body-and-credential")
+
+    monkeypatch.setattr(Transport, "create", broken)
+    with pytest.raises(providers.ProviderFailure) as error:
+        providers.generate_grounded(settings, "Question", [])
+    assert "private-provider" not in str(error.value)
