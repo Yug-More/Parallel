@@ -215,3 +215,145 @@ def test_phase1b_upgrade_refuses_inconsistent_ownership_without_changing_data(tm
             column["name"] for column in inspect(db).get_columns("workspaces")
         }
     engine.dispose()
+
+
+def test_phase1b_upgrade_preserves_every_existing_table(tmp_path):
+    from datetime import timedelta
+
+    from sqlalchemy.orm import Session
+
+    from models import (
+        Activity,
+        AuthSession,
+        Invitation,
+        Membership,
+        Message,
+        Task,
+        TaskDependency,
+        User,
+        UserCredential,
+        Workspace,
+        utc_now,
+    )
+
+    url = f"sqlite:///{tmp_path / 'phase1b-upgrade.db'}"
+    upgrade_database(url, "0003_collaboration")
+    engine = create_db_engine(url)
+    with Session(engine) as db:
+        db.add_all(
+            [
+                User(id="owner", email="owner@example.test", name="Owner"),
+                User(id="recipient", email="recipient@example.test", name="Recipient"),
+            ]
+        )
+        db.flush()
+        db.add(UserCredential(user_id="owner", password_hash=hash_password("keep-password")))
+        db.add(Workspace(id="space", name="Preserve all records", owner_id="owner"))
+        db.flush()
+        db.add(Membership(workspace_id="space", user_id="owner", role="owner"))
+        db.flush()
+        db.add_all(
+            [
+                Task(
+                    id=tid,
+                    workspace_id="space",
+                    creator_id="owner",
+                    assignee_id="owner",
+                    title=tid,
+                    status="todo",
+                    priority="high",
+                )
+                for tid in ["task1", "task2"]
+            ]
+        )
+        db.flush()
+        db.add(TaskDependency(workspace_id="space", task_id="task2", depends_on_id="task1"))
+        db.add(
+            Invitation(
+                id="invite",
+                workspace_id="space",
+                recipient_id="recipient",
+                inviter_id="owner",
+                status="pending",
+                expires_at=utc_now() + timedelta(days=7),
+            )
+        )
+        db.add(
+            AuthSession(id="a" * 64, user_id="owner", expires_at=utc_now() + timedelta(hours=24))
+        )
+        db.add(
+            Message(
+                id="message",
+                workspace_id="space",
+                user_id="owner",
+                sender_id="owner",
+                sender_name="Owner",
+                role="user",
+                content="Preserve private history",
+            )
+        )
+        db.add(
+            Activity(
+                id="activity",
+                workspace_id="space",
+                user_id="owner",
+                user_name="Owner",
+                summary="Preserve activity",
+            )
+        )
+        db.commit()
+    tables = [
+        "users",
+        "user_credentials",
+        "workspaces",
+        "workspace_memberships",
+        "tasks",
+        "task_dependencies",
+        "workspace_invitations",
+        "auth_sessions",
+        "messages",
+        "activities",
+    ]
+
+    def snapshot():
+        with engine.connect() as db:
+            return {table: db.execute(text(f"SELECT * FROM {table}")).all() for table in tables}
+
+    before = snapshot()
+    upgrade_database(url)
+    upgrade_database(url)
+    assert snapshot() == before
+    assert set(inspect(engine).get_table_names()) >= {
+        "decisions",
+        "decision_revisions",
+        "decision_sources",
+        "agent_runs",
+        "run_events",
+        "approvals",
+        "workspace_visits",
+    }
+    with engine.connect() as db:
+        assert db.execute(text("PRAGMA foreign_key_check")).all() == []
+    engine.dispose()
+
+
+def test_intelligence_migration_uses_portable_postgres_boolean_default():
+    import importlib.util
+    import io
+    from pathlib import Path
+
+    from alembic.migration import MigrationContext
+    from alembic.operations import Operations
+
+    path = Path(__file__).parents[1] / "migrations/versions/0004_intelligence.py"
+    spec = importlib.util.spec_from_file_location("intelligence_migration", path)
+    migration = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(migration)
+    sql = io.StringIO()
+    context = MigrationContext.configure(
+        dialect_name="postgresql", opts={"as_sql": True, "output_buffer": sql}
+    )
+    with Operations.context(context):
+        migration.upgrade()
+    assert "publish BOOLEAN DEFAULT false NOT NULL" in sql.getvalue()
+    assert "BOOLEAN DEFAULT 0" not in sql.getvalue()

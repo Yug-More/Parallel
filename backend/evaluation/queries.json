@@ -1,0 +1,91 @@
+[
+  {
+    "name": "current decision",
+    "q": "authentication",
+    "kind": "decision",
+    "expected": [
+      "current_auth"
+    ]
+  },
+  {
+    "name": "historical decisions",
+    "q": "authentication",
+    "kind": "decision",
+    "include_historical": true,
+    "expected": [
+      "current_auth",
+      "old_auth"
+    ]
+  },
+  {
+    "name": "similar task names",
+    "q": "release",
+    "kind": "task",
+    "expected": [
+      "release_api",
+      "release_ui"
+    ]
+  },
+  {
+    "name": "archived task explicit",
+    "q": "obsolete",
+    "kind": "task",
+    "include_archived": true,
+    "expected": [
+      "archived"
+    ]
+  },
+  {
+    "name": "archived task excluded",
+    "q": "obsolete",
+    "kind": "task",
+    "expected": []
+  },
+  {
+    "name": "contradictory raw conversation",
+    "q": "cache policy",
+    "kind": "message",
+    "expected": [
+      "cache_yes",
+      "cache_no"
+    ]
+  },
+  {
+    "name": "long history needle",
+    "q": "zebra migration receipt",
+    "kind": "message",
+    "expected": [
+      "needle"
+    ]
+  },
+  {
+    "name": "no invented evidence",
+    "q": "quantum banana",
+    "expected": []
+  },
+  {
+    "name": "temporal interval",
+    "q": "release",
+    "kind": "task",
+    "since_marker": true,
+    "expected": [
+      "release_ui"
+    ]
+  },
+  {
+    "name": "ambiguous OR terms",
+    "q": "release UI",
+    "kind": "task",
+    "expected": [
+      "release_ui"
+    ]
+  },
+  {
+    "name": "lexical vocabulary gap",
+    "q": "sign-out security",
+    "kind": "decision",
+    "expected": [
+      "current_auth"
+    ]
+  }
+]

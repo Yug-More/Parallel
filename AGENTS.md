@@ -2,7 +2,7 @@
 
 ## Product and architecture
 - Build a persistent collaborative project workspace for humans and AI agents.
-- Project Continuity Intelligence means source-linked decisions, useful project context, safe handoffs, and verifiable outcomes across sessions. It is a roadmap, not a claim of completed functionality.
+- Project Continuity Intelligence means source-linked decisions, useful project context, safe handoffs, and verifiable outcomes across sessions. The implemented baseline is source-linked decisions, lexical retrieval/continuity and deterministic local agents; semantic memory and external execution remain roadmap work.
 - Evolve React/Vite and FastAPI/SQLAlchemy as a modular monolith. Preserve useful existing work; avoid unnecessary frameworks and rewrites.
 - Keep configuration, authentication, workspace authorization, persistence, providers, and external execution separate.
 - Runtime code is in backend/*.py and backend/api; backend/legacy contains non-executable historical references. Do not reactivate it without a security review.
@@ -39,3 +39,13 @@
 - Substantial authorized implementations use professional PRs explaining the problem, motivation, final design, important files, database/backfill strategy, security, actual testing, compatibility, limitations, follow-up and merge readiness.
 - Inspect remote CI and protections before an authorized merge; never bypass them. Verify resulting main and working tree before reporting completion.
 - Do not intentionally add Codex or AI-agent co-author trailers, branding or unnecessary attribution. Never invite AI bots as collaborators. Platform-generated account/integration metadata is outside repository control.
+
+
+## Intelligence and execution invariants
+- Decision corrections require a reason and current version. Preserve revision/source snapshots; supersession only links distinct current accepted decisions in the same workspace.
+- Resolve every source by immutable kind/ID inside the authorized workspace. Raw messages, structured choices, derived reports and interpretations are distinct; never promote model text into truth automatically.
+- Describe retrieval as deterministic lexical search. Run backend/evaluation/run.py and report actual fixture metrics and vocabulary/ambiguity limits before changing ranking.
+- Local agent contracts cannot execute shell, tools, models or external writes. Preserve lease tokens, bounded scope, explicit attempts, cancellation and failure records; queue insertion is never completion.
+- Recheck initiating membership, task dependencies and context before committing worker results. Bind publication approval to exact action/payload/hash, current owner, expiry and atomic message receipt.
+- Worker and HTTP processes share a migrated database. Test interrupted leases, competing workers, approval replay/tampering, changed context and populated Phase 1B upgrades.
+- Keep docs screenshots captured from actual synthetic browser workflows. Diagrams must match implemented modules and states; do not present local computation as autonomous software execution.

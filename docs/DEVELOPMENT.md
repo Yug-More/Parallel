@@ -30,7 +30,7 @@ Vite uses port 5174; CORS must explicitly include the actual frontend origin. `V
 
 Development can use a random process-local secret. For stable sessions generate a secret with `python -c 'import secrets; print(secrets.token_urlsafe(48))'` and set SECRET_KEY in backend/.env. Production requires at least 32 bytes and explicit HTTPS CORS_ORIGINS; cookies are Secure and HttpOnly. Local HTTP uses HttpOnly/SameSite=Lax cookies. A changed signing key invalidates old sessions.
 
-No provider credentials are required. For optional AI replies install `pip install -r requirements-ai.txt` and set OPENAI_API_KEY explicitly. This is a server-owned model credential, not another user's account fallback. Real requests can incur cost; do not exercise them without authorization. Model selection is OPENAI_MODEL. Voice/SMS/research/tool execution cannot be enabled in Phase 1A.
+No provider credentials are required. For optional AI replies install `pip install -r requirements-ai.txt` and set OPENAI_API_KEY explicitly. This is a server-owned model credential, not another user's account fallback. Real requests can incur cost; do not exercise them without authorization. Model selection is OPENAI_MODEL. Voice/SMS/research/external tool execution remains disabled.
 
 ## Migrating existing databases
 
@@ -38,7 +38,7 @@ No provider credentials are required. For optional AI replies install `pip insta
 2. Make a database-native backup and verify it can be restored. For SQLite use Python's sqlite3 backup API while the application is stopped; preserve WAL state through the backup API rather than copying a live main file. Use pg_dump/restore procedures for PostgreSQL.
 3. Test `python migrate.py` against a disposable copy first.
 4. Inspect account/message/activity counts and ownership. Only then run against the intended database.
-5. Run `alembic current` and `alembic check`; expect 0003_collaboration and no new upgrade operations.
+5. Run `alembic current` and `alembic check`; expect 0004_intelligence and no new upgrade operations.
 
 Revision 0001 adopts known legacy tables or creates an empty schema; it does not stamp a database blindly. Revision 0002 creates one private workspace per original user and assigns that user's message/activity rows there. Credentials, record IDs, existing timestamps and contents are preserved. Missing legacy creation timestamps are filled with the migration time so pagination remains ordered. No other user receives membership. Unknown schemas or orphan ownership stop migration for owner review; never delete records merely to make migration pass.
 
@@ -63,7 +63,7 @@ pytest -q
 python ../scripts/check_secrets.py
 ```
 
-Backend tests migrate isolated SQLite files and block outbound sockets. Provider unit tests use mocks and do not prove live compatibility. Requirements-dev and requirements-ai are installed in CI so adapter tests can import the optional SDK.
+Backend tests migrate isolated SQLite files and block outbound sockets. Provider unit tests use mocks and do not prove live compatibility. Requirements-dev includes the optional AI SDK for mocked adapter regressions; the application runtime can still install only requirements.txt and run local intelligence without that SDK or provider keys.
 
 Frontend:
 
@@ -106,3 +106,43 @@ Mark prerequisites Done before completing dependents. Reopen completed dependent
 Log out revokes the current session. Log out all sessions requires confirmation and invalidates all existing browser sessions. Other browsers return to sign-in on their next authenticated refresh. Auth throttling returns 429/Retry-After after 20 registration/login attempts per connection IP within 60 seconds; do not trust X-Forwarded-For without a controlled deployment design.
 
 `postgres_smoke.py` and `postgres_upgrade.py` are CI-only scripts guarded by APP_ENV=test and the disposable parallel_test database name. The upgrade script creates an isolated schema in that test service; never point these scripts at user databases.
+
+
+## Phase 2 + 3 development
+
+After the backup and disposable-copy procedure, `python migrate.py` applies `0004_intelligence`. This adds decision/revision/source, visit, run/event and approval tables without changing existing Phase 1B records or invalidating its live sessions. Stop both HTTP and worker writers before upgrading a user database. `alembic current` and `alembic check` must agree with the new revision.
+
+Start the backend, frontend and a separate worker using the same database URL:
+
+```bash
+cd backend
+source .venv/bin/activate
+python worker.py
+```
+
+`python worker.py --once` processes at most one queued job, expired lease or approval; a coordinator requires multiple iterations. For the optional development Docker profile, start the backend/database first, then `docker compose run --rm backend python worker.py`. Docker execution has not been verified in this phase. Never start a worker before the intended database is migrated. A missing worker leaves runs Queued, not Completed.
+
+In Decisions, record a statement, rationale and linked source, revise it with a reason, or supersede an accepted decision with another accepted record. In Intelligence, inspect a visit-relative briefing, apply a timestamp, mark changes seen, or search current/historical source records. In Agents & approvals, request a local status/dependency/handoff report and inspect its child runs, context and events. Select publication only when you want an owner to review the exact report for posting to Conversation. Approval and publication are separate persisted states.
+
+Additional verification from the repository root:
+
+```bash
+python backend/evaluation/run.py
+python scripts/check_secrets.py
+```
+
+CI runs PostgreSQL collaboration plus `postgres_intelligence.py`: populated Phase 1B preservation, source-linked decisions, concurrent revisions, SQL retrieval, delegated handoffs and competing-worker approval publication. Those scripts require APP_ENV=test and the disposable parallel_test service; never target a user database. Browser scenarios use synthetic accounts, real localhost HTTP, SQLite and the same worker implementation. See [Evaluation](EVALUATION.md) and [Agent orchestration](AGENT_ORCHESTRATION.md) for metrics and recovery commands.
+
+Troubleshooting: Queued means check the worker uses the same migrated DATABASE_URL; `task_blocked` means complete prerequisites or use dependency analysis; `context_changed` means project state changed during computation/approval and a fresh run is needed; `lease_expired` means interrupted execution failed visibly and can be explicitly retried. A pending approval can only be answered by the current owner. Approved means the worker still has to execute; Executed contains the publication message receipt.
+
+
+## Documentation validation
+
+Screenshots are captured by the real `intelligence.spec.js` desktop/mobile scenarios into Playwright test output; curated copies live in `docs/screenshots/` and contain synthetic accounts only. Do not substitute generated mockups. To validate Markdown links and parse/render every Mermaid diagram without adding a runtime dependency:
+
+```bash
+npm install --prefix /tmp/parallel-doc-tools --no-save --package-lock=false mermaid@11.12.0
+MERMAID_BUNDLE=/tmp/parallel-doc-tools/node_modules/mermaid/dist/mermaid.min.js node scripts/check_docs.cjs
+```
+
+Run from the repository root after frontend dependency/Chromium installation. The script uses that Playwright browser and checks actual local link/image targets. This validation is optional locally and was executed for the documentation overhaul; the core CI has no Mermaid package dependency.

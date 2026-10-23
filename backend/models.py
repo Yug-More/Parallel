@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     CheckConstraint,
     Column,
@@ -183,4 +184,191 @@ class TaskDependency(Base):
         ),
         CheckConstraint("task_id <> depends_on_id", name="ck_dependency_not_self"),
         Index("ix_dependency_prerequisite", "workspace_id", "depends_on_id"),
+    )
+
+
+class Decision(Base):
+    __tablename__ = "decisions"
+    id = Column(String, primary_key=True)
+    workspace_id = Column(String, ForeignKey("workspaces.id"), nullable=False)
+    title = Column(String(200), nullable=False)
+    context = Column(Text, nullable=False)
+    statement = Column(Text, nullable=False)
+    rationale = Column(Text, nullable=False)
+    alternatives = Column(Text, nullable=False)
+    tradeoffs = Column(Text, nullable=False)
+    status = Column(String(16), nullable=False)
+    creator_id = Column(String, ForeignKey("users.id"), nullable=False)
+    version = Column(Integer, nullable=False)
+    superseded_by_id = Column(String)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, nullable=False)
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "id", name="uq_decision_workspace_id"),
+        ForeignKeyConstraint(
+            ["workspace_id", "superseded_by_id"],
+            ["decisions.workspace_id", "decisions.id"],
+            name="fk_decision_successor",
+        ),
+        CheckConstraint(
+            "status IN ('proposed','accepted','superseded','rejected')", name="ck_decision_status"
+        ),
+        CheckConstraint("version >= 1", name="ck_decision_version"),
+        CheckConstraint(
+            "superseded_by_id IS NULL OR (superseded_by_id <> id AND status='superseded')",
+            name="ck_decision_successor",
+        ),
+        Index("ix_decisions_workspace_updated", "workspace_id", "updated_at", "id"),
+    )
+
+
+class DecisionRevision(Base):
+    __tablename__ = "decision_revisions"
+    decision_id = Column(String, primary_key=True)
+    version = Column(Integer, primary_key=True)
+    workspace_id = Column(String, nullable=False)
+    actor_id = Column(String, ForeignKey("users.id"), nullable=False)
+    reason = Column(String(1000), nullable=False)
+    snapshot = Column(JSON, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "decision_id", "version", name="uq_revision_workspace"),
+        ForeignKeyConstraint(
+            ["workspace_id", "decision_id"],
+            ["decisions.workspace_id", "decisions.id"],
+            name="fk_revision_decision",
+        ),
+        CheckConstraint("version >= 1", name="ck_revision_version"),
+        Index("ix_revisions_workspace_created", "workspace_id", "created_at"),
+    )
+
+
+class DecisionSource(Base):
+    __tablename__ = "decision_sources"
+    workspace_id = Column(String, primary_key=True)
+    decision_id = Column(String, primary_key=True)
+    revision = Column(Integer, primary_key=True)
+    kind = Column(String(16), primary_key=True)
+    source_id = Column(String, primary_key=True)
+    snapshot = Column(JSON, nullable=False)
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "decision_id", "revision"],
+            [
+                "decision_revisions.workspace_id",
+                "decision_revisions.decision_id",
+                "decision_revisions.version",
+            ],
+            name="fk_source_revision",
+        ),
+        CheckConstraint("kind IN ('message','task','activity','decision')", name="ck_source_kind"),
+    )
+
+
+class WorkspaceVisit(Base):
+    __tablename__ = "workspace_visits"
+    workspace_id = Column(String, ForeignKey("workspaces.id"), primary_key=True)
+    user_id = Column(String, ForeignKey("users.id"), primary_key=True)
+    through = Column(DateTime, nullable=False)
+
+
+class AgentRun(Base):
+    __tablename__ = "agent_runs"
+    id = Column(String, primary_key=True)
+    workspace_id = Column(String, ForeignKey("workspaces.id"), nullable=False)
+    initiator_id = Column(String, ForeignKey("users.id"), nullable=False)
+    agent_type = Column(String(64), nullable=False)
+    objective = Column(String(1000), nullable=False)
+    task_id = Column(String)
+    parent_id = Column(String)
+    idempotency_key = Column(String(100))
+    request_hash = Column(String(64), nullable=False)
+    input_refs = Column(JSON, nullable=False)
+    publish = Column(Boolean, nullable=False, server_default=false())
+    state = Column(String(32), nullable=False)
+    attempt = Column(Integer, nullable=False, default=1)
+    retry_of_id = Column(String)
+    lease_token = Column(String)
+    lease_until = Column(DateTime)
+    context = Column(JSON)
+    outcome = Column(JSON)
+    error_code = Column(String(64))
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    started_at = Column(DateTime)
+    completed_at = Column(DateTime)
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "id", name="uq_run_workspace_id"),
+        UniqueConstraint(
+            "workspace_id", "initiator_id", "idempotency_key", name="uq_run_idempotency"
+        ),
+        UniqueConstraint("retry_of_id", name="uq_run_retry_once"),
+        ForeignKeyConstraint(
+            ["workspace_id", "task_id"], ["tasks.workspace_id", "tasks.id"], name="fk_run_task"
+        ),
+        ForeignKeyConstraint(
+            ["workspace_id", "parent_id"],
+            ["agent_runs.workspace_id", "agent_runs.id"],
+            name="fk_run_parent",
+        ),
+        ForeignKeyConstraint(
+            ["workspace_id", "retry_of_id"],
+            ["agent_runs.workspace_id", "agent_runs.id"],
+            name="fk_run_retry",
+        ),
+        CheckConstraint(
+            "state IN ('queued','running','waiting_for_approval','completed','failed','cancelled')",
+            name="ck_run_state",
+        ),
+        CheckConstraint("attempt BETWEEN 1 AND 3", name="ck_run_attempt"),
+        Index("ix_runs_queue", "state", "created_at"),
+        Index("ix_runs_workspace_created", "workspace_id", "created_at", "id"),
+    )
+
+
+class RunEvent(Base):
+    __tablename__ = "run_events"
+    id = Column(String, primary_key=True)
+    workspace_id = Column(String, nullable=False)
+    run_id = Column(String, nullable=False)
+    event = Column(String(64), nullable=False)
+    detail = Column(JSON, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "run_id"],
+            ["agent_runs.workspace_id", "agent_runs.id"],
+            name="fk_event_run",
+        ),
+        Index("ix_run_events", "run_id", "created_at", "id"),
+    )
+
+
+class Approval(Base):
+    __tablename__ = "approvals"
+    id = Column(String, primary_key=True)
+    workspace_id = Column(String, nullable=False)
+    run_id = Column(String, nullable=False, unique=True)
+    action = Column(String(64), nullable=False)
+    payload = Column(JSON, nullable=False)
+    payload_hash = Column(String(64), nullable=False)
+    state = Column(String(16), nullable=False)
+    approver_id = Column(String, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    responded_at = Column(DateTime)
+    executed_at = Column(DateTime)
+    message_id = Column(String, ForeignKey("messages.id"), unique=True)
+    error_code = Column(String(64))
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "run_id"],
+            ["agent_runs.workspace_id", "agent_runs.id"],
+            name="fk_approval_run",
+        ),
+        CheckConstraint(
+            "state IN ('pending','approved','rejected','expired','executed','failed','cancelled')",
+            name="ck_approval_state",
+        ),
+        CheckConstraint("action='publish_report'", name="ck_approval_action"),
+        Index("ix_approvals_workspace_state", "workspace_id", "state", "created_at"),
     )

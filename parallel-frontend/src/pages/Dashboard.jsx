@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
+import AgentsPanel from "../components/AgentsPanel";
+import DecisionsPanel from "../components/DecisionsPanel";
+import IntelligencePanel from "../components/IntelligencePanel";
 import ChatBubble from "../components/ChatBubble";
 import ConfirmDialog from "../components/ConfirmDialog";
 import InvitationInbox from "../components/InvitationInbox";
@@ -10,10 +13,26 @@ import "./Collaboration.css";
 
 export default function Dashboard({ user, onLogout }) {
   const [workspaces, setWorkspaces] = useState([]);
-  const [workspaceId, setWorkspaceId] = useState("");
+  const [workspaceId, setWorkspaceId] = useState(
+    () => new URLSearchParams(window.location.search).get("workspace") || "",
+  );
   const [snapshot, setSnapshot] = useState(null);
   const [invitations, setInvitations] = useState([]);
-  const [tab, setTab] = useState("conversation");
+  const [tab, setTab] = useState(() => {
+    const section = new URLSearchParams(window.location.search).get("section");
+    return [
+      "conversation",
+      "tasks",
+      "decisions",
+      "intelligence",
+      "agents",
+      "members",
+      "activity",
+      "inbox",
+    ].includes(section)
+      ? section
+      : "conversation";
+  });
   const [draft, setDraft] = useState("");
   const [older, setOlder] = useState([]);
   const [name, setName] = useState("");
@@ -97,6 +116,14 @@ export default function Dashboard({ user, onLogout }) {
       clearInterval(timer);
     };
   }, [workspaceId, refresh, lostAccess]);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (workspaceId) url.searchParams.set("workspace", workspaceId);
+    else url.searchParams.delete("workspace");
+    url.searchParams.set("section", tab);
+    window.history.replaceState(null, "", url);
+  }, [workspaceId, tab]);
 
   const view = snapshot?.id === workspaceId ? snapshot : null;
   async function act(action, success = "") {
@@ -315,6 +342,9 @@ export default function Dashboard({ user, onLogout }) {
                 {[
                   ["conversation", "Conversation"],
                   ["tasks", "Tasks"],
+                  ["decisions", "Decisions"],
+                  ["intelligence", "Intelligence"],
+                  ["agents", "Agents & approvals"],
                   ["members", "Members"],
                   ["activity", "Activity"],
                 ].map(([value, label]) => (
@@ -427,6 +457,30 @@ export default function Dashboard({ user, onLogout }) {
                       members={view.members}
                       refresh={refresh}
                       onConfirm={setConfirmation}
+                      onAccessLost={lostAccess}
+                    />
+                  )}
+                  {tab === "decisions" && (
+                    <DecisionsPanel
+                      key={workspaceId}
+                      workspaceId={workspaceId}
+                      onAccessLost={lostAccess}
+                    />
+                  )}
+                  {tab === "intelligence" && (
+                    <IntelligencePanel
+                      key={workspaceId}
+                      workspaceId={workspaceId}
+                      onAccessLost={lostAccess}
+                      onAgents={() => setTab("agents")}
+                    />
+                  )}
+                  {tab === "agents" && (
+                    <AgentsPanel
+                      key={workspaceId}
+                      workspaceId={workspaceId}
+                      user={user}
+                      workspace={view.workspace}
                       onAccessLost={lostAccess}
                     />
                   )}
