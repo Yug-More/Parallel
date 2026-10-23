@@ -229,7 +229,6 @@ def test_phase1b_upgrade_preserves_every_existing_table(tmp_path):
         Membership,
         Task,
         TaskDependency,
-        User,
         UserCredential,
         utc_now,
     )
@@ -238,11 +237,13 @@ def test_phase1b_upgrade_preserves_every_existing_table(tmp_path):
     upgrade_database(url, "0003_collaboration")
     engine = create_db_engine(url)
     with Session(engine) as db:
-        db.add_all(
+        # Seed the historical schema without importing new User columns.
+        db.execute(
+            text("INSERT INTO users (id,email,name) VALUES (:id,:email,:name)"),
             [
-                User(id="owner", email="owner@example.test", name="Owner"),
-                User(id="recipient", email="recipient@example.test", name="Recipient"),
-            ]
+                {"id": "owner", "email": "owner@example.test", "name": "Owner"},
+                {"id": "recipient", "email": "recipient@example.test", "name": "Recipient"},
+            ],
         )
         db.flush()
         db.add(UserCredential(user_id="owner", password_hash=hash_password("keep-password")))
@@ -525,6 +526,11 @@ def test_populated_phase3_upgrade_preserves_records_and_receipts(tmp_path):
         "0011_retrieval_index.py",
         "0012_private_github.py",
         "0013_shared_limits.py",
+        "0014_semantic.py",
+        "0015_recovery.py",
+        "0016_retention.py",
+        "0017_answer_retrieval.py",
+        "0018_sync_checkpoints.py",
     ],
 )
 def test_connected_migrations_compile_portable_postgres_ddl(filename):

@@ -36,6 +36,7 @@ class User(Base):
     role = Column(String, nullable=True)
     created_at = Column(DateTime, default=utc_now)
     last_seen_at = Column(DateTime, default=utc_now)
+    email_verified_at = Column(DateTime)
 
     credentials = relationship("UserCredential", back_populates="user", uselist=False)
 
@@ -84,6 +85,7 @@ class Workspace(Base):
     name = Column(String(120), nullable=False)
     revision = Column(Integer, nullable=False, server_default="0")
     knowledge_epoch = Column(Integer, nullable=False, server_default="0")
+    closed_at = Column(DateTime)
     owner_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
     created_at = Column(DateTime, default=utc_now, nullable=False)
 
@@ -287,6 +289,7 @@ class AgentRun(Base):
     parent_id = Column(String)
     idempotency_key = Column(String(100))
     request_hash = Column(String(64), nullable=False)
+    knowledge_refs = Column(JSON)
     input_refs = Column(JSON, nullable=False)
     publish = Column(Boolean, nullable=False, server_default=false())
     state = Column(String(32), nullable=False)
@@ -463,6 +466,7 @@ class RepositoryConnection(Base):
     credential = Column(Text)
     credential_expires_at = Column(DateTime)
     access_verified_until = Column(DateTime)
+    sync_checkpoint = Column(JSON)
     active = Column(Boolean, nullable=False, server_default=false())
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime, nullable=False, default=utc_now)
@@ -486,6 +490,7 @@ class RepositorySync(Base):
     next_attempt_at = Column(DateTime, nullable=False, default=utc_now)
     error_code = Column(String(64))
     record_count = Column(Integer, nullable=False, default=0)
+    checkpoint = Column(JSON)
     created_at = Column(DateTime, nullable=False, default=utc_now)
     completed_at = Column(DateTime)
     __table_args__ = (
@@ -537,6 +542,8 @@ class KnowledgeAnswer(Base):
     question = Column(String(200), nullable=False)
     mode = Column(String(16), nullable=False)
     provider_model = Column(String(200))
+    retrieval_mode = Column(String(16), nullable=False, server_default="lexical")
+    evidence_plan = Column(JSON)
     idempotency_key = Column(String(100), nullable=False)
     state = Column(String(16), nullable=False)
     claims = Column(JSON, nullable=False)
@@ -602,6 +609,12 @@ class RetrievalIndex(Base):
     provider = Column(String(100), nullable=False)
     model = Column(String(200), nullable=False)
     state = Column(String(16), nullable=False)
+    dimensions = Column(Integer)
+    options = Column(JSON)
+    duration_ms = Column(Integer)
+    input_characters = Column(Integer)
+    usage_tokens = Column(Integer)
+    attempt = Column(Integer, nullable=False, server_default="1")
     entries = Column(JSON, nullable=False, default=list)
     error_code = Column(String(64))
     lease_token = Column(String)
@@ -643,3 +656,33 @@ class AbuseCounter(Base):
     key = Column(String(64), primary_key=True)
     window = Column(BigInteger, nullable=False)
     count = Column(Integer, nullable=False)
+
+
+class RecoveryRequest(Base):
+    __tablename__ = "recovery_requests"
+    id = Column(String, primary_key=True)
+    user_id = Column(String, ForeignKey("users.id"))
+    purpose = Column(String(16), nullable=False)
+    state = Column(String(16), nullable=False)
+    token_hash = Column(String(64), unique=True)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    expires_at = Column(DateTime)
+    used_at = Column(DateTime)
+    __table_args__ = (
+        CheckConstraint("purpose IN ('reset','verify')", name="ck_recovery_purpose"),
+        CheckConstraint(
+            "state IN ('queued','running','delivered','failed','consumed','superseded')",
+            name="ck_recovery_state",
+        ),
+        Index("ix_recovery_user", "user_id", "purpose", "created_at"),
+    )
+
+
+class RetentionReceipt(Base):
+    __tablename__ = "retention_receipts"
+    id = Column(String, primary_key=True)
+    workspace_id = Column(String, ForeignKey("workspaces.id"), nullable=False)
+    actor_id = Column(String, ForeignKey("users.id"), nullable=False)
+    plan = Column(JSON, nullable=False)
+    plan_hash = Column(String(64), nullable=False, unique=True)
+    created_at = Column(DateTime, nullable=False, default=utc_now)

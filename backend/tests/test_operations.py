@@ -117,8 +117,29 @@ def test_restoration_drill_preserves_live_source_and_runs_migrations(tmp_path):
     with engine.connect() as db:
         assert (
             db.execute(text("SELECT version_num FROM alembic_version")).scalar()
-            == "0013_shared_limits"
+            == "0018_sync_checkpoints"
         )
     engine.dispose()
     with pytest.raises(FileExistsError):
         restore_sqlite(backup, destination)
+
+
+def test_worker_heartbeat_pulses_independently_of_blocked_jobs(application, monkeypatch):
+    from threading import Event
+
+    import worker_health
+
+    observed = Event()
+    pulses = []
+
+    def pulse(_factory, _worker, state="running"):
+        pulses.append(state)
+        if len(pulses) >= 2:
+            observed.set()
+
+    monkeypatch.setattr(worker_health, "heartbeat", pulse)
+    with worker_health.HeartbeatSupervisor(
+        application.state.session_factory, "fixture-worker", interval=0.01
+    ):
+        assert observed.wait(timeout=2), "A long job must not suppress worker liveness"
+    assert pulses[-1] == "stopped"

@@ -52,6 +52,8 @@ def answer_out(db, answer):
         "id": answer.id,
         "question": answer.question,
         "mode": answer.mode,
+        "retrieval_mode": answer.retrieval_mode,
+        "evidence_plan": answer.evidence_plan,
         "provider_model": answer.provider_model,
         "state": state,
         "claims": claims,
@@ -101,3 +103,36 @@ def evidence_warnings(evidence):
                 )
                 return warnings
     return warnings
+
+
+def planned_evidence(db, workspace_id, question):
+    """Bounded explicit question intents; all other questions stay lexical.
+
+    No inference changes task state, resolves disagreement, or asserts completion.
+    """
+    from retrieval import retrieve
+
+    result = retrieve(db, workspace_id, q=question, limit=8)
+    plan = {"strategy": "lexical", "scope": "current authorized sources"}
+    terms = set(re.findall(r"\w+", question.casefold()))
+    special = []
+    if terms & {"blocker", "blockers", "blocked", "blocking"}:
+        special = retrieve(db, workspace_id, q="", kind="task", status="blocked", limit=8)["items"]
+        plan = {
+            "strategy": "explicit_blocked_tasks_then_lexical",
+            "scope": "current tasks explicitly marked blocked; this does not detect every implicit blocker",
+        }
+    elif {"what", "changed"} <= terms:
+        special = retrieve(
+            db, workspace_id, q="", kind="activity", since=utc_now() - timedelta(days=1), limit=8
+        )["items"]
+        plan = {
+            "strategy": "recent_activity_then_lexical",
+            "scope": "recorded workspace activity in the last 24 hours; external work may be missing",
+        }
+    seen, rows = set(), []
+    for row in [*special, *result["items"]]:
+        if row["ref"] not in seen:
+            rows.append(row)
+            seen.add(row["ref"])
+    return {**result, "items": rows[:8]}, plan

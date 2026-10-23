@@ -156,6 +156,7 @@ def connection_out(db, connection):
         "version": connection.version,
         "auth_mode": connection.auth_mode,
         "access_verified_until": iso(connection.access_verified_until),
+        "sync_checkpoint": connection.sync_checkpoint,
         "provider": "github",
         "created_at": iso(connection.created_at),
         "syncs": [
@@ -165,6 +166,7 @@ def connection_out(db, connection):
                 "attempt": job.attempt,
                 "error_code": job.error_code,
                 "record_count": job.record_count,
+                "checkpoint": job.checkpoint,
                 "next_attempt_at": iso(job.next_attempt_at),
                 "created_at": iso(job.created_at),
                 "completed_at": iso(job.completed_at),
@@ -310,6 +312,7 @@ def sync_once(factory, fetch=fetch_repository, settings=None):
                 )
                 connection.access_verified_until = utc_now() + timedelta(minutes=10)
             changed = False
+            delta = {"created": 0, "updated": 0, "unavailable": 0, "unchanged": 0}
             provider_ids = {item["provider_id"] for item in records}
             existing = db.query(ImportedRecord).filter_by(connection_id=connection.id).all()
             new_count = len(provider_ids - {item.provider_id for item in existing})
@@ -321,6 +324,7 @@ def sync_once(factory, fetch=fetch_repository, settings=None):
             for item in existing:
                 if item.available and item.provider_id not in provider_ids:
                     item.available = False
+                    delta["unavailable"] += 1
                     changed = True
             for data in records:
                 digest = hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
@@ -330,6 +334,7 @@ def sync_once(factory, fetch=fetch_repository, settings=None):
                     .first()
                 )
                 if item is None:
+                    delta["created"] += 1
                     changed = True
                     db.add(
                         ImportedRecord(
@@ -343,6 +348,7 @@ def sync_once(factory, fetch=fetch_repository, settings=None):
                         )
                     )
                 elif item.content_hash != digest or not item.available:
+                    delta["updated"] += 1
                     changed = True
                     for key, value in data.items():
                         setattr(item, key, value)
@@ -352,6 +358,16 @@ def sync_once(factory, fetch=fetch_repository, settings=None):
                         item.version + 1,
                         utc_now(),
                     )
+                else:
+                    delta["unchanged"] += 1
+            job.checkpoint = {
+                "mode": "bounded_full_snapshot_incremental_upserts",
+                "connection_version": job.connection_version,
+                "committed_at": iso(utc_now()),
+                "records": len(records),
+                "delta": delta,
+            }
+            connection.sync_checkpoint = {**job.checkpoint, "sync_id": job.id}
             if changed:
                 advance(db, wid)
             job.state, job.record_count, job.error_code = "completed", len(records), None

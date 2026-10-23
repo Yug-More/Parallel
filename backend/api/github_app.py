@@ -226,3 +226,65 @@ def pending(workspace_id: str, user: CurrentUser, db: DB, request: Request):
                 )
     db.commit()
     return {"items": result}
+
+
+class VerifyAccess(InputModel):
+    version: int = Field(ge=1)
+
+
+@router.post("/workspaces/{workspace_id}/connections/{connection_id}/verify")
+def verify_access(
+    workspace_id: str,
+    connection_id: str,
+    payload: VerifyAccess,
+    user: CurrentUser,
+    db: DB,
+    request: Request,
+):
+    settings = configured(request)
+    lock_workspace(db, workspace_id, user.id, owner=True)
+    row = (
+        db.query(RepositoryConnection)
+        .filter_by(id=connection_id, workspace_id=workspace_id)
+        .first()
+    )
+    if not row:
+        raise HTTPException(404, "Connection not found")
+    if (
+        row.version != payload.version
+        or not row.active
+        or row.auth_mode != "github_app_user"
+        or row.creator_id != user.id
+    ):
+        raise HTTPException(409, "Connection changed or requires renewed owner authorization")
+    if not row.credential_expires_at or row.credential_expires_at <= utc_now() + timedelta(
+        seconds=60
+    ):
+        raise HTTPException(409, "Sync the connection to renew its grant first")
+    credentials = github_app.unseal(settings, row.credential)
+    expected_id, installation_id, repository = (
+        row.repository_id,
+        row.installation_id,
+        row.repository,
+    )
+    db.commit()
+    request.app.state.auth_limiter.check("github-permission-budget", limit=20)
+    try:
+        verified = github_app.verified_repository(
+            settings, credentials["access_token"], installation_id, repository
+        )
+        valid = verified == expected_id
+    except Exception:
+        valid = False
+    lock_workspace(db, workspace_id, user.id, owner=True)
+    db.refresh(row)
+    if row.version != payload.version or not row.active or row.creator_id != user.id:
+        raise HTTPException(409, "Connection changed during verification")
+    if not valid:
+        github_app.revoke_connection(db, row)
+        db.commit()
+        raise HTTPException(409, "Private access could not be verified; connection revoked")
+    row.access_verified_until = utc_now() + timedelta(minutes=10)
+    record_activity(db, workspace_id, user, "Revalidated selected read-only GitHub App permission")
+    db.commit()
+    return connection_out(db, row)

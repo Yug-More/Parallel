@@ -1,4 +1,4 @@
-"""A heartbeat proves recent worker polling, not successful job execution."""
+"""A heartbeat proves process liveness, not successful job execution."""
 
 from datetime import timedelta
 
@@ -32,6 +32,40 @@ def status(db):
     return {
         "active_workers": active,
         "last_seen_at": as_utc(latest.last_seen_at) if latest else None,
-        "status": "recently_polling" if active else "not_recently_seen",
-        "note": "Recent polling does not prove a job succeeded; inspect its durable state.",
+        "status": "recently_alive" if active else "not_recently_seen",
+        "note": "Recent process liveness does not prove a job succeeded; inspect its durable state.",
     }
+
+
+class HeartbeatSupervisor:
+    """Independent liveness pulse; deliberately says nothing about job success."""
+
+    def __init__(self, factory, worker_id, interval=10):
+        from threading import Event, Thread
+
+        self.factory, self.worker_id, self.interval = factory, worker_id, interval
+        self.stop = Event()
+        self.thread = Thread(target=self.pulse, name="worker-heartbeat", daemon=True)
+
+    def pulse(self):
+        import logging
+
+        while not self.stop.wait(self.interval):
+            try:
+                heartbeat(self.factory, self.worker_id)
+            except Exception:
+                # Do not print database URLs or provider exception bodies.
+                logging.getLogger(__name__).warning("worker_heartbeat_failed")
+
+    def __enter__(self):
+        heartbeat(self.factory, self.worker_id)
+        self.thread.start()
+        return self
+
+    def __exit__(self, *_):
+        if self.thread.ident is None:
+            return
+        self.stop.set()
+        self.thread.join(timeout=5)
+        if not self.thread.is_alive():
+            heartbeat(self.factory, self.worker_id, "stopped")

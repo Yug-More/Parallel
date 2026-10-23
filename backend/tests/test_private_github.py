@@ -379,3 +379,61 @@ def test_private_revoke_during_provider_read_discards_import(accounts, applicati
     with application.state.session_factory() as db:
         assert db.query(ImportedRecord).count() == 0
         assert db.query(RepositorySync).one().state == "cancelled"
+
+
+def test_explicit_permission_recheck_and_sensitive_freshness(accounts, application, monkeypatch):
+    from fastapi import HTTPException
+
+    from github_app import require_fresh_private_access
+
+    configure(application)
+    monkeypatch.setattr(github_app, "request_json", transport)
+    owner, _ = accounts()
+    member, _ = accounts("member@example.test", "Member")
+    wid = project(owner)
+    join(owner, member, wid, "member@example.test")
+    result = authorize(owner, wid, application)
+    cid = result["connection"]["id"]
+    url = f"/workspaces/{wid}/connections/{cid}/verify"
+    assert member.post(url, json={"version": 1}).status_code == 403
+    assert owner.post(url, json={"version": 9}).status_code == 409
+    with application.state.session_factory() as db:
+        db.get(RepositoryConnection, cid).access_verified_until = utc_now() + timedelta(minutes=8)
+        db.commit()
+        with pytest.raises(HTTPException) as stale:
+            require_fresh_private_access(db, wid)
+        assert stale.value.status_code == 409
+    assert owner.post(url, json={"version": 1}).status_code == 200
+    with application.state.session_factory() as db:
+        require_fresh_private_access(db, wid)
+    monkeypatch.setattr(github_app, "verified_repository", lambda *_args, **_kwargs: 999)
+    assert owner.post(url, json={"version": 1}).status_code == 409
+    with application.state.session_factory() as db:
+        connection = db.get(RepositoryConnection, cid)
+        assert not connection.active and connection.credential is None
+
+
+def test_permission_recheck_discards_late_owner_revocation(accounts, application, monkeypatch):
+    configure(application)
+    monkeypatch.setattr(github_app, "request_json", transport)
+    owner, _ = accounts()
+    wid = project(owner)
+    result = authorize(owner, wid, application)
+    cid = result["connection"]["id"]
+
+    def revoked(*_args, **_kwargs):
+        assert (
+            owner.post(
+                f"/workspaces/{wid}/connections/{cid}/revoke", json={"version": 1}
+            ).status_code
+            == 200
+        )
+        return 99
+
+    monkeypatch.setattr(github_app, "verified_repository", revoked)
+    assert (
+        owner.post(f"/workspaces/{wid}/connections/{cid}/verify", json={"version": 1}).status_code
+        == 409
+    )
+    with application.state.session_factory() as db:
+        assert not db.get(RepositoryConnection, cid).active

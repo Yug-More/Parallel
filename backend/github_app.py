@@ -287,3 +287,21 @@ def maintain_private(factory):
                     )
                 )
         db.commit()
+
+
+def require_fresh_private_access(db, workspace_id, maximum_age=30):
+    """Sensitive model transmission requires a recently verified permission cache.
+
+    Ordinary reads retain the documented ten-minute maximum revocation window.
+    Revalidation performs fixed-host permission GETs and never reads source bodies.
+    """
+    from fastapi import HTTPException
+
+    threshold = utc_now() + timedelta(minutes=10) - timedelta(seconds=maximum_age)
+    for row in db.query(RepositoryConnection).filter_by(
+        workspace_id=workspace_id, active=True, auth_mode="github_app_user"
+    ):
+        if not row.access_verified_until or row.access_verified_until < threshold:
+            raise HTTPException(
+                409, "Revalidate private repository access before model transmission"
+            )

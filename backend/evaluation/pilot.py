@@ -9,13 +9,15 @@ import base64
 import json
 import logging
 import sys
+import time
+from dataclasses import replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 
-def evaluate():
+def evaluate(trained_settings=None):
     from fastapi.testclient import TestClient
 
     from config import Settings
@@ -40,6 +42,7 @@ def evaluate():
                 database_url=url,
                 secret_key="test-only-pilot-evaluation-session-key",
                 environment="test",
+                local_index_enabled=True,
             )
         )
         factory = app.state.session_factory
@@ -213,10 +216,42 @@ def evaluate():
                     )
                     labels[alias] = {"external:" + alias}
                 db.commit()
+            from semantic import index_once
+
+            assert owner.post(f"/workspaces/{wid}/retrieval-index").status_code == 202
+            index_once(factory)
+            modes = ["legacy", "coverage", "focused", "hybrid"]
+            trained_status = "not_run_no_operator_provisioned_model"
+            if trained_settings:
+                from embedding_providers import configured_provider
+
+                if trained_settings.embedding_provider != "local":
+                    raise ValueError("This full holdout harness permits offline local models only")
+                app.state.settings = replace(
+                    app.state.settings,
+                    embedding_provider="local",
+                    embedding_model=trained_settings.embedding_model,
+                    embedding_revision=trained_settings.embedding_revision,
+                    embedding_dimensions=trained_settings.embedding_dimensions,
+                    embedding_local_path=trained_settings.embedding_local_path,
+                    embedding_artifact_sha256=trained_settings.embedding_artifact_sha256,
+                )
+                queued = owner.post(
+                    f"/workspaces/{wid}/retrieval-index",
+                    json={"provider": "trained", "include_historical": True},
+                )
+                assert queued.status_code == 202, queued.text
+                index_once(factory, configured_provider(app.state.settings))
+                job = owner.get(f"/workspaces/{wid}/retrieval-index").json()["items"][0]
+                if job["state"] != "ready":
+                    raise RuntimeError("Offline trained model could not build the evaluation index")
+                modes.extend(["semantic", "trained"])
+                trained_status = {"state": "executed_offline", "index": job}
             methods = {}
-            for ranking in ["legacy", "coverage", "focused"]:
+            for ranking in modes:
                 results = []
                 citations = 0
+                latencies = []
                 for case in cases:
                     expected = set().union(*(labels[a] for a in case["relevant"]))
                     # Long document queries judge the matching passage, rather than
@@ -228,6 +263,7 @@ def evaluate():
                                 for p in db.query(DocumentPassage)
                                 if "Incident runbook" in p.body
                             }
+                    started = time.perf_counter()
                     response = owner.get(
                         f"/workspaces/{wid}/knowledge",
                         params={
@@ -239,6 +275,7 @@ def evaluate():
                             **({"status": case["status"]} if case["status"] else {}),
                         },
                     )
+                    latencies.append((time.perf_counter() - started) * 1000)
                     assert response.status_code == 200, response.text
                     rows = response.json()["items"]
                     actual = {r["ref"] for r in rows}
@@ -277,6 +314,8 @@ def evaluate():
                     "recall_at_5": avg("recall_at_5"),
                     "mrr": avg("rr"),
                     "citations_resolved": citations,
+                    "latency_ms_mean": sum(latencies) / len(latencies),
+                    "latency_ms_max": max(latencies),
                     "cases": results,
                 }
             denials = 0
@@ -325,6 +364,8 @@ def evaluate():
                 if (new["rr"] or 0) < (old["rr"] or 0):
                     comparison["regressed_mrr_cases"].append(new["name"])
             return {
+                "trained_model": trained_status,
+                "character_similarity": "hybrid mode uses deterministic character ngrams, not a trained model",
                 "judgments": "developer-created frozen holdout; not independent human judgments",
                 "queries": len(cases),
                 "cutoff": 5,
@@ -341,8 +382,20 @@ def evaluate():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--offline-trained",
+        action="store_true",
+        help="Explicitly run an operator-provisioned local model on synthetic holdout data; never downloads weights",
+    )
     args = parser.parse_args()
-    report = json.dumps(evaluate(), indent=2)
+    trained_settings = None
+    if args.offline_trained:
+        from config import load_settings
+
+        trained_settings = load_settings()
+        if trained_settings.embedding_provider != "local":
+            parser.error("--offline-trained requires EMBEDDING_PROVIDER=local")
+    report = json.dumps(evaluate(trained_settings), indent=2)
     if args.output:
         args.output.write_text(report + "\n")
     print(report)

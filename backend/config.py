@@ -1,6 +1,7 @@
 """Validated configuration, loaded before database construction."""
 
 import os
+import re
 import secrets
 from dataclasses import dataclass
 from pathlib import Path
@@ -22,6 +23,14 @@ class Settings:
     github_app_client_secret: str | None = None
     github_app_id: int | None = None
     credential_encryption_key: str | None = None
+    embedding_provider: str = "disabled"
+    embedding_model: str = "text-embedding-3-small"
+    embedding_revision: str = "v1"
+    embedding_dimensions: int = 384
+    embedding_local_path: str | None = None
+    embedding_artifact_sha256: str | None = None
+    external_embeddings_enabled: bool = False
+    recovery_outbox_path: str | None = None
     local_index_enabled: bool = False
     grounded_model_enabled: bool = False
     github_connector_enabled: bool = False
@@ -29,6 +38,31 @@ class Settings:
     openai_model: str = "gpt-4.1-mini"
 
     def __post_init__(self):
+        if self.embedding_provider not in {"disabled", "local", "openai"}:
+            raise ValueError("EMBEDDING_PROVIDER must be disabled, local or openai")
+        if not 1 <= self.embedding_dimensions <= 1536:
+            raise ValueError("EMBEDDING_DIMENSIONS must be between 1 and 1536")
+        if not re.fullmatch(r"[A-Za-z0-9_./:-]{1,80}", self.embedding_model):
+            raise ValueError("EMBEDDING_MODEL must be a bounded model identifier")
+        if not re.fullmatch(r"[A-Za-z0-9_.-]{1,32}", self.embedding_revision):
+            raise ValueError("EMBEDDING_REVISION must be bounded and explicit")
+        if self.embedding_provider == "local" and not (
+            self.embedding_local_path
+            and self.embedding_artifact_sha256
+            and re.fullmatch(r"[a-f0-9]{64}", self.embedding_artifact_sha256)
+        ):
+            raise ValueError(
+                "Local embeddings require an operator-provisioned path and artifact SHA256"
+            )
+        if self.embedding_provider == "openai" and not (
+            self.external_embeddings_enabled and self.openai_api_key
+        ):
+            raise ValueError("External embeddings require explicit enablement and a server key")
+
+        if self.recovery_outbox_path and (
+            self.environment == "production" or not Path(self.recovery_outbox_path).is_absolute()
+        ):
+            raise ValueError("Local recovery outbox requires an absolute path in development/test")
         if self.github_app_enabled:
             if not all(
                 (
@@ -97,6 +131,15 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
         github_app_client_secret=environ.get("GITHUB_APP_CLIENT_SECRET") or None,
         github_app_id=int(environ["GITHUB_APP_ID"]) if environ.get("GITHUB_APP_ID") else None,
         credential_encryption_key=environ.get("CREDENTIAL_ENCRYPTION_KEY") or None,
+        embedding_provider=environ.get("EMBEDDING_PROVIDER", "disabled"),
+        embedding_model=environ.get("EMBEDDING_MODEL", "text-embedding-3-small"),
+        embedding_revision=environ.get("EMBEDDING_REVISION", "v1"),
+        embedding_dimensions=int(environ.get("EMBEDDING_DIMENSIONS", "384")),
+        embedding_local_path=environ.get("EMBEDDING_LOCAL_PATH") or None,
+        embedding_artifact_sha256=environ.get("EMBEDDING_ARTIFACT_SHA256") or None,
+        external_embeddings_enabled=environ.get("EXTERNAL_EMBEDDINGS_ENABLED", "false").lower()
+        == "true",
+        recovery_outbox_path=environ.get("RECOVERY_OUTBOX_PATH") or None,
         local_index_enabled=environ.get("LOCAL_INDEX_ENABLED", "false").lower() == "true",
         grounded_model_enabled=environ.get("GROUNDED_MODEL_ENABLED", "false").lower() == "true",
         github_connector_enabled=environ.get("GITHUB_CONNECTOR_ENABLED", "false").lower() == "true",

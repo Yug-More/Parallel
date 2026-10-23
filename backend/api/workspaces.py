@@ -44,7 +44,7 @@ def list_workspaces(user: CurrentUser, db: DB):
     rows = (
         db.query(Workspace, Membership)
         .join(Membership)
-        .filter(Membership.user_id == user.id)
+        .filter(Membership.user_id == user.id, Workspace.closed_at.is_(None))
         .order_by(Workspace.created_at, Workspace.id)
         .all()
     )

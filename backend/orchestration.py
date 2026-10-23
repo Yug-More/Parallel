@@ -131,6 +131,7 @@ def create_run(
     key,
     attempt=1,
     retry_of=None,
+    knowledge_refs=None,
 ):
     request_hash = digest(
         {
@@ -140,6 +141,7 @@ def create_run(
             "input_refs": refs,
             "publish": publish,
             "retry_of": retry_of,
+            **({"knowledge_refs": knowledge_refs} if knowledge_refs else {}),
         }
     )
     existing = (
@@ -168,6 +170,8 @@ def create_run(
         raise HTTPException(409, str(exc)) from None
     for ref in refs:
         source_record(db, workspace_id, ref["kind"], ref["id"])
+    for ref in knowledge_refs or []:
+        resolve(db, workspace_id, ref["kind"], ref["id"])
     run = AgentRun(
         id=str(uuid4()),
         workspace_id=workspace_id,
@@ -176,6 +180,7 @@ def create_run(
         objective=objective,
         task_id=task_id,
         input_refs=refs,
+        knowledge_refs=knowledge_refs,
         publish=publish,
         idempotency_key=key,
         request_hash=request_hash,
@@ -197,6 +202,7 @@ def create_run(
                 objective=objective,
                 task_id=task_id,
                 input_refs=refs,
+                knowledge_refs=knowledge_refs,
                 publish=False,
                 parent_id=run.id,
                 request_hash=request_hash,
@@ -254,7 +260,11 @@ def capture_context(db, run):
     decision_data = [source_record(db, run.workspace_id, "decision", row.id) for row in decisions]
     graph = [{"task_id": row.task_id, "depends_on_id": row.depends_on_id} for row in edges]
     inputs = [source_record(db, run.workspace_id, ref["kind"], ref["id"]) for ref in run.input_refs]
-    knowledge = []
+    selected_knowledge = [
+        resolve(db, run.workspace_id, ref["kind"], ref["id"]) for ref in run.knowledge_refs or []
+    ]
+    inputs.extend(selected_knowledge)
+    knowledge = list(selected_knowledge)
     if run.agent_type in KNOWLEDGE_CONTRACTS:
         matches = []
         for kind in ["decision", "decision_revision", "task", "document", "external", "message"]:
@@ -278,8 +288,13 @@ def capture_context(db, run):
                 if item["authority"] != "interpretation"
             )
         matches.sort(key=lambda item: (-item["score"], item["kind"], item["id"]))
-        for item in matches[:8]:
-            knowledge.append(resolve(db, run.workspace_id, item["kind"], item["id"]))
+        seen = {(source["kind"], source["id"]) for source in knowledge}
+        for item in matches:
+            if len(knowledge) >= 8:
+                break
+            if (item["kind"], item["id"]) not in seen:
+                knowledge.append(resolve(db, run.workspace_id, item["kind"], item["id"]))
+                seen.add((item["kind"], item["id"]))
     epoch = db.get(Workspace, run.workspace_id).knowledge_epoch
     fingerprint_data = {
         "tasks": task_data,

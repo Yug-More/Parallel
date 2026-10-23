@@ -57,7 +57,8 @@ def search(
     until: datetime | None = None,
     include_historical: bool = False,
     include_archived: bool = False,
-    ranking: Literal["legacy", "coverage", "focused", "hybrid"] = "coverage",
+    ranking: Literal["legacy", "coverage", "focused", "hybrid", "trained", "semantic"] = "coverage",
+    external_consent: bool = False,
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0, le=10000),
 ):
@@ -68,6 +69,23 @@ def search(
     from semantic import hybrid
 
     use_hybrid = ranking == "hybrid" and request.app.state.settings.local_index_enabled
+    provider = None
+    if ranking in {"trained", "semantic"}:
+        from embedding_providers import configured_provider
+
+        provider = configured_provider(request.app.state.settings)
+        if provider is None:
+            raise HTTPException(503, "Trained embedding provider is disabled")
+        if provider.external:
+            require_member(db, user.id, workspace_id, owner=True)
+            from github_app import require_fresh_private_access
+
+            require_fresh_private_access(db, workspace_id)
+            if not external_consent:
+                raise HTTPException(422, "Explicit external query transmission consent required")
+            db.commit()
+            request.app.state.auth_limiter.check("embedding-global-budget", limit=12)
+        use_hybrid = True
     retrieval = hybrid if use_hybrid else retrieve
     result = retrieval(
         db,
@@ -79,7 +97,11 @@ def search(
         until=end,
         include_historical=include_historical,
         include_archived=include_archived,
-        **({} if use_hybrid else {"ranking": "coverage" if ranking == "hybrid" else ranking}),
+        **(
+            {"provider": provider, "user_id": user.id, "semantic_only": ranking == "semantic"}
+            if use_hybrid
+            else {"ranking": "coverage" if ranking == "hybrid" else ranking}
+        ),
         limit=limit,
         offset=offset,
     )
