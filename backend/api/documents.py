@@ -38,14 +38,18 @@ def get_document(db, workspace_id, document_id):
 def upload(db, workspace_id, payload, user, document_id=None):
     lock_workspace(db, workspace_id, user.id)
     filename = payload.filename
-    if re.search(r"[/\\\x00-\x1f\x7f]", filename) or not filename.lower().endswith((".txt", ".md")):
-        raise HTTPException(422, "Use a plain filename ending in .txt or .md")
+    if re.search(r"[/\\\x00-\x1f\x7f]", filename) or not filename.lower().endswith(
+        (".txt", ".md", ".pdf")
+    ):
+        raise HTTPException(422, "Use a plain filename ending in .txt, .md or .pdf")
     try:
         raw = base64.b64decode(payload.content_base64, validate=True)
     except (binascii.Error, ValueError):
         raise HTTPException(422, "Invalid base64 content") from None
     if not raw or len(raw) > MAX_BYTES:
         raise HTTPException(422, "Upload must contain 1–524288 bytes")
+    if filename.lower().endswith(".pdf") != raw.startswith(b"%PDF-"):
+        raise HTTPException(422, "PDF content must match its filename and PDF signature")
     digest = content_hash(raw)
     if document_id:
         item = get_document(db, workspace_id, document_id)

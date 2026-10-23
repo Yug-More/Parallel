@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 def main():
     import uvicorn
+    from cryptography.fernet import Fernet
 
     from config import Settings
     from main import create_app
@@ -24,6 +25,12 @@ def main():
                 secret_key="e2e-only-session-signing-key-32-bytes",
                 environment="test",
                 github_connector_enabled=True,
+                local_index_enabled=True,
+                github_app_enabled=True,
+                github_app_id=123,
+                github_app_client_id="e2e-fixture-client",
+                github_app_client_secret="e2e-fixture-secret",
+                credential_encryption_key=Fernet.generate_key().decode(),
                 allowed_origins=("http://127.0.0.1:15175",),
             )
         )
@@ -63,6 +70,63 @@ def main():
 
             return fetch_repository(repository, read)
 
+        import github_app
+        from semantic import index_once
+
+        def fixture_private(path, *, token=None, data=None):
+            if path == "/login/device/code":
+                return {
+                    "device_code": "e2e-device",
+                    "user_code": "TEST-CODE",
+                    "expires_in": 900,
+                    "interval": 5,
+                }
+            if path == "/login/oauth/access_token":
+                return {
+                    "token_type": "bearer",
+                    "access_token": "e2e-access",
+                    "refresh_token": "e2e-refresh",
+                    "expires_in": 28800,
+                }
+            if path.startswith("/user/installations?"):
+                return {
+                    "installations": [
+                        {
+                            "id": 42,
+                            "app_id": 123,
+                            "repository_selection": "selected",
+                            "permissions": {
+                                "metadata": "read",
+                                "issues": "read",
+                                "pull_requests": "read",
+                            },
+                        }
+                    ]
+                }
+            if path.startswith("/user/installations/42/repositories?"):
+                return {"repositories": [{"id": 99, "full_name": "parallel-example/private"}]}
+            if path == "/repos/parallel-example/private":
+                return {
+                    "id": 99,
+                    "private": True,
+                    "full_name": "parallel-example/private",
+                    "description": "Synthetic private test fixture",
+                }
+            if path.startswith("/repos/parallel-example/private/issues?"):
+                return [
+                    {
+                        "number": 1,
+                        "title": "Pilot rollback verification",
+                        "body": "Verify the pilot rollback before release",
+                        "state": "open",
+                    }
+                ]
+            if path.startswith("/repos/parallel-example/private/pulls?"):
+                return []
+            raise SyncError("test_endpoint_unavailable")
+
+        # Explicit test-only transport; no production fixture mode or real grant.
+        github_app.request_json = fixture_private
         stopped = threading.Event()
 
         def worker():
@@ -74,8 +138,8 @@ def main():
                 execute_once(app.state.session_factory) or run_once(
                     app.state.session_factory
                 ) or ingest_once(app.state.session_factory) or sync_once(
-                    app.state.session_factory, fixture_fetch
-                )
+                    app.state.session_factory, fixture_fetch, settings=app.state.settings
+                ) or index_once(app.state.session_factory)
                 stopped.wait(0.2)
 
         thread = threading.Thread(target=worker, daemon=True)

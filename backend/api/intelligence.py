@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import aliased
@@ -46,6 +46,7 @@ def search(
     workspace_id: str,
     user: CurrentUser,
     db: DB,
+    request: Request,
     q: str = Query("", max_length=200),
     kind: Literal[
         "message", "task", "activity", "decision", "document", "external", "decision_revision"
@@ -56,7 +57,7 @@ def search(
     until: datetime | None = None,
     include_historical: bool = False,
     include_archived: bool = False,
-    ranking: Literal["legacy", "coverage"] = "coverage",
+    ranking: Literal["legacy", "coverage", "focused", "hybrid"] = "coverage",
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0, le=10000),
 ):
@@ -64,7 +65,11 @@ def search(
     start, end = naive_utc(since), naive_utc(until)
     if start and end and start > end:
         raise HTTPException(422, "Since must precede until")
-    result = retrieve(
+    from semantic import hybrid
+
+    use_hybrid = ranking == "hybrid" and request.app.state.settings.local_index_enabled
+    retrieval = hybrid if use_hybrid else retrieve
+    result = retrieval(
         db,
         workspace_id,
         q=q,
@@ -74,7 +79,7 @@ def search(
         until=end,
         include_historical=include_historical,
         include_archived=include_archived,
-        ranking=ranking,
+        **({} if use_hybrid else {"ranking": "coverage" if ranking == "hybrid" else ranking}),
         limit=limit,
         offset=offset,
     )

@@ -108,6 +108,8 @@ def answer(workspace_id: str, payload: Question, user: CurrentUser, db: DB, requ
     db.add(row)
     db.commit()  # provider latency never holds the workspace lock
     code = None
+    if payload.mode == "model":
+        request.app.state.auth_limiter.check("provider-global-budget", limit=30)
     try:
         if not evidence:
             claims = []

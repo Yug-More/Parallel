@@ -82,6 +82,7 @@ def passage_record(db, workspace_id, passage_id):
         "document_id": document.id,
         "revision_id": revision.id,
         "ordinal": passage.ordinal,
+        "page_number": passage.page_number,
         "filename": revision.filename,
     }
 
@@ -140,16 +141,33 @@ def ingest_once(factory, extract_fn=extract_text):
         revision.state, revision.lease_token = "processing", token
         revision.lease_until = now + timedelta(seconds=30)
         raw, revision_id, workspace_id = revision.raw_content, revision.id, revision.workspace_id
+        is_pdf = revision.filename.lower().endswith(".pdf")
         db.commit()
-    error, text = None, None
+    error = None
     try:
-        text = extract_fn(raw)
+        if is_pdf:
+            from pdf_extract import extract_pdf
+
+            pages = extract_pdf(raw)
+        else:
+            pages = [(None, extract_fn(raw))]
     except UnicodeDecodeError:
         error = "invalid_utf8"
     except ValueError as exc:
         error = (
             str(exc)
-            if str(exc) in {"binary_content", "text_limit", "empty_document"}
+            if str(exc)
+            in {
+                "binary_content",
+                "text_limit",
+                "empty_document",
+                "pdf_invalid",
+                "pdf_encrypted",
+                "pdf_page_limit",
+                "pdf_timeout",
+                "pdf_resource_limit",
+                "pdf_no_text",
+            }
             else "extraction_failed"
         )
     except Exception:
@@ -164,7 +182,11 @@ def ingest_once(factory, extract_fn=extract_text):
             error = "lease_expired"
         cancelled = document.archived or not db.get(Membership, (workspace_id, revision.creator_id))
         if not cancelled and not error:
-            for ordinal, start in enumerate(range(0, len(text), 1200)):
+            from segmentation import segments
+
+            for ordinal, (page_number, body) in enumerate(
+                (page, part) for page, text in pages for part in segments(text)
+            ):
                 db.add(
                     DocumentPassage(
                         id=str(uuid5(NAMESPACE_URL, f"parallel:document:{revision.id}:{ordinal}")),
@@ -172,7 +194,8 @@ def ingest_once(factory, extract_fn=extract_text):
                         revision_id=revision.id,
                         ordinal=ordinal,
                         title=revision.title,
-                        body=text[start : start + 1200],
+                        body=body,
+                        page_number=page_number,
                     )
                 )
         revision.state = "cancelled" if cancelled else "failed" if error else "ready"

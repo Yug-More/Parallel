@@ -224,6 +224,9 @@ def create_run(
 
 
 def capture_context(db, run):
+    from github_app import expire_workspace
+
+    expire_workspace(db, run.workspace_id)
     task_scope(db, run.workspace_id, run.task_id, run.agent_type)
     tasks = (
         db.query(Task).filter_by(workspace_id=run.workspace_id).order_by(Task.id).limit(501).all()
@@ -260,7 +263,14 @@ def capture_context(db, run):
                 for item in retrieve(
                     db,
                     run.workspace_id,
-                    q=run.objective[:200],
+                    q=""
+                    if run.objective.casefold().strip() == "triage github issues"
+                    and kind == "external"
+                    else run.objective[:200],
+                    status="open"
+                    if run.objective.casefold().strip() == "triage github issues"
+                    and kind == "external"
+                    else None,
                     kind=kind,
                     limit=8,
                     include_historical=kind in {"document", "decision_revision"},
@@ -408,6 +418,31 @@ def compute(contract, context, children=None):
             if key not in seen_refs and len(evidence) < 20:
                 evidence.append(reference(source))
                 seen_refs.add(key)
+        if context["objective"].casefold().strip() == "triage github issues":
+            issues = [
+                s
+                for s in context["knowledge_sources"]
+                if s["kind"] == "external"
+                and s.get("record_type") == "issues"
+                and s["status"] == "open"
+            ]
+            steps = [
+                {
+                    "title": ("Review issue: " + s["title"])[:200],
+                    "description": "Imported GitHub issue; inspect before implementation.\n"
+                    + s["original_url"]
+                    + "\nSource: external:"
+                    + s["id"]
+                    + " version "
+                    + str(s["version"]),
+                    "status": "todo",
+                    "priority": "medium",
+                    "assignee_id": None,
+                }
+                for s in issues
+                if ("Review issue: " + s["title"])[:200].casefold() not in existing
+            ][:5]
+            evidence = [reference(s) for s in issues[:5]]
         if steps:
             proposal = {
                 "action": "create_task_plan",

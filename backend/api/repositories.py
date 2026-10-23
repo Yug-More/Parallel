@@ -72,6 +72,7 @@ def listing(workspace_id: str, user: CurrentUser, db: DB, request: Request):
     require_member(db, user.id, workspace_id)
     return {
         "enabled": request.app.state.settings.github_connector_enabled,
+        "private_enabled": request.app.state.settings.github_app_enabled,
         "items": [
             connection_out(db, row)
             for row in db.query(RepositoryConnection)
@@ -145,6 +146,7 @@ def revoke(workspace_id: str, connection_id: str, payload: Version, user: Curren
     if row.active:
         advance(db, workspace_id)
         row.active, row.version = False, row.version + 1
+        row.credential = row.credential_expires_at = row.access_verified_until = None
         db.query(RepositorySync).filter(
             RepositorySync.connection_id == row.id, RepositorySync.state.in_(["queued", "running"])
         ).update(

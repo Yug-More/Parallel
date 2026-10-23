@@ -69,7 +69,7 @@ def safe_text(value, maximum):
     return re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", str(value or ""))[:maximum]
 
 
-def fetch_repository(repository, read=github_read):
+def fetch_repository(repository, read=github_read, maximum=25):
     """Three GET requests, at most 50 issue/PR records, no arbitrary URLs."""
     path = f"/repos/{repository}"
     metadata = read(path)
@@ -89,7 +89,7 @@ def fetch_repository(repository, read=github_read):
         items = read(f"{path}/{category}?state=all&sort=updated&direction=desc&per_page=25&page=1")
         if not isinstance(items, list):
             raise SyncError("invalid_response")
-        for item in items[:25]:
+        for item in items[:maximum]:
             if category == "issues" and "pull_request" in item:
                 continue
             number = item.get("number")
@@ -154,7 +154,8 @@ def connection_out(db, connection):
         "repository": connection.repository,
         "active": connection.active,
         "version": connection.version,
-        "auth_mode": "public_unauthenticated",
+        "auth_mode": connection.auth_mode,
+        "access_verified_until": iso(connection.access_verified_until),
         "provider": "github",
         "created_at": iso(connection.created_at),
         "syncs": [
@@ -180,10 +181,17 @@ def authorized(db, job, connection):
         and connection.version == job.connection_version
         and member
         and member.role == "owner"
+        and (
+            connection.auth_mode != "github_app_user"
+            or (
+                (creator := db.get(Membership, (job.workspace_id, connection.creator_id)))
+                and creator.role == "owner"
+            )
+        )
     )
 
 
-def sync_once(factory, fetch=fetch_repository):
+def sync_once(factory, fetch=fetch_repository, settings=None):
     with factory() as db:
         expired = (
             db.query(RepositorySync)
@@ -221,13 +229,30 @@ def sync_once(factory, fetch=fetch_repository):
         job.state, job.lease_token, job.lease_until = (
             "running",
             token,
-            utc_now() + timedelta(seconds=45),
+            utc_now() + timedelta(seconds=120 if connection.auth_mode == "github_app_user" else 45),
         )
         job.attempt += 1
+        private = connection.auth_mode == "github_app_user"
+        if private:
+            member = db.get(Membership, (job.workspace_id, connection.creator_id))
+            if not member or member.role != "owner":
+                from github_app import revoke_connection
+
+                revoke_connection(db, connection)
+                db.commit()
+                return True
+        db.expunge(connection)
         db.commit()
-    records, error = None, None
+    records, error, credential, credential_expiry = None, None, None, None
     try:
-        records = fetch(repo)
+        if private:
+            if not settings or not settings.github_app_enabled:
+                raise SyncError("private_connector_disabled")
+            from github_app import private_fetch
+
+            records, credential, credential_expiry = private_fetch(settings, connection)
+        else:
+            records = fetch(repo)
     except SyncError as exc:
         error = exc
     except Exception:
@@ -243,6 +268,10 @@ def sync_once(factory, fetch=fetch_repository):
         elif job.lease_until <= utc_now():
             job.state, job.error_code = "failed", "lease_expired"
         elif error:
+            if private and error.code not in {"rate_limited", "github_unavailable"}:
+                from github_app import revoke_connection
+
+                revoke_connection(db, connection)
             job.error_code = error.code
             if error.retry_seconds and job.attempt < 3:
                 job.state, job.next_attempt_at = (
@@ -252,6 +281,12 @@ def sync_once(factory, fetch=fetch_repository):
             else:
                 job.state = "failed"
         else:
+            if private:
+                connection.credential, connection.credential_expires_at = (
+                    credential,
+                    credential_expiry,
+                )
+                connection.access_verified_until = utc_now() + timedelta(minutes=10)
             changed = False
             provider_ids = {item["provider_id"] for item in records}
             existing = db.query(ImportedRecord).filter_by(connection_id=connection.id).all()
