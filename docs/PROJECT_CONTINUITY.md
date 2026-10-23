@@ -48,9 +48,9 @@ flowchart LR
 
 `GET /workspaces/{w}/knowledge` supports `q`, `kind`, `status`, `since`, `until`, `include_historical`, `include_archived`, `limit` (1–100), and `offset` (0–10,000). Timestamps must include a timezone. Since is exclusive and until inclusive, applied to update time for decisions/tasks and creation time for messages/activity.
 
-Lowercase word terms match title/body by OR. A title term scores 3, body term 1; a complete title phrase adds 4. Up to 12 unique terms and 200 query characters are used. Ties sort by event time descending, kind, then ID. Default decision results exclude superseded/rejected records; default task results exclude archives. A status filter does not override those defaults: enable historical/archive inclusion explicitly.
+Default `ranking=coverage` removes a small explicit set of common question words and requires at least 60% of the remaining terms (rounded up) to match title/body. A title term scores 3, body term 1; a complete title phrase adds 4. `ranking=legacy` preserves the original OR candidate method for comparisons. Stopword-only nonempty questions abstain. Up to 12 unique terms and 200 query characters are used. Ties sort by event time descending, kind, then ID. Default decision results exclude superseded/rejected records; default task results exclude archives. A status filter does not override those defaults: enable historical/archive inclusion explicitly.
 
-Every result carries a stable reference, version where applicable, event time, state, authority category, and excerpt. Empty results say no matching evidence. This is lexical retrieval; synonyms and paraphrases can be missed. OR matching can return irrelevant neighbors. It is not semantic search, contradiction resolution, or an arbitrary question-answering system. [Evaluation](EVALUATION.md) measures those limits.
+Every result carries a stable reference, version where applicable, event time, state, authority category, and excerpt. Empty results say no matching evidence. This is lexical retrieval; synonyms and paraphrases can be missed. Coverage matching can still return irrelevant neighbors and miss partial/vocabulary matches. It is not semantic search, contradiction resolution, or an arbitrary question-answering system. [Evaluation](EVALUATION.md) measures those limits.
 
 ## Continuity briefing
 
@@ -62,4 +62,10 @@ The change interval ends at the server's retrieval timestamp. Counts are current
 
 ## Optional models
 
-The existing conversation reply adapter remains optional and separately scoped. The new retrieval, briefing, coordinator and approval flows make no model calls and require no provider credentials. There is no claim that live model-backed evidence synthesis or embedding retrieval has been verified.
+The existing conversation reply adapter remains optional and separately scoped. Retrieval, briefing, coordinator and approval flows make no model calls and require no provider credentials. Ask workspace adds local quotations plus a separately enabled bounded model mode, described in [Integrations](INTEGRATIONS.md). There is no claim that live model-backed evidence synthesis or embedding retrieval has been verified.
+
+## Connected source lifecycle
+
+Search/source navigation also supports `document`, `external` and explicitly historical `decision_revision` IDs (`decision_id@version`). Default document search selects the current ready revision; historical inclusion exposes prior ready revisions only while the parent is active. Archived documents and revoked/unavailable imports remain inaccessible even with archive/history flags. Imported records retain original GitHub links and an untrusted-import authority category.
+
+Research/answers can cite these sources. Human decision-source editing still accepts the original four native types; importing a document does not automatically promote it into an accepted decision. Generated report messages can be cited, but their snapshots are redacted if the underlying knowledge epoch becomes unavailable. Saved answers check exact evidence fingerprints on every read. [Integrations](INTEGRATIONS.md) describes conservative revocation and authored-record limitations.

@@ -27,7 +27,7 @@ flowchart TB
 - `api/decisions.py` and `provenance.py` preserve revisioned human decisions and resolve actual same-workspace evidence.
 - `retrieval.py` builds bounded SQL union queries over current sources. `api/intelligence.py` authorizes retrieval and builds visit-relative briefings.
 - `api/agents.py` exposes human control; `orchestration.py` owns contract execution, context capture, leases, composition, recovery and exact publication. `worker.py` is its process entry point.
-- `providers.py` remains an optional conversation adapter. New local intelligence/agent capabilities never call it. Historical voice/SMS/tool modules remain non-executable under `legacy/`.
+- `providers.py` provides optional conversation replies and separately enabled structured grounded answers. Local deterministic agent contracts never call it. Historical voice/SMS/tool modules remain non-executable under `legacy/`.
 
 ## Workspace authorization
 
@@ -52,7 +52,7 @@ sequenceDiagram
     end
 ```
 
-Owners manage invitations/removal/ownership and approve publications. All members can collaborate on tasks and decisions, retrieve sources, and request read-only local runs. Only the initiating member or owner can cancel a root run; only the original initiator retries failed work. Agent identities are stable capability identifiers, not membership roles. Source text, display names, URL parameters and model output never confer authority.
+Owners manage invitations/removal/ownership, authorize/revoke public repository reads, and approve publications/native task plans. All members can collaborate on tasks and decisions, retrieve sources, and request read-only local runs. Only the initiating member or owner can cancel a root run; only the original initiator retries failed work. Agent identities are stable capability identifiers, not membership roles. Source text, display names, URL parameters and model output never confer authority.
 
 Read operations check membership before querying workspace resources. An already-authorized in-flight read may finish during removal; subsequent requests are denied. Frontend polling clears inaccessible state. A worker independently rechecks authority before saving an outcome or executing approved publication.
 
@@ -66,10 +66,18 @@ Polling remains the transport: approximately two seconds for workspace data, 1.5
 
 ## Data and time
 
-[Data model](DATA_MODEL.md) describes seven new tables added in revision `0004_intelligence`. Existing Phase 1B records and session validity are preserved. Decisions have full revisions; task history before/after this phase is represented by versions, current state and activity rather than a complete point-in-time task ledger. Briefing event time is distinct from retrieval time; live counts are not historical reconstruction.
+[Data model](DATA_MODEL.md) describes decision/run provenance from `0004_intelligence` and the document/import/answer/action/heartbeat additions through `0009_worker_health`. Existing Phase 1B records and session validity are preserved. Decisions have full revisions; task history before/after this phase is represented by versions, current state and activity rather than a complete point-in-time task ledger. Briefing event time is distinct from retrieval time; live counts are not historical reconstruction.
 
 ## Deployment assumptions and tradeoffs
 
 Development uses one backend, one worker and a database. The worker must be started explicitly; queued jobs survive its absence. Multiple workers are safe under database locks but do not imply a production queue service or measured scaling. SQLite serializes writers; PostgreSQL is the practical shared deployment option. Database backups, TLS, trusted ingress, shared rate limiting, monitoring, resource/retention policies and operational recovery remain deployment work.
 
-Optional providers require separate installation/configuration and can incur cost. Live provider compatibility, production deployment, real external actions and semantic retrieval have not been verified in this phase. See [Engineering decisions](ENGINEERING_DECISIONS.md) for why these boundaries were chosen.
+Optional providers require separate installation/configuration and can incur cost. Public GitHub GETs were live-verified. Live model compatibility, production deployment, external writes and semantic retrieval are not verified. See [Engineering decisions](ENGINEERING_DECISIONS.md) for why these boundaries were chosen.
+
+## Connected knowledge and native actions
+
+`documents.py` extracts bounded UTF-8 uploads through durable leases; `repositories.py` is a fixed-host public GET adapter and sync worker. `knowledge_sources.py` resolves native/document/import/revision evidence. Search remains SQL-based with a measured term-coverage filter, rather than a new vector/index service. `answers.py` validates schema/citation allowlists and revalidates saved evidence on every read. Optional provider latency runs outside workspace transactions.
+
+Knowledge epochs conservatively invalidate derived run contexts, outcomes, publication previews and generated messages after document/import changes or revocation. Unavailable generated-message previews are redacted from decision source history. Human-authored native records remain authored data. No archive/history flag bypasses a document/connection revocation boundary.
+
+`actions.py` separately executes exact native task-plan proposals; the legacy publish_report approval constraint remains unchanged. The worker recomputes the plan, compares context/payload/hash, verifies current ownership and initiating membership, then commits the complete task graph and resource receipt atomically. Local plan completion means computation completed; the proposed work is still To do. Worker health/readiness/backup behavior and scheduling limits are documented in [Operations](OPERATIONS.md).

@@ -49,3 +49,11 @@
 - Recheck initiating membership, task dependencies and context before committing worker results. Bind publication approval to exact action/payload/hash, current owner, expiry and atomic message receipt.
 - Worker and HTTP processes share a migrated database. Test interrupted leases, competing workers, approval replay/tampering, changed context and populated Phase 1B upgrades.
 - Keep docs screenshots captured from actual synthetic browser workflows. Diagrams must match implemented modules and states; do not present local computation as autonomous software execution.
+
+## Connected knowledge and native actions
+- Keep public GitHub reads opt-in, owner-authorized, fixed-host, GET-only and bounded. Never reuse CLI/account credentials or add a private/token fallback. Recheck connection version/current ownership before committing syncs.
+- Document filenames are metadata only; cap uploads/extracted text and use durable leases. Preserve revision uploader/filename/title and stable passage IDs. Archive/revocation denies current and historical retrieval; discard late results and terminal raw uploads.
+- Advance knowledge epochs on revocable source changes. Hide stale derived run/context/publication/message text across APIs, search, model context and decision-source previews. Revalidate answer evidence/fingerprints on every read. Human-authored native text cannot be automatically erased.
+- Optional grounded model answers require a separate opt-in and explicit request. Bound evidence/tokens/time/calls, forbid tools, validate allowlisted citations, recheck authority after latency and sanitize failures. Citation validity is not semantic correctness; never present fake-adapter tests as live model evidence.
+- Native proposals accept only code-defined exact task plans. Owner approval binds the payload/hash, context and expiry; recompute before execution and atomically commit To do tasks/prerequisites plus one receipt. Never infer Done or external work from reports or approvals.
+- Run both lexical rankings and backend/evaluation/connected.py before ranking changes. Disclose author-curated versus independent judgments and stated latency workloads. Keep production, PDF/private-auth/semantic/model-quality gaps explicit.

@@ -31,3 +31,15 @@ Rejected alternatives: silently editing accepted records; treating every convers
 ## ADR 007 — Poll and restore navigation without storing credentials
 
 **Accepted.** The interface polls bounded lists, preserves draft edits, and restores workspace/section from URL parameters. The backend checks membership independently of those parameters. HttpOnly cookies remain the session mechanism; no token is stored in browser localStorage. Already-read data cannot be recalled, and an in-flight authorized read may finish during removal.
+
+## ADR 006 — Bounded stored sources before a vector service
+
+**Accepted.** Text/Markdown extraction and public GitHub imports use SQL tables and the existing worker. Stable passages and explicit source kinds preserve provenance; archive/revocation gates live joins. Coverage-based lexical retrieval improves measured fixture precision without introducing embeddings, model downloads or another index lifecycle. PDF/private authentication remain separate follow-ups.
+
+## ADR 007 — Conservative invalidation for derived knowledge
+
+**Accepted.** Answers revalidate evidence fingerprints; generated run/report/publication text binds a workspace knowledge epoch. Revocable source change hides entire older reports rather than trying to redact individual paraphrases. This reduces availability after unrelated edits, but avoids claiming a model summary is safe merely because one citation was removed. Manual native quotations remain authored data; administrative storage/backup retention is an operational boundary.
+
+## ADR 008 — Small exact native action surface
+
+**Accepted.** A deterministic planner preserves explicit user steps, with at most five To do/unassigned tasks and sequential prerequisites. A separate proposal record protects the legacy publication action constraint. Owner review binds exact payload/hash/context, and task creation plus receipt is atomic. General coding tools, unconstrained model actions and external writes were rejected for this cycle because their execution and independent outcome verification require a broader authorization design.

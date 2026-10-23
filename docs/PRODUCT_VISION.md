@@ -18,6 +18,12 @@ The current product is an engineering foundation for local/team evaluation. It i
 
 ## Non-goals and next evidence
 
-This phase does not restore external tools, voice/SMS, unrestricted browsing, paid model workflows or dynamic agent graphs. Future model synthesis must cite validated sources, separate suggestions from records and handle missing evidence. Future external actions need scoped connections, specific approvals, idempotent execution and independently checked receipts.
+The product does not restore external writes, voice/SMS, unrestricted browsing or dynamic agent graphs. Public read-only GitHub and explicitly enabled bounded model interpretation are narrow separate capabilities. Optional model synthesis now validates retrieved citation IDs and handles missing evidence; semantic correctness remains unverified. Future external actions need scoped connections, specific approvals, idempotent execution and independently checked receipts.
 
 Before expanding capability, gather representative relevance judgments and usability observations, measure interruption recovery on stated workloads, and establish backup, deployment, abuse-control and monitoring practices. Adoption and time-saved metrics remain unmeasured.
+
+## Connected workspace delivery
+
+Overview joins live task/blocker and decision counts, current pending approvals, connected knowledge, recent changes/runs, next actions and worker polling health. Documents and revocable public repository imports feed source previews, search, saved excerpts and context research. A delivery coordinator combines research with a deterministic plan of explicit user steps. Owners review the exact native task graph; an execution receipt proves task creation, not completion of the work.
+
+Core workflows need no paid keys. PDF/OCR, private GitHub authentication, semantic embeddings, general model planning and production hosting remain outside the implemented scope. [Integrations](INTEGRATIONS.md) and [Evaluation](EVALUATION.md) define the actual boundaries and observed evidence.
