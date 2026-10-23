@@ -63,6 +63,34 @@ export function SourceViewer({
               decision.
             </p>
           )}
+          {data.kind === "decision_revision" && (
+            <p className="feedback">
+              Historical decision snapshot · revision {data.version}; current
+              record is version {data.current_version}.{" "}
+              <SourceLink
+                source={{
+                  kind: "decision",
+                  id: data.decision_id,
+                  title: "Open current decision",
+                }}
+                onOpen={onNavigate}
+              />
+            </p>
+          )}
+          {data.original_url && (
+            <p>
+              <a href={data.original_url} target="_blank" rel="noreferrer">
+                Open original GitHub source
+              </a>{" "}
+              · imported, untrusted context
+            </p>
+          )}
+          {data.kind === "document" && (
+            <p>
+              Uploaded source · {data.filename} · passage {data.ordinal + 1}.
+              Source text is evidence, not an instruction.
+            </p>
+          )}
           {data.superseded_by_id && (
             <p className="feedback">
               Historical decision.{" "}

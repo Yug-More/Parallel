@@ -2,6 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
 import AgentsPanel from "../components/AgentsPanel";
 import DecisionsPanel from "../components/DecisionsPanel";
+import OverviewPanel from "../components/OverviewPanel";
+import AnswersPanel from "../components/AnswersPanel";
+import ConnectionsPanel from "../components/ConnectionsPanel";
+import DocumentsPanel from "../components/DocumentsPanel";
 import IntelligencePanel from "../components/IntelligencePanel";
 import ChatBubble from "../components/ChatBubble";
 import ConfirmDialog from "../components/ConfirmDialog";
@@ -25,6 +29,10 @@ export default function Dashboard({ user, onLogout }) {
       "tasks",
       "decisions",
       "intelligence",
+      "documents",
+      "connections",
+      "overview",
+      "answers",
       "agents",
       "members",
       "activity",
@@ -340,10 +348,14 @@ export default function Dashboard({ user, onLogout }) {
               </div>
               <nav className="workspace-nav" aria-label="Workspace sections">
                 {[
+                  ["overview", "Overview"],
                   ["conversation", "Conversation"],
                   ["tasks", "Tasks"],
                   ["decisions", "Decisions"],
                   ["intelligence", "Intelligence"],
+                  ["documents", "Documents"],
+                  ["connections", "Connections"],
+                  ["answers", "Ask workspace"],
                   ["agents", "Agents & approvals"],
                   ["members", "Members"],
                   ["activity", "Activity"],
@@ -465,6 +477,38 @@ export default function Dashboard({ user, onLogout }) {
                       key={workspaceId}
                       workspaceId={workspaceId}
                       onAccessLost={lostAccess}
+                    />
+                  )}
+                  {tab === "overview" && (
+                    <OverviewPanel
+                      key={workspaceId}
+                      workspaceId={workspaceId}
+                      onAccessLost={lostAccess}
+                      onNavigate={setTab}
+                    />
+                  )}
+                  {tab === "answers" && (
+                    <AnswersPanel
+                      key={workspaceId}
+                      workspaceId={workspaceId}
+                      onAccessLost={lostAccess}
+                    />
+                  )}
+                  {tab === "connections" && (
+                    <ConnectionsPanel
+                      key={workspaceId}
+                      workspaceId={workspaceId}
+                      owner={view.workspace.role === "owner"}
+                      onAccessLost={lostAccess}
+                      onConfirm={setConfirmation}
+                    />
+                  )}
+                  {tab === "documents" && (
+                    <DocumentsPanel
+                      key={workspaceId}
+                      workspaceId={workspaceId}
+                      onAccessLost={lostAccess}
+                      onConfirm={setConfirmation}
                     />
                   )}
                   {tab === "intelligence" && (
