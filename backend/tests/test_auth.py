@@ -1,9 +1,9 @@
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
+import jwt
 import pytest
 from fastapi.testclient import TestClient
-from jose import jwt
 
 from config import Settings, load_settings
 from main import create_app

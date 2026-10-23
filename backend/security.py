@@ -4,8 +4,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 import bcrypt
+import jwt
 from fastapi import Depends, HTTPException, Request
-from jose import JWTError, jwt
+from jwt import InvalidTokenError
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 
@@ -86,10 +87,10 @@ def current_user(request: Request, db: DB):
             request.cookies.get("access_token", ""),
             request.app.state.settings.secret_key,
             algorithms=["HS256"],
-            options={"require_exp": True, "require_sub": True},
+            options={"require": ["exp", "sub"]},
         )
         user = db.get(User, payload["sub"])
-    except (JWTError, ValueError, TypeError):
+    except (InvalidTokenError, ValueError, TypeError):
         user = None
     if user is None:
         raise HTTPException(401, "Not authenticated")
