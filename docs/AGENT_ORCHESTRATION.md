@@ -1,5 +1,7 @@
 # Durable local agent coordination
 
+Current Phase 10–12 behavior: [trained intelligence, selected evidence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections retain their historical scope.
+
 The supported agents perform real deterministic computation over persisted workspace data. They do not execute code, browse, call models, modify external systems, or implement a task on a user's behalf.
 
 ## Contracts
@@ -143,3 +145,7 @@ Document/import changes advance a conservative knowledge epoch. Stale run contex
 The exact objective `triage github issues` on planner or delivery coordinator selects bounded authorized open imported issues and proposes up to five `Review issue: …` tasks, retaining original URL, source ID and version in the description. Existing active titles are skipped. Issues stay untrusted imported records; no dependency is inferred between separate issues. The owner sees exact To do/unassigned payloads and citations; execution recomputes the same plan and verifies the source/context epoch before atomically creating tasks and one receipt. Public and private imports use the same stored-source boundary. Revocation/expiry hides the derived run and fails stale proposals. The deterministic researcher also retains historical labels and explicit uncertainty.
 
 When separately configured, an explicit Request cited model interpretation action re-retrieves current evidence for a short run objective and saves a cited model answer. It uses the same one-call/20-second/1,600-token/no-tools schema and citation gate as Ask workspace, plus shared model request budget. It does not change the durable run, deterministic plan, approval payload or task status. This is bounded optional reasoning alongside agents, not general model planning or autonomous implementation. Fake-provider tests reject extra action fields and prove no native state change; no live model-quality claim follows.
+
+## Selected connected evidence
+
+New requests may include up to eight `knowledge_refs` of kind `document`, `external` or `decision_revision`, distinct from native `input_refs`. They bind idempotency only when nonempty, preserving existing empty-reference request hashes. Child/retry runs preserve selection; capture resolves it in the authorized workspace, adds it to the context fingerprint and prioritizes it before lexical research candidates. Changed or revoked evidence cannot pass exact approval recomputation. The optional picker performs explicitly requested trained retrieval before queuing; local contract execution itself remains deterministic and does not call models or embeddings.

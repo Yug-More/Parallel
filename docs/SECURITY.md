@@ -1,5 +1,7 @@
 # Security
 
+Current Phase 10–12 implementation, setup, verification and limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
+
 ## Historical credential exposure: owner action required
 
 The original backend/check_plivo.py contained Plivo authentication material. It has been removed from current source and the diagnostic is disabled. The credential remains in historical commits. **The owner must rotate/revoke the exposed credential and review provider access logs.** No credential was tested, rotated, revoked or reproduced in reports. No history rewriting was performed. Source cleanup is not credential revocation.

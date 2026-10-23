@@ -102,3 +102,54 @@ flowchart LR
 ```
 
 Agent issue triage remains inside the existing plan/research/delivery contracts; it proposes unfinished native tasks from stored open issue evidence. Separate issues acquire no inferred dependency. Exact approval/recomputation/receipt boundaries remain unchanged. Optional run reasoning reuses the cited-answer provider and cannot control the action executor. Shared HMAC request counters and rotating worker queues strengthen local operation without introducing distributed infrastructure.
+
+## Phase 10–12 boundaries
+
+See [trained intelligence and hardening](INTELLIGENCE_HARDENING.md) for exact limits, retention exceptions and live verification status. New migrations 0014–0018 are additive; they do not erase history or implicitly verify users. Back up original databases before operator-run migration.
+
+```mermaid
+flowchart LR
+    Owner[Current owner and exact consent] --> Index[Versioned bounded index job]
+    Index --> Worker[Separate worker and independent heartbeat]
+    Worker --> Local[Offline safetensors subprocess]
+    Worker --> External[Explicit opt-in embedding API]
+    Local --> Vectors[(Epoch and source fingerprints)]
+    External --> Vectors
+    Search[Authorized filtered query] --> SQL[Live lexical eligibility]
+    SQL --> Hybrid[Explicit semantic or hybrid mode]
+    Vectors --> Hybrid
+    Hybrid --> Check[Recheck membership and evidence]
+    Check --> Answer[Cited answer or selected agent evidence]
+    Hybrid --> Fallback[Fresh lexical fallback]
+    Answer --> Approval[Exact human approval and receipt]
+```
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant API
+    participant DB
+    participant Worker
+    participant Outbox
+    Browser->>API: Request recovery
+    API->>DB: Queue known or unknown account request
+    API-->>Browser: Same generic 202 response
+    Worker->>DB: Serialize issuance on user row
+    Worker->>DB: Store one-use expiring token hash
+    Worker->>Outbox: Private local delivery only
+    Browser->>API: Token and new password
+    API->>DB: Lock user, consume token, revoke sessions
+    API-->>Browser: Reset completed, sign in again
+```
+
+```mermaid
+stateDiagram-v2
+    [*] --> Review
+    Review --> Preview: Owner chooses scope
+    Preview --> Review: Revision changes or five minutes pass
+    Preview --> Erasure: Signed exact plan and typed confirmation
+    Erasure --> Receipt: Cancel jobs and erase scoped content
+    Receipt --> Closed: Workspace closure selected
+    Receipt --> [*]: Native history and audit exceptions retained
+    Closed --> [*]: Normal access denied, owner audit route retained
+```

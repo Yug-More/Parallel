@@ -1,14 +1,20 @@
 # Parallel
 
+Current Phase 10–12 implementation, setup, verification and limits: [trained intelligence and operational hardening](docs/INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
+
 **A collaborative workspace that keeps the reasoning behind the work.**
 
 Parallel brings conversations, tasks, decisions, documents and connected repository context into private project workspaces. Return to what changed, ask source-linked questions, and inspect a delegated plan before approving the exact native tasks it will create.
 
 The current implementation combines human collaboration with **Project Continuity Intelligence**: revisioned decisions, permission-aware lexical retrieval, visit-relative briefings, grounded answers, and durable coordination between bounded local agents. These capabilities work without paid provider credentials.
 
+Optional trained retrieval now supports operator-provisioned offline Sentence Transformers or separately consented OpenAI embeddings. Saved answers and local agents can use explicitly selected evidence. Private GitHub permission rechecks, private local account recovery, signed retention previews and an isolated PostgreSQL restore drill strengthen the pilot. Trained-model quality and live private access remain unverified; [setup and limits](docs/INTELLIGENCE_HARDENING.md) distinguish these from fixture tests.
+
 ## See the product
 
 The screenshots below come from real desktop Chromium workflows against FastAPI, SQLite and the local worker. Accounts and project content are synthetic demonstration data; these are application captures, not UI mockups.
+
+![Actual owner retention preview with synthetic data](docs/screenshots/phase101112-retention-1440.png)
 
 ![Live project overview with native task outcomes and worker health](docs/screenshots/connected-overview-1440.png)
 

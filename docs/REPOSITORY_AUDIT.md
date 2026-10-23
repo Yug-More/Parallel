@@ -1,5 +1,7 @@
 # Repository audit and remediation
 
+Current Phase 10–12 implementation, setup, verification and limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
+
 ## Original verified baseline
 
 Audit baseline: 4700bf0ff764a0e18e47bebf0bf2b60579165f69, main, clean working tree, origin https://github.com/Yug-More/Parallel-AI.git. Local history had 50 commits: severin-spagnola 20, Sean Aminov 19, Yug-More 9, Nayab 2. Historical contributions remain intact.

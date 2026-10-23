@@ -1,5 +1,7 @@
 # Retrieval evaluation
 
+Current Phase 10–12 implementation, setup, verification and limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
+
 The evaluation exercises the real authenticated HTTP retrieval/source APIs against an isolated migrated SQLite database. Fixtures are synthetic and explicitly separate from screenshots, real user data and adoption claims. No provider calls or embeddings are used.
 
 ## Reproduce
@@ -80,3 +82,9 @@ The focused option adds body phrase weight, a small question-word normalization 
 Every returned citation was resolved through the same authenticated workspace source API; this checks existence/scope, **not factual entailment**. Seven outsider requests were denied, zero unauthorized retrievals observed, and three unsupported saved-answer questions explicitly abstained. Separate current-state checks assert default superseded decisions, archived passages and revoked imports stay hidden. Regression gates preserve coverage precision/recall versus legacy and focused recall versus coverage, with lifecycle/access failures always fatal. These developer holdout gates are reproducibility checks, not independent quality certification.
 
 The optional character index has lifecycle/provider/failure/fallback tests but no held-out trained-semantic-quality claim. No human usability participants were involved; [pilot browser evidence](PILOT_READINESS.md) reports actual persisted completion and interaction metrics separately from retrieval scores. Original eleven- and sixteen-query baselines remain available and required in CI.
+
+## Phase 10 comparison and verification boundary
+
+[Raw forty-query results](evaluation-phase10.json) preserve the frozen labels. Coverage returned precision/strict P@5/recall/MRR remain **0.772917 / 0.170 / 0.900 / 0.817708**. The character hybrid measured **0.393750 / 0.170 / 0.800 / 0.709375** and therefore remains optional; it is not a trained semantic model. Local mean API latency in this single tiny-corpus run was about **12.09 ms** for coverage and **18.67 ms** for character hybrid. The raw report contains per-case results and maximum timings. These are not independent judgments or production performance measures.
+
+The offline opt-in adds pure trained and trained-hybrid comparisons to the same harness when an operator supplies trusted weights. **Neither ran here.** Trained-provider tests use fabricated vectors, mocked SDK transport or subprocess outputs; they establish boundaries, dimensions, budgets, source invalidation and failure behavior, not semantic relevance. Development prompts, frozen developer holdout, real-model execution and independent human evaluation remain separate evidence categories. No default ranking was changed based on fixture vectors.
