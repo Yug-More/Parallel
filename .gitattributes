@@ -1,0 +1,2 @@
+# PDF cross-reference records have significant fixed-width whitespace.
+*.pdf binary
