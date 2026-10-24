@@ -1,8 +1,8 @@
 # Retrieval evaluation
 
-Current Phase 10–12 implementation, setup, verification and limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
+Runtime configuration, hardening and external limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
 
-The evaluation exercises the real authenticated HTTP retrieval/source APIs against an isolated migrated SQLite database. Fixtures are synthetic and explicitly separate from screenshots, real user data and adoption claims. No provider calls or embeddings are used.
+The evaluation exercises the real authenticated HTTP retrieval/source APIs against an isolated migrated SQLite database. Fixtures are synthetic and explicitly separate from screenshots, real user data and adoption claims. The default baseline uses no provider calls or embeddings. Later optional character/offline-trained comparisons are explicitly separated below; no paid call was made.
 
 ## Reproduce
 

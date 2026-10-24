@@ -1,6 +1,6 @@
 # Connected knowledge and grounded answers
 
-Current Phase 10–12 implementation, setup, verification and limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
+Runtime configuration, hardening and external limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
 
 Parallel keeps native tasks/decisions, uploaded passages, imported GitHub records and generated interpretations distinct. Everything is retrieved inside an authenticated workspace. No external write capability is enabled.
 
@@ -34,7 +34,7 @@ API behavior follows [GitHub REST guidance](https://docs.github.com/en/rest/usin
 
 The existing 512 KiB / 200,000-character bounds apply to PDFs, plus 30 pages. Extraction receives bytes through stdin, never a filename or URL, in `python -I` with no shell and a minimal environment. The parent kills/reaps the child after eight seconds. Unix CPU limit is four seconds; Linux additionally limits address space to 512 MiB. macOS cannot reliably lower its reserved address space and therefore relies on CPU/deadline/input/output limits; Windows workers should use Linux containers. This is resource isolation, not a complete filesystem/network sandbox. pypdf does not execute embedded scripts or fetch links/attachments.
 
-Malformed, encrypted, image-only/empty, oversized and page-limit failures expose safe codes. New passages retain one-based page numbers; old text passages retain null page numbers in storage and omit page metadata from source JSON, preserving existing fingerprints and IDs. Revision/hash deduplication, history and archive invalidation reuse the existing lifecycle. Archive is the supported application removal operation; physical deletion/retention is not implemented. See [pypdf extraction limits](https://pypdf.readthedocs.io/en/stable/user/extract-text.html).
+Malformed, encrypted, image-only/empty, oversized and page-limit failures expose safe codes. New passages retain one-based page numbers; old text passages retain null page numbers in storage and omit page metadata from source JSON, preserving existing fingerprints and IDs. Revision/hash deduplication, history and archive invalidation reuse the existing lifecycle. Archive immediately denies retrieval. Separate signed owner retention previews can erase selected source and derived content or close a workspace; human native history/audit exceptions remain. See the hardening guide for exact scope; backup/external copies are separate. See [pypdf extraction limits](https://pypdf.readthedocs.io/en/stable/user/extract-text.html).
 
 ## Selected private GitHub repositories
 
@@ -59,7 +59,7 @@ Private authorization, expiry/renewal, pagination, access loss and revocation us
 
 `LOCAL_INDEX_ENABLED=true` exposes an explicit Build local passage index action. Durable jobs bind workspace epoch/provider/model, claim a 20-second lease, index at most 200 current document passages and validate finite bounded vectors. Raw text is not duplicated into index entries. The worker discards stale/late results; each read re-resolves every source and fingerprint. The lexical path remains available without an index or credentials; filters/offsets that the index cannot safely preserve fall back.
 
-`EmbeddingProvider` is a replaceable interface. The shipped `local-ngram / char3-sha256-128-v1` adapter is deterministic character similarity, **not trained semantic embeddings**. `ranking=hybrid` explicitly combines its candidates with lexical ranking through reciprocal-rank fusion. This infrastructure and fallback are tested; semantic quality, multilingual understanding and external embedding adapters are unverified/unimplemented. No model downloads, network embedding calls or vector database are introduced.
+`EmbeddingProvider` is a replaceable interface. The shipped `local-ngram / char3-sha256-128-v1` adapter is deterministic character similarity, **not trained semantic embeddings**. `ranking=hybrid` explicitly combines its candidates with lexical ranking through reciprocal-rank fusion. This infrastructure and fallback are tested; semantic quality and multilingual understanding remain unverified. Separately configured trained local/OpenAI adapters are now implemented, with artifact checks or explicit external consent; the character adapter itself makes no network call and needs no vector database. Default retrieval remains lexical.
 
 ## Grounded answers
 

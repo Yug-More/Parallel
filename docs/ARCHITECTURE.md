@@ -66,13 +66,13 @@ Polling remains the transport: approximately two seconds for workspace data, 1.5
 
 ## Data and time
 
-[Data model](DATA_MODEL.md) describes decision/run provenance from `0004_intelligence` and the document/import/answer/action/heartbeat additions through `0013_shared_limits`. Existing Phase 1B records and session validity are preserved. Decisions have full revisions; task history before/after this phase is represented by versions, current state and activity rather than a complete point-in-time task ledger. Briefing event time is distinct from retrieval time; live counts are not historical reconstruction.
+[Data model](DATA_MODEL.md) describes decision/run provenance from `0004_intelligence` and the document/import/answer/action/heartbeat additions through `0018_sync_checkpoints`. Existing Phase 1B records and session validity are preserved. Decisions have full revisions; task history before/after this phase is represented by versions, current state and activity rather than a complete point-in-time task ledger. Briefing event time is distinct from retrieval time; live counts are not historical reconstruction.
 
 ## Deployment assumptions and tradeoffs
 
 Development uses one backend, one worker and a database. The worker must be started explicitly; queued jobs survive its absence. Multiple workers are safe under database locks but do not imply a production queue service or measured scaling. SQLite serializes writers; PostgreSQL is the practical shared deployment option. Database backups, TLS, trusted ingress, shared rate limiting, monitoring, resource/retention policies and operational recovery remain deployment work.
 
-Optional providers require separate installation/configuration and can incur cost. Public GitHub GETs were live-verified. Live model compatibility, production deployment, external writes and semantic retrieval are not verified. See [Engineering decisions](ENGINEERING_DECISIONS.md) for why these boundaries were chosen.
+Optional providers require separate installation/configuration and can incur cost. Public GitHub GETs were live-verified. Live model compatibility/quality, private GitHub authorization and production deployment are not verified. External writes remain unavailable; optional trained adapters are implemented with fixture-tested boundaries, not demonstrated semantic quality. See [Engineering decisions](ENGINEERING_DECISIONS.md) for why these boundaries were chosen.
 
 ## Connected knowledge and native actions
 
@@ -84,7 +84,7 @@ Knowledge epochs conservatively invalidate derived run contexts, outcomes, publi
 
 ## Pilot knowledge and authorization boundaries
 
-New PDF passages use the same document/revision lifecycle plus nullable page numbers. The worker launches a resource-bounded parser subprocess; no new service is required. Optional retrieval-index jobs store provider/model/epoch and fingerprinted vectors in SQL, with explicit lexical fallback. The shipped provider is local character similarity rather than a trained semantic model.
+New PDF passages use the same document/revision lifecycle plus nullable page numbers. The worker launches a resource-bounded parser subprocess; no new service is required. Optional retrieval-index jobs store provider/model/epoch and fingerprinted vectors in SQL, with explicit lexical fallback. The local character provider is character similarity rather than a trained model. Separately opt-in offline/OpenAI trained adapters bind artifacts/provider/model/epoch/fingerprints; their live quality remains unverified.
 
 GitHub App device flow binds an expiring encrypted user grant to the current workspace owner and a verified selected repository/installation. Fixed-host authentication POSTs are separate from GET-only repository reads. Revalidation/expiry advances the existing knowledge epoch. Private refresh rotation is persisted before further network reads. A five-minute worker sync schedule and ten-minute authorization freshness window are explicit limits, not a remote webhook guarantee.
 
@@ -153,3 +153,7 @@ stateDiagram-v2
     Receipt --> [*]: Native history and audit exceptions retained
     Closed --> [*]: Normal access denied, owner audit route retained
 ```
+
+## Product interface
+
+The React state router retains workspace/section query parameters. A persistent desktop sidebar becomes a local horizontal section row on mobile. Shared native controls, light/dark tokens, bounded text-only message formatting, named live message log, focus-contained native dialogs and explicit account/retention navigation preserve the server contracts. See [design system](PRODUCT_DESIGN_SYSTEM.md), [screen inventory](PRODUCT_UI_AUDIT.md) and [regression evidence](PRODUCT_REGRESSION_QA.md). No frontend visibility or rendered model text grants permissions.

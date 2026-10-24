@@ -74,7 +74,7 @@ erDiagram
 
 `documents` has an optimistic current version and archive state. `document_revisions` preserves uploader, filename, title, content hash, durable state/lease and nullable raw bytes; its same-workspace FK and unique document/version prevent mixed ownership/duplicate revisions. `document_passages` stores stable revision/ordinal text with a composite same-workspace FK. Raw content becomes null after terminal extraction. Current visibility is enforced by joins to the ready revision and unarchived parent, not a stale client index.
 
-`repository_connections` records public repository, creating owner, active state/version and workspace. It contains no token. `repository_syncs` records initiating owner, connection version, lease, bounded attempt/backoff, safe error and count. `imported_records` stores provider ID/type, original URL, current availability, bounded text, version/hash and timestamps; `(connection, provider_id)` is unique. Composite FKs enforce workspace/connection relationships. Stored older snapshots can remain unavailable without deleting history.
+`repository_connections` records public repository, creating owner, active state/version and workspace. Public mode contains no token; later private App fields hold encrypted expiring credentials, never browser-provided bearer tokens. `repository_syncs` records initiating owner, connection version, lease, bounded attempt/backoff, safe error and count. `imported_records` stores provider ID/type, original URL, current availability, bounded text, version/hash and timestamps; `(connection, provider_id)` is unique. Composite FKs enforce workspace/connection relationships. Stored older snapshots can remain unavailable without deleting history.
 
 `knowledge_answers` stores question, mode/provider model, request idempotency, state, bounded claims and exact evidence reference fingerprints. Reads re-resolve evidence before displaying claims. No stored evidence snapshot bypasses source authorization/revocation.
 
@@ -82,7 +82,7 @@ erDiagram
 
 `workspaces.knowledge_epoch` defaults to zero; generated `messages.knowledge_epoch` is nullable so preexisting/human messages retain compatibility. Run contexts bind an epoch in JSON. `worker_heartbeats` stores opaque worker ID, running/stopped state and last seen time; it is operational telemetry rather than workspace content.
 
-The current schema head is `0013_shared_limits`. Additive migrations preserve original columns/records, including completed publication receipts and existing sessions. SQLite populated Phase 1B and Phase 3 comparisons, repeated upgrades, FK checks, offline PostgreSQL DDL compilation and CI PostgreSQL execution protect migration compatibility. Destructive downgrades remain disabled.
+The current schema head is `0018_sync_checkpoints`. Additive migrations preserve original columns/records, including completed publication receipts and existing sessions. SQLite populated Phase 1B and Phase 3 comparisons, repeated upgrades, FK checks, offline PostgreSQL DDL compilation and CI PostgreSQL execution protect migration compatibility. Destructive downgrades remain disabled.
 
 ## Additive pilot migrations (0010–0013)
 

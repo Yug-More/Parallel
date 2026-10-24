@@ -1,0 +1,72 @@
+{
+  "source": "Real Chromium / isolated FastAPI, database and worker",
+  "workflow": "parallel-frontend/tests/showcase.spec.js",
+  "capture_date": "2026-10-24",
+  "synthetic": true,
+  "live_model_or_private_github_claim": false,
+  "images": [
+    {
+      "file": "agents.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 150587,
+      "sha256": "32e9c439a46473beb1b23b641c6fe03107651e7058111c5159cfac4fa81a78c6"
+    },
+    {
+      "file": "answers.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 129572,
+      "sha256": "b238bea2e153d2eabd79b7ed8bd38119a47a97d1cc94eb3ed47ec1bad2b8fe8f"
+    },
+    {
+      "file": "approval.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 162796,
+      "sha256": "c0b36b42d335175fea859794d9097fad5fc3e3b3a38ef34bf6a42e0ebed95833"
+    },
+    {
+      "file": "conversation-mobile.png",
+      "width": 390,
+      "height": 1455,
+      "bytes": 92321,
+      "sha256": "aa738e286eee75399c8a0c1f77cda890975cdb755089478a231f5cf954992b54"
+    },
+    {
+      "file": "conversation.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 120633,
+      "sha256": "d57f9f040be538bc0d6b780d4e8b57c08aa1b7eb4d3e581eefcd343ce4dcf208"
+    },
+    {
+      "file": "evidence.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 159474,
+      "sha256": "bac82d952b53e17d8a19a93145506f872888f6c87a58641e7cbe70f0010c79e9"
+    },
+    {
+      "file": "memory.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 166358,
+      "sha256": "bf8a94bc9f91e8e41c869bbd6eefc1b21be6c11827cc76591843ae93f4da108b"
+    },
+    {
+      "file": "shared.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 98123,
+      "sha256": "063b325d785523ccffd1d6eb710313868c88bdc3bb0ac6fe9ef00ea43d9deb7a"
+    },
+    {
+      "file": "workspace.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 128494,
+      "sha256": "dd8c96e3ee9204d545ab86ba4ff2bedcd6f092c700b7e5bee632ba1d02c3274e"
+    }
+  ]
+}
