@@ -46,6 +46,7 @@ for (const width of [1440, 390]) {
     await expect(
       page.getByRole("heading", { name: "Personal workspace", exact: true }),
     ).toBeVisible();
+    await page.getByText("Account & security", { exact: true }).click();
     await page.getByText("Verify account email", { exact: true }).click();
     await page
       .getByRole("button", { name: "Request verification instructions" })
@@ -58,27 +59,24 @@ for (const width of [1440, 390]) {
       "Verification completed",
     );
     await page.getByText("Verify account email", { exact: true }).click();
+    await page.getByText("Account & security", { exact: true }).click();
     await page.getByRole("button", { name: "Documents", exact: true }).click();
     await page.getByLabel("Document title").fill("Cobalt reference");
-    await page
-      .getByLabel("Text, Markdown or PDF file")
-      .setInputFiles({
-        name: "cobalt.md",
-        mimeType: "text/markdown",
-        buffer: Buffer.from("Project uses durable session records."),
-      });
+    await page.getByLabel("Text, Markdown or PDF file").setInputFiles({
+      name: "cobalt.md",
+      mimeType: "text/markdown",
+      buffer: Buffer.from("Project uses durable session records."),
+    });
     await page
       .getByRole("button", { name: "Upload document", exact: true })
       .click();
     await expect(
-      page
-        .getByRole("article")
-        .filter({
-          has: page.getByRole("heading", {
-            name: "Cobalt reference",
-            exact: true,
-          }),
+      page.getByRole("article").filter({
+        has: page.getByRole("heading", {
+          name: "Cobalt reference",
+          exact: true,
         }),
+      }),
     ).toContainText("ready");
     await page
       .getByRole("button", { name: "Build trained index · owner only" })
@@ -104,15 +102,13 @@ for (const width of [1440, 390]) {
       })
       .click();
     await page.getByLabel("Retention scope").selectOption("document");
-    await page
-      .getByLabel("Retention target")
-      .selectOption({
-        label: await page
-          .getByLabel("Retention target")
-          .locator("option")
-          .nth(1)
-          .textContent(),
-      });
+    await page.getByLabel("Retention target").selectOption({
+      label: await page
+        .getByLabel("Retention target")
+        .locator("option")
+        .nth(1)
+        .textContent(),
+    });
     await page
       .getByRole("button", { name: "Preview erasure", exact: true })
       .click();
@@ -134,6 +130,7 @@ for (const width of [1440, 390]) {
       .getByRole("button", { name: "Ask workspace", exact: true })
       .click();
     await expect(page.getByRole("blockquote")).toHaveCount(0);
+    await page.getByText("Account & security", { exact: true }).click();
     await page.getByRole("button", { name: "Log out", exact: true }).click();
     await page.getByText("Recover your account", { exact: true }).click();
     await page.getByLabel("Recovery email").fill(email);

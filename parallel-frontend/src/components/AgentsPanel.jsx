@@ -200,7 +200,6 @@ export default function AgentsPanel({
       <details className="surface new-run-form" open={!selected}>
         <summary>Start a local run</summary>
         <form className="project-form" onSubmit={start}>
-          <h3>Start a local run</h3>
           <div className="form-grid">
             <label>
               Agent capability
@@ -233,6 +232,24 @@ export default function AgentsPanel({
                   ))}
               </select>
             </label>
+          </div>
+          <div className="contract-summary">
+            <strong>
+              {contracts.data?.find((item) => item.id === contract)?.name ||
+                "Loading capability…"}
+            </strong>
+            <p>
+              {
+                contracts.data?.find((item) => item.id === contract)
+                  ?.description
+              }
+            </p>
+            <small>
+              Scope: this workspace and explicitly selected evidence. Local
+              computation cannot run code or change external services. Native
+              task creation and report publication require a separate owner
+              review.
+            </small>
           </div>
           <label>
             Run objective
@@ -311,7 +328,10 @@ export default function AgentsPanel({
             </button>
           </div>
         </aside>
-        <article className="surface record-detail" aria-label="Run details">
+        <article
+          className={selected ? "surface record-detail" : "run-placeholder"}
+          aria-label="Run details"
+        >
           {!selected ? (
             <p className="empty-state">
               Select a run to inspect its plan, evidence, events, and saved

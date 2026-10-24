@@ -8,7 +8,7 @@ Make the workspace, actor, source and action legible. Prefer compact lists, clea
 
 ## Layout and navigation
 
-Use a 224px desktop sidebar for workspace selection, creation, invitations and persistent section navigation. Keep the content region fluid with a 1240px maximum reading/work width; use smaller text measures inside conversations. At 768px and below, use a compact disclosure for section navigation with a clearly named current section. Keep workspace switching available without opening a menu. Do not create a second routing framework: existing workspace/section query parameters remain reloadable.
+Use a 224px desktop sidebar for workspace selection, creation, invitations and persistent section navigation. Keep the content region fluid with a 1240px maximum reading/work width; use smaller text measures inside conversations. At 768px and below, use a single horizontally scrollable section row with visible selection and native keyboard access. This preserves direct section access and avoids a hidden navigation prerequisite; the browser scrolls focused controls into view. Keep workspace switching available without opening a menu. Do not create a second routing framework: existing workspace/section query parameters remain reloadable.
 
 The shell header identifies Parallel and the signed-in account; account verification and global session revocation belong together under an Account disclosure. Workspace membership and retention remain in Members, with a clear security/retention heading. Never move owner controls into a location members can use to bypass server authorization.
 
@@ -22,7 +22,7 @@ Spacing scale: 4, 8, 12, 16, 20, 24, 32, 48px. Use 24px section gaps and 16px fo
 
 Light: canvas #f7f8fa, surface #ffffff, secondary surface #f0f3f5, text #19242e, muted #52616f, border #d3dbe2, accent #126678, accent-soft #e6f1f3. Dark: canvas #11171d, surface #182129, secondary surface #202d37, text #edf2f5, muted #acbbc7, border #3c4c59, accent #85d3df, accent-soft #213d45. Primary filled controls use #126678 with white text in both themes. Error light #a82d35/dark #ffabb1; success light #216b43/dark #9ddcb7. Selection must use both shape/border and text, not color alone.
 
-Surface hierarchy is canvas → panel → selected item; no translucent glass or gradients. Border 1px solid semantic border. Controls 6px radius, panels/dialogs 8px, small tags 4px. Shadows only where needed for an actual overlay; avoid ordinary card shadows.
+Surface hierarchy is canvas → panel → selected item; no translucent glass or gradients. Border 1px solid semantic border; input boundaries use #81929e in light mode and #71899b in dark mode for stronger non-text contrast. Controls 6px radius, panels/dialogs 8px, small tags 4px. Shadows only where needed for an actual overlay; avoid ordinary card shadows.
 
 ## Controls and content
 

@@ -62,6 +62,22 @@ export default function IntelligencePanel({
           </p>
         </div>
       </div>
+      <details className="context-explainer">
+        <summary>What this workspace remembers</summary>
+        <p>
+          Search uses this workspace’s messages, tasks, decisions, available
+          document passages and authorized repository imports. Default retrieval
+          is deterministic lexical search. Source buttons open the current
+          authorized record; quotations and interpretations remain distinct.
+        </p>
+        <p>
+          Archive documents or revoke connections to remove their evidence from
+          retrieval. Owners can review signed erasure and closure previews in
+          Members. Human-authored native history is retained under those
+          controls. This is shared workspace context, not a separate personal
+          memory store.
+        </p>
+      </details>
       <div className="button-row section-switch">
         <button
           aria-pressed={mode === "briefing"}

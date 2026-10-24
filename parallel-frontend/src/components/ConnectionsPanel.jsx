@@ -92,6 +92,45 @@ export default function ConnectionsPanel({
                 : "Read-only public connection"
               : "Revoked; imported sources unavailable"}
           </p>
+          <dl className="permission-facts">
+            <div>
+              <dt>Last committed sync</dt>
+              <dd>
+                {connection.sync_checkpoint?.committed_at
+                  ? new Date(
+                      connection.sync_checkpoint.committed_at,
+                    ).toLocaleString()
+                  : "No successful sync yet"}
+              </dd>
+            </div>
+            <div>
+              <dt>Access check</dt>
+              <dd>
+                {connection.auth_mode === "github_app_user"
+                  ? connection.active && connection.access_verified_until
+                    ? `Last cached grant expiry: ${new Date(connection.access_verified_until).toLocaleString()}`
+                    : "No current verified grant"
+                  : "Public GET-only access; no private grant"}
+              </dd>
+            </div>
+          </dl>
+          {connection.auth_mode === "github_app_user" && (
+            <p className="muted">
+              Sync status is separate from permission freshness. The server
+              rechecks access; model transmission requires a permission check
+              within 30 seconds. Use Revalidate private access before an
+              explicit model request.
+            </p>
+          )}
+          {connection.sync_checkpoint?.delta && (
+            <p className="muted">
+              Last snapshot: {connection.sync_checkpoint.delta.created} new ·{" "}
+              {connection.sync_checkpoint.delta.updated} updated ·{" "}
+              {connection.sync_checkpoint.delta.unavailable} unavailable ·{" "}
+              {connection.sync_checkpoint.delta.unchanged} unchanged. Bounded
+              full snapshot; not a webhook or live stream.
+            </p>
+          )}
           <ul>
             {connection.syncs.map((sync) => (
               <li key={sync.id}>

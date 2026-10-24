@@ -242,6 +242,9 @@ export default function Dashboard({ user, onLogout }) {
 
   return (
     <div className="collab-app">
+      <a className="skip-link" href="#workspace-content">
+        Skip to workspace content
+      </a>
       <header className="collab-header">
         <div className="brand">
           Parallel <span>Project workspace</span>
@@ -249,30 +252,39 @@ export default function Dashboard({ user, onLogout }) {
         <div className="header-actions">
           <span className="account-name">{user.name}</span>
           <ThemeToggle />
-          <button disabled={busy} onClick={() => onLogout(false)}>
-            Log out
-          </button>
-          <button
-            disabled={busy}
-            onClick={() =>
-              setConfirmation({
-                title: "Log out all sessions?",
-                message:
-                  "Every browser session for this account will be revoked, including this one.",
-                action: async () => {
-                  if (!(await onLogout(true)))
-                    throw new Error(
-                      "Logout failed. Your sessions were not revoked.",
-                    );
-                },
-              })
-            }
-          >
-            Log out all sessions
-          </button>
+          <details className="account-menu">
+            <summary>Account & security</summary>
+            <div className="account-controls">
+              <p className="muted">
+                Signed in as {user.name}. Session revocation applies to this
+                account across all workspaces.
+              </p>
+              <button disabled={busy} onClick={() => onLogout(false)}>
+                Log out
+              </button>
+              <button
+                disabled={busy}
+                onClick={() =>
+                  setConfirmation({
+                    title: "Log out all sessions?",
+                    message:
+                      "Every browser session for this account will be revoked, including this one.",
+                    action: async () => {
+                      if (!(await onLogout(true)))
+                        throw new Error(
+                          "Logout failed. Your sessions were not revoked.",
+                        );
+                    },
+                  })
+                }
+              >
+                Log out all sessions
+              </button>
+              <AccountRecovery verification />
+            </div>
+          </details>
         </div>
       </header>
-      <AccountRecovery verification />
       <div className="collab-shell">
         <aside className="workspace-sidebar">
           <label>
@@ -313,11 +325,40 @@ export default function Dashboard({ user, onLogout }) {
           >
             Invitations ({invitations.length})
           </button>
+          <nav className="workspace-nav" aria-label="Workspace sections">
+            {[
+              ["overview", "Overview"],
+              ["conversation", "Conversation"],
+              ["tasks", "Tasks"],
+              ["decisions", "Decisions"],
+              ["intelligence", "Intelligence"],
+              ["documents", "Documents"],
+              ["connections", "Connections"],
+              ["answers", "Ask workspace"],
+              ["agents", "Agents & approvals"],
+              ["members", "Members"],
+              ["activity", "Activity"],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                aria-pressed={tab === value}
+                disabled={busy}
+                className={tab === value ? "active" : ""}
+                onClick={() => {
+                  setTab(value);
+                  setNotice("");
+                  setError("");
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
           <p className="sidebar-note">
             Shared project state. Explicit access. Work you can return to.
           </p>
         </aside>
-        <main className="workspace-main">
+        <main id="workspace-content" tabIndex={-1} className="workspace-main">
           {error && !confirmation && (
             <p role="alert" className="feedback error">
               {error}
@@ -346,45 +387,13 @@ export default function Dashboard({ user, onLogout }) {
                   </h1>
                 </div>
                 {view && (
-                  <span className="role-label">{view.workspace.role}</span>
+                  <span className="role-label">
+                    {view.workspace.role} · {view.members.length}{" "}
+                    {view.members.length === 1 ? "member" : "members"}
+                  </span>
                 )}
               </div>
-              {tab === "members" && view?.workspace.role === "owner" && (
-                <RetentionPanel
-                  key={workspaceId}
-                  workspaceId={workspaceId}
-                  onAccessLost={lostAccess}
-                />
-              )}
-              <nav className="workspace-nav" aria-label="Workspace sections">
-                {[
-                  ["overview", "Overview"],
-                  ["conversation", "Conversation"],
-                  ["tasks", "Tasks"],
-                  ["decisions", "Decisions"],
-                  ["intelligence", "Intelligence"],
-                  ["documents", "Documents"],
-                  ["connections", "Connections"],
-                  ["answers", "Ask workspace"],
-                  ["agents", "Agents & approvals"],
-                  ["members", "Members"],
-                  ["activity", "Activity"],
-                ].map(([value, label]) => (
-                  <button
-                    key={value}
-                    aria-pressed={tab === value}
-                    disabled={busy}
-                    className={tab === value ? "active" : ""}
-                    onClick={() => {
-                      setTab(value);
-                      setNotice("");
-                      setError("");
-                    }}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </nav>
+
               {!view ? (
                 <div role="status" className="empty-state">
                   {workspaces.length
@@ -404,7 +413,10 @@ export default function Dashboard({ user, onLogout }) {
                           <p>Visible only to current workspace members.</p>
                         </div>
                       </div>
-                      <div className="conversation-log" aria-live="polite">
+                      <div
+                        className="conversation-log"
+                        aria-label="Saved messages"
+                      >
                         {view.messages.length > 0 && (
                           <button disabled={busy} onClick={loadOlder}>
                             Load older messages
@@ -428,6 +440,10 @@ export default function Dashboard({ user, onLogout }) {
                             >
                               <small>
                                 {message.sender_name} ·{" "}
+                                {message.role === "user"
+                                  ? "Member"
+                                  : "AI interpretation"}{" "}
+                                ·{" "}
                                 {new Date(message.created_at).toLocaleString()}
                               </small>
                               <ChatBubble
@@ -440,7 +456,21 @@ export default function Dashboard({ user, onLogout }) {
                       <form className="message-form" onSubmit={send}>
                         <label>
                           Message
-                          <input
+                          <textarea
+                            rows={3}
+                            aria-label="Message"
+                            aria-describedby="composer-help"
+                            onKeyDown={(event) => {
+                              if (
+                                event.key === "Enter" &&
+                                !event.shiftKey &&
+                                !event.nativeEvent.isComposing
+                              ) {
+                                event.preventDefault();
+                                if (!busy && draft.trim())
+                                  event.currentTarget.form.requestSubmit();
+                              }
+                            }}
                             value={draft}
                             maxLength={16000}
                             onChange={(event) => setDraft(event.target.value)}
@@ -454,6 +484,11 @@ export default function Dashboard({ user, onLogout }) {
                           Send
                         </button>
                       </form>
+                      <p className="muted" id="composer-help">
+                        Enter to send · Shift+Enter for a new line. Basic
+                        Markdown and fenced code are supported; HTML stays text.
+                      </p>
+                      {busy && <p role="status">Saving your request…</p>}
                       <button
                         className="ai-button"
                         disabled={
@@ -540,16 +575,26 @@ export default function Dashboard({ user, onLogout }) {
                     />
                   )}
                   {tab === "members" && (
-                    <WorkspaceMembers
-                      key={workspaceId}
-                      workspace={view.workspace}
-                      members={view.members}
-                      invitations={view.sent}
-                      user={user}
-                      onRefresh={bump}
-                      onConfirm={setConfirmation}
-                      onAccessLost={lostAccess}
-                    />
+                    <>
+                      <WorkspaceMembers
+                        key={workspaceId}
+                        workspace={view.workspace}
+                        members={view.members}
+                        invitations={view.sent}
+                        user={user}
+                        onRefresh={bump}
+                        onConfirm={setConfirmation}
+                        onAccessLost={lostAccess}
+                      />
+                      {tab === "members" &&
+                        view?.workspace.role === "owner" && (
+                          <RetentionPanel
+                            key={workspaceId}
+                            workspaceId={workspaceId}
+                            onAccessLost={lostAccess}
+                          />
+                        )}
+                    </>
                   )}
                   {tab === "activity" && (
                     <section aria-label="Workspace activity">

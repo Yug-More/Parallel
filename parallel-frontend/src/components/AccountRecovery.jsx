@@ -20,7 +20,7 @@ export default function AccountRecovery({ verification = false }) {
     }
   }
   return (
-    <details className="surface">
+    <details className="account-recovery">
       <summary>
         {verification ? "Verify account email" : "Recover your account"}
       </summary>

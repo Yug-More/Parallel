@@ -2,19 +2,12 @@
   min-height: 100dvh;
   background: var(--bg);
   color: var(--text);
-  --brand-color: #157286;
-  --muted: var(--text-secondary, #64737b);
-  --surface: #fff;
-}
-[data-theme="dark"] .collab-app {
-  --surface: #181c22;
-  --brand-color: #76d8e8;
 }
 .collab-app button,
 .confirm-dialog button {
   padding: 9px 13px;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: 6px;
   background: var(--surface, var(--bg));
   color: var(--text);
   cursor: pointer;
@@ -31,17 +24,17 @@
 }
 .collab-app button.primary,
 .confirm-dialog button.primary {
-  background: #157286;
+  background: var(--primary-fill);
   color: white;
-  border-color: #157286;
+  border-color: var(--primary-fill);
   font-weight: 600;
 }
 .collab-app button.danger {
-  color: #b33b3b;
+  color: var(--danger);
 }
 .collab-app :focus-visible,
 .confirm-dialog :focus-visible {
-  outline: 3px solid var(--brand-color, #157286);
+  outline: 3px solid var(--brand-color, var(--primary-fill));
   outline-offset: 3px;
 }
 .collab-app label {
@@ -55,7 +48,8 @@
 .collab-app select,
 .collab-app textarea {
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-color: var(--control-border);
+  border-radius: 6px;
   padding: 10px;
   min-width: 0;
   width: 100%;
@@ -65,12 +59,12 @@
   font-size: 14px;
 }
 .collab-app h1 {
-  font-size: 26px;
+  font-size: 24px;
   letter-spacing: -0.7px;
   line-height: 1.25;
 }
 .collab-app h2 {
-  font-size: 20px;
+  font-size: 18px;
   letter-spacing: -0.3px;
 }
 .collab-app h3 {
@@ -86,12 +80,12 @@
   line-height: 1.6;
 }
 .collab-header {
-  min-height: 76px;
+  min-height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 16px 28px;
+  padding: 12px 24px;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
 }
@@ -124,17 +118,17 @@
 }
 .collab-shell {
   display: grid;
-  grid-template-columns: 235px minmax(0, 1fr);
-  min-height: calc(100dvh - 76px);
+  grid-template-columns: 224px minmax(0, 1fr);
+  min-height: calc(100dvh - 64px);
 }
 .workspace-sidebar {
-  padding: 28px 20px;
+  padding: 24px 16px;
   border-right: 1px solid var(--border);
 }
 .create-workspace {
   display: grid;
   gap: 9px;
-  margin: 24px 0;
+  margin: 16px 0;
 }
 .inbox-button {
   width: 100%;
@@ -146,9 +140,9 @@
   margin-top: 32px;
 }
 .workspace-main {
-  padding: 32px clamp(20px, 4vw, 64px);
+  padding: 28px 32px;
   min-width: 0;
-  max-width: 1600px;
+  max-width: 1240px;
   width: 100%;
 }
 .workspace-heading {
@@ -174,16 +168,18 @@
 }
 .workspace-nav {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 24px 0;
-  margin-bottom: 10px;
-  border-bottom: 1px solid var(--border);
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px 0 0;
+  margin-bottom: 0;
+  border-top: 1px solid var(--border);
+  margin-top: 20px;
 }
 .workspace-nav button {
   border-color: transparent;
   background: transparent;
   color: var(--text-secondary);
+  text-align: left;
 }
 .workspace-nav button.active,
 button.inbox-button.active {
@@ -194,7 +190,7 @@ button.inbox-button.active {
 }
 .surface {
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--surface);
 }
 .section-heading {
@@ -218,7 +214,7 @@ button.inbox-button.active {
   overflow-wrap: anywhere;
 }
 .feedback.error {
-  border-left-color: #b33b3b;
+  border-left-color: var(--danger);
 }
 .empty-state {
   padding: 28px 16px;
@@ -230,8 +226,8 @@ button.inbox-button.active {
   padding: 0 24px 22px;
 }
 .conversation-log {
-  min-height: 250px;
-  max-height: 48dvh;
+  min-height: 180px;
+  max-height: 52dvh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -245,10 +241,10 @@ button.inbox-button.active {
 }
 .collab-app .chat-bubble {
   align-self: auto;
-  max-width: 100%;
+  max-width: min(100%, 760px);
   margin: 0;
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 14px;
   overflow-wrap: anywhere;
   box-shadow: none;
@@ -281,7 +277,7 @@ button.inbox-button.active {
   align-items: flex-end;
   padding: 20px;
   flex-wrap: wrap;
-  margin: 24px 0;
+  margin: 16px 0;
 }
 .invite-form label {
   flex: 1;
@@ -373,16 +369,16 @@ button.inbox-button.active {
   flex-wrap: wrap;
 }
 .status-done {
-  color: #17774d;
+  color: var(--success);
 }
 .status-blocked {
-  color: #b33b3b;
+  color: var(--danger);
 }
 .task-detail {
   padding: 20px;
   border: 1px solid var(--border);
   background: var(--surface);
-  border-radius: 12px;
+  border-radius: 8px;
   display: grid;
   gap: 16px;
   min-width: 0;
@@ -417,7 +413,7 @@ button.inbox-button.active {
 }
 .confirm-dialog {
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 28px;
   max-width: min(480px, calc(100% - 32px));
   margin: auto;
@@ -442,7 +438,7 @@ button.inbox-button.active {
     display: none;
   }
 }
-@media (max-width: 700px) {
+@media (max-width: 768px) {
   .collab-header {
     padding: 16px;
     flex-wrap: wrap;
@@ -504,9 +500,6 @@ button.inbox-button.active {
 }
 
 /* Project intelligence uses the same workspace surfaces and form vocabulary. */
-.workspace-nav {
-  flex-wrap: wrap;
-}
 .project-section {
   display: grid;
   gap: 20px;
@@ -809,7 +802,7 @@ button.inbox-button.active {
     overflow: auto;
   }
 }
-@media (max-width: 700px) {
+@media (max-width: 768px) {
   .project-section .surface {
     padding: 16px;
   }
@@ -823,4 +816,218 @@ button.inbox-button.active {
   .briefing-filter > label {
     flex-basis: 100%;
   }
+}
+
+/* Shell utilities share the same native controls as domain panels. */
+.workspace-heading {
+  margin-bottom: 24px;
+}
+.workspace-sidebar {
+  background: var(--surface);
+}
+.workspace-nav button[aria-pressed="true"] {
+  border-left: 3px solid var(--accent);
+}
+.account-menu {
+  font-size: 13px;
+}
+.account-menu > summary {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.account-menu[open] {
+  flex-basis: 100%;
+}
+.account-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 20px 0 4px;
+  max-width: 560px;
+}
+.account-controls > p,
+.account-controls .account-recovery {
+  width: 100%;
+}
+.header-actions:has(.account-menu[open]) {
+  flex-basis: 100%;
+}
+.collab-header:has(.account-menu[open]) {
+  flex-wrap: wrap;
+}
+.account-controls .account-recovery {
+  margin-top: 0;
+}
+.collab-app details.surface {
+  padding: 16px 20px;
+}
+.collab-app details.surface[open] > summary {
+  margin-bottom: 16px;
+}
+.collab-app details.surface > p {
+  margin: 12px 0;
+}
+.collab-app details.surface > label {
+  margin: 16px 0;
+}
+.project-form > button {
+  justify-self: start;
+}
+.project-section > .section-heading {
+  margin-top: 0;
+}
+.project-section article.surface > * + * {
+  margin-top: 12px;
+}
+.project-section ul,
+.project-section ol {
+  padding-left: 22px;
+}
+.project-section blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 16px;
+}
+.project-section .surface > .empty-state {
+  padding: 12px 0;
+}
+.message-form {
+  margin-bottom: 8px;
+}
+.message-form textarea {
+  resize: vertical;
+  min-height: 80px;
+  max-height: 240px;
+}
+.conversation-entry > small {
+  display: block;
+  font-weight: 500;
+}
+.permission-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.permission-facts dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+.permission-facts dd {
+  margin: 4px 0 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.contract-summary {
+  background: var(--surface-secondary);
+  border-left: 3px solid var(--accent);
+  padding: 12px 16px;
+}
+.collab-app .feedback.error {
+  color: var(--danger);
+}
+@media (max-width: 768px) {
+  .collab-header {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+  .header-actions {
+    flex: 1;
+    justify-content: flex-end;
+  }
+  .account-name {
+    display: none;
+  }
+  .brand {
+    font-size: 19px;
+  }
+  .workspace-sidebar {
+    padding: 16px;
+    gap: 12px;
+  }
+  .workspace-sidebar > label {
+    align-self: start;
+  }
+  .create-workspace {
+    margin: 0;
+  }
+  .inbox-button {
+    grid-column: 1 / -1;
+  }
+  .workspace-sidebar .sidebar-note {
+    display: none;
+  }
+  .workspace-nav {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    max-width: 100%;
+    gap: 4px;
+    padding: 12px 0 4px;
+    margin: 0;
+  }
+  .workspace-nav button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 8px 12px;
+  }
+  .workspace-nav button[aria-pressed="true"] {
+    border-left: 1px solid var(--border);
+    border-bottom: 3px solid var(--accent);
+  }
+  .workspace-main {
+    padding: 24px 16px;
+  }
+  .workspace-heading {
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+  .collab-app h1 {
+    font-size: 22px;
+    overflow-wrap: anywhere;
+  }
+  .role-label {
+    flex-shrink: 0;
+  }
+  .message-form {
+    gap: 8px;
+  }
+  .permission-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .collab-app input,
+  .collab-app textarea,
+  .collab-app select {
+    font-size: 16px;
+  }
+  .account-controls button {
+    min-height: 44px;
+  }
+}
+@media (max-width: 480px) {
+  .workspace-heading {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .message-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .project-form > button {
+    justify-self: stretch;
+  }
+  .collab-app .button-row button {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+}
+
+.run-placeholder {
+  align-self: center;
+  color: var(--muted);
+}
+.project-form textarea {
+  border-color: var(--control-border);
 }
