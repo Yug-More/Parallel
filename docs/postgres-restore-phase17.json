@@ -1,0 +1,9 @@
+{
+  "drill": "isolated_postgres_restore",
+  "tables": 32,
+  "rows": 24,
+  "backup_sha256": "af690ddf72cd673c27784380c89872588e9fd2378356896b22c78438e89da931",
+  "source_unchanged": true,
+  "receipts_preserved": true,
+  "restored_migration_verified": true
+}

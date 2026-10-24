@@ -153,7 +153,7 @@ npx playwright install chromium
 PARALLEL_TEST_PYTHON=../backend/.venv/bin/python npm test
 ```
 
-Install the separately pinned audit tool if needed: `pip install pip-audit==2.10.0`. Browser tests launch disposable real API/database/worker services and use synthetic accounts. They include six-width/both-theme layout, keyboard/dialog/citation behavior, failed-send retry, persisted collaboration, evidence revocation, exact approval/rejection/replay, recovery and retention. CI also runs both Python versions, PostgreSQL fresh/populated upgrades/concurrency, migration drift, dependency audits and isolated dump/restore. Ordinary tests make no paid provider calls. Counts and exact outcomes belong to the dated [regression report](docs/PRODUCT_REGRESSION_QA.md) and PR runs.
+Install the separately pinned audit tool if needed: `pip install pip-audit==2.10.0`. Browser tests launch disposable real API/database/worker services and use synthetic accounts. They include six-width/both-theme layout, keyboard/dialog/citation behavior, failed-send retry, persisted collaboration, evidence revocation, exact approval/rejection/replay, recovery and retention. CI also runs both Python versions, PostgreSQL fresh/populated upgrades/concurrency, migration drift, dependency audits and isolated dump/restore. Ordinary tests make no paid provider calls. Counts and exact outcomes belong to the [final handoff](docs/FINAL_PRODUCT_HANDOFF.md), dated [regression report](docs/PRODUCT_REGRESSION_QA.md) and PR runs.
 
 ## Evidence and limits
 
@@ -176,6 +176,8 @@ Historical Plivo credential exposure still requires owner-side revocation/rotati
 - `backend/tests/`, `backend/evaluation/`: isolated regression, PostgreSQL and labeled retrieval fixtures.
 - `backend/legacy/`: non-executable historical references; do not reactivate without security review.
 - `docs/`: [product vision](docs/PRODUCT_VISION.md), [design system](docs/PRODUCT_DESIGN_SYSTEM.md), [screen audit](docs/PRODUCT_UI_AUDIT.md), [UI implementation](docs/PRODUCT_UI_IMPLEMENTATION.md), [agent contracts](docs/AGENT_ORCHESTRATION.md), [roadmap](docs/DEVELOPMENT_ROADMAP.md) and [audit history](docs/REPOSITORY_AUDIT.md).
+
+The [final product handoff](docs/FINAL_PRODUCT_HANDOFF.md) records completed phases, verification and remaining owner steps.
 
 Contribute through focused PRs with actual verification evidence; follow [AGENTS.md](AGENTS.md), preserve user data/history and keep authorization/approval boundaries intact. The original project began as a hackathon prototype; owner-supplied recognition is recorded with its verification limits in [project history](docs/PROJECT_HISTORY.md). Historical human contributions remain preserved.
 

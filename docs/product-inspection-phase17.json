@@ -1,0 +1,137 @@
+{
+  "observations": [
+    {
+      "width": 1440,
+      "section": "Overview",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "width": 1440,
+      "section": "Conversation",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "width": 1440,
+      "section": "Tasks",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "width": 1440,
+      "section": "Decisions",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "width": 1440,
+      "section": "Intelligence",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "width": 1440,
+      "section": "Documents",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "width": 1440,
+      "section": "Connections",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "width": 1440,
+      "section": "Ask workspace",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "width": 1440,
+      "section": "Agents & approvals",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "width": 1440,
+      "section": "Members",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "width": 1440,
+      "section": "Activity",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "width": 390,
+      "section": "Overview",
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "width": 390,
+      "section": "Conversation",
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "width": 390,
+      "section": "Tasks",
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "width": 390,
+      "section": "Decisions",
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "width": 390,
+      "section": "Intelligence",
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "width": 390,
+      "section": "Documents",
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "width": 390,
+      "section": "Connections",
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "width": 390,
+      "section": "Ask workspace",
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "width": 390,
+      "section": "Agents & approvals",
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "width": 390,
+      "section": "Members",
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "width": 390,
+      "section": "Activity",
+      "viewport": 390,
+      "document": 390
+    }
+  ],
+  "pageErrors": []
+}

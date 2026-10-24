@@ -2,7 +2,11 @@ import { useState } from "react";
 import { api } from "../api";
 import { useWorkspaceQuery } from "./projectHooks";
 
-export default function RetentionPanel({ workspaceId, onAccessLost }) {
+export default function RetentionPanel({
+  workspaceId,
+  onAccessLost,
+  onClosed,
+}) {
   const [scope, setScope] = useState("derived");
   const [target, setTarget] = useState("");
   const [plan, setPlan] = useState(null);
@@ -44,6 +48,7 @@ export default function RetentionPanel({ workspaceId, onAccessLost }) {
         );
         setPlan(null);
         setConfirmation("");
+        if (scope === "close") onClosed?.(result);
       } else {
         setPlan(
           await api(`/workspaces/${workspaceId}/retention/preview`, {

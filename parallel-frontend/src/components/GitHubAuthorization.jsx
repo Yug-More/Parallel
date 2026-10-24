@@ -20,8 +20,8 @@ export default function GitHubAuthorization({
       <h3>Connect a selected private repository</h3>
       <p>
         Install the operator-configured read-only GitHub App on selected
-        repositories first. Device authorization grants access to this workspace
-        until revoked. Tokens stay encrypted on the server.
+        repositories first. Device authorization grants time-limited, read-only
+        access to this workspace. Tokens stay encrypted on the server.
       </p>
       {(actions.error || query.error) && (
         <p role="alert">{actions.error || query.error}</p>

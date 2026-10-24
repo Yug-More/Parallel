@@ -37,6 +37,7 @@ test("populated synthetic product walkthrough and reproducible screenshots", asy
   const colleague = await member.newPage();
   await page.goto("/");
   await colleague.goto("/");
+  await expect(page).toHaveTitle("Parallel — Project workspace");
   const save = async (name) => {
     await page.evaluate(() => window.scrollTo(0, 0));
     const path =
@@ -198,6 +199,13 @@ test("populated synthetic product walkthrough and reproducible screenshots", asy
   await proposals.getByRole("button", { name: "Approve task plan" }).click();
   await expect(page.getByRole("dialog")).toContainText(
     "exactly the displayed tasks",
+  );
+  await expect(page.getByLabel("Exact task effect")).toContainText(
+    "1. Review release evidence",
+  );
+  await expect(page.getByLabel("Exact task effect")).toContainText("SHA-256:");
+  await expect(page.getByLabel("Exact task effect")).toContainText(
+    "requires previous step",
   );
   await save("approval");
   await page

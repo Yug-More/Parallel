@@ -1,0 +1,127 @@
+{
+  "date": "2026-10-24",
+  "ranking_changed": false,
+  "reports": {
+    "legacy": {
+      "method": "deterministic_lexical_v1",
+      "fixture": "synthetic-v1",
+      "query_count": 11,
+      "macro_precision_at_5": 0.8636363636363636,
+      "macro_recall_at_5": 0.9090909090909091,
+      "mean_reciprocal_rank": 0.8888888888888888,
+      "citation_correctness": 1.0,
+      "citations_checked": 12,
+      "current_state_correctness": 1.0,
+      "current_state_checks": 6,
+      "unauthorized_retrieval_count": 0,
+      "access_denials_checked": 6
+    },
+    "coverage": {
+      "method": "deterministic_lexical_v2",
+      "fixture": "synthetic-v1",
+      "query_count": 11,
+      "macro_precision_at_5": 0.9090909090909091,
+      "macro_recall_at_5": 0.9090909090909091,
+      "mean_reciprocal_rank": 0.8888888888888888,
+      "citation_correctness": 1.0,
+      "citations_checked": 11,
+      "current_state_correctness": 1.0,
+      "current_state_checks": 5,
+      "unauthorized_retrieval_count": 0,
+      "access_denials_checked": 6
+    },
+    "connected": {
+      "fixture": "connected-synthetic-v1",
+      "judgments": "Frozen author-curated labels; held out from original 11-query fixture, not independently human-adjudicated",
+      "workload": "SQLite; 200 unrelated messages, four documents/five revisions, two tasks, two decisions/three revisions, one imported issue; 10 sequential requests per query per ranking, includes API/session overhead",
+      "rankings": {
+        "legacy": {
+          "query_count": 16,
+          "macro_precision_at_5": 0.734375,
+          "macro_recall_at_5": 0.875,
+          "mean_reciprocal_rank": 0.8333333333333334,
+          "citation_correctness": 1.0,
+          "citations_checked": 16,
+          "latency_samples": 160,
+          "latency_p50_ms": 5.101353977806866,
+          "latency_p95_ms": 8.757625008001924
+        },
+        "coverage": {
+          "query_count": 16,
+          "macro_precision_at_5": 0.875,
+          "macro_recall_at_5": 0.875,
+          "mean_reciprocal_rank": 0.8333333333333334,
+          "citation_correctness": 1.0,
+          "citations_checked": 10,
+          "latency_samples": 160,
+          "latency_p50_ms": 4.969333502231166,
+          "latency_p95_ms": 8.327500021550804
+        }
+      },
+      "safety_checks_passed": 6,
+      "safety_checks_total": 6,
+      "unauthorized_retrieval_count": 0,
+      "limitations": "Synthetic workload; no semantic embeddings, multilingual normalization or model quality evaluation. Latency is local, not a production capacity claim."
+    },
+    "pilot": {
+      "trained_model": "not_run_no_operator_provisioned_model",
+      "character_similarity": "hybrid mode uses deterministic character ngrams, not a trained model",
+      "judgments": "developer-created frozen holdout; not independent human judgments",
+      "queries": 40,
+      "cutoff": 5,
+      "methods": {
+        "legacy": {
+          "precision_returned_at_5": 0.6183333333333334,
+          "precision_at_5": 0.165,
+          "recall_at_5": 0.85,
+          "mrr": 0.7708333333333334,
+          "citations_resolved": 76,
+          "latency_ms_mean": 11.119714551023208,
+          "latency_ms_max": 26.058416988234967
+        },
+        "coverage": {
+          "precision_returned_at_5": 0.7729166666666667,
+          "precision_at_5": 0.17,
+          "recall_at_5": 0.9,
+          "mrr": 0.8177083333333334,
+          "citations_resolved": 49,
+          "latency_ms_mean": 12.59985837386921,
+          "latency_ms_max": 78.935542027466
+        },
+        "focused": {
+          "precision_returned_at_5": 0.7729166666666667,
+          "precision_at_5": 0.17,
+          "recall_at_5": 0.9,
+          "mrr": 0.8385416666666666,
+          "citations_resolved": 49,
+          "latency_ms_mean": 11.037652072263882,
+          "latency_ms_max": 33.52195804473013
+        },
+        "hybrid": {
+          "precision_returned_at_5": 0.39375,
+          "precision_at_5": 0.17,
+          "recall_at_5": 0.8,
+          "mrr": 0.725,
+          "citations_resolved": 128,
+          "latency_ms_mean": 18.701561499619856,
+          "latency_ms_max": 97.91508404305205
+        }
+      },
+      "authorization_denials": 7,
+      "unauthorized_leaks": 0,
+      "unsupported_questions_abstained": 3,
+      "state_checks": {
+        "superseded_default_hidden": true,
+        "archive_hidden": true,
+        "revoked_hidden": true
+      },
+      "focused_vs_coverage": {
+        "improved_mrr_cases": [
+          "decision correction"
+        ],
+        "regressed_mrr_cases": []
+      },
+      "limitations": "Synthetic local dataset; no live private/model calls. Returned precision uses actual returned count; strict precision@5 divides by five, including empty slots. Lexical paraphrase and multilingual misses remain; conflicts are quoted, not resolved."
+    }
+  }
+}

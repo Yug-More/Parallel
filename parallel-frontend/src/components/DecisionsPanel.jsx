@@ -206,8 +206,9 @@ export default function DecisionsPanel({ workspaceId, onAccessLost }) {
               Previous decisions
             </button>
             <span>
-              {offset + 1}–{offset + (listing.data?.items.length || 0)} of{" "}
-              {listing.data?.total || 0}
+              {listing.data?.items.length
+                ? `${offset + 1}–${offset + listing.data.items.length} of ${listing.data.total}`
+                : `0 of ${listing.data?.total || 0}`}
             </span>
             <button
               disabled={offset + 20 >= (listing.data?.total || 0)}
