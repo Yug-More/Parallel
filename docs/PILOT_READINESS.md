@@ -1,6 +1,6 @@
 # Pilot foundation and evidence
 
-Current Phase 10–12 implementation, setup, verification and limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
+Runtime configuration, hardening and external limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
 
 Parallel now connects extractable PDF evidence, selected GitHub App imports, source-linked questions and approved issue-review tasks in the existing collaborative workspace. This is a demonstrated engineering foundation, not a claim of production readiness, human usability validation or live private/model verification.
 

@@ -1,6 +1,6 @@
 # Product vision
 
-Current Phase 10–12 implementation, setup, verification and limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
+Runtime configuration, hardening and external limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
 
 Parallel helps small project teams preserve the state and reasoning needed to resume work across days, people and tools. A discussion can contain contradictory advice; a task can be unfinished despite a confident report; a decision can be replaced. A useful workspace must make those distinctions inspectable.
 
@@ -33,3 +33,7 @@ Core workflows need no paid keys. PDF/OCR, private GitHub authentication, semant
 ## Current pilot foundation
 
 Project continuity now includes extractable PDF page provenance, selected private GitHub App authorization, bounded optional local character indexing, source conflict/history warnings and evidence-linked issue triage through existing local agents. Every native change still needs exact owner approval and an execution receipt. [Pilot readiness](PILOT_READINESS.md) distinguishes fixture-tested private/model flows and automated browser evidence from live authorization, human usability or production operations. Trained semantics, OCR, general model planning and external writes remain future work.
+
+## Current product experience
+
+A coherent light/dark shell keeps workspace identity, role/member count and evidence controls visible. Conversations retain readable multiline text/code; Intelligence explains the actual shared context and local lexical limits. Selected contract scope, exact approval review, permission expiry and signed retention remain explicit. Optional trained adapters and local recovery are implemented under separate opt-ins; live model quality, private grant behavior and real delivery are not verified. See [design system](PRODUCT_DESIGN_SYSTEM.md) and [external validation](EXTERNAL_VALIDATION_CHECKLIST.md).

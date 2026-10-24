@@ -1,170 +1,109 @@
 # Development
 
-Current Phase 10–12 implementation, setup, verification and limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
+React/Vite and FastAPI/SQLAlchemy form a modular monolith; the separate worker shares the same database. Use Python 3.12/3.13 and Node 22.12+ (the lockfile also permits compatible Node 20.19+). The ordinary local suite requires no paid provider, private grant, model weights or email service.
 
-## Requirements
+## First local setup
 
-Use Python 3.12 or 3.13 and Node 22.12+ (the lockfile also permits compatible Node 20.19+). CI tests Python 3.12/3.13 and Node 22. SQLite is bundled with Python. PostgreSQL 16 is the CI/Docker database target.
-
-From backend:
+From a new checkout's `backend` directory:
 
 ```bash
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-dev.txt
 cp .env.example .env
+python -c 'import secrets; print("SECRET_KEY", secrets.token_urlsafe(48), sep="=")' >> .env
 python migrate.py
 uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
-From parallel-frontend:
+Do not overwrite an existing `.env`. Windows PowerShell activation is `.venv\Scripts\Activate.ps1`; use an installed supported Python executable. Development can generate a process-local secret, but an explicit generated secret gives HTTP/worker consistent configuration and stable sessions across restarts. Never commit it.
+
+In separate terminals run `npm ci && npm run dev` from `parallel-frontend`, and `source .venv/bin/activate && python worker.py` from `backend`. Open http://localhost:5174 and register. HTTP and worker must use the same migrated database and private configuration. Queued uploads/runs/approved actions await the worker; a heartbeat proves polling, not success.
+
+Vite defaults to 5174 and can choose another free port. Match the actual browser origin in `CORS_ORIGINS`. `VITE_API_BASE` defaults to http://localhost:8000; keep localhost/127.0.0.1 consistent for cookies. Provider keys are never frontend environment variables. SQLite relative URLs resolve from the process working directory; use an absolute URL when running commands elsewhere.
+
+## Configuration and optional features
+
+`APP_ENV` is development, test or production. Production requires a sufficiently long signing key and explicit HTTPS origins; invalid settings fail closed. Cookies are HttpOnly/SameSite=Lax and Secure in production. Sessions additionally require live unrevoked database records; never restore stateless JWT acceptance or browser localStorage tokens.
+
+See [example settings](../backend/.env.example). Default collaboration/lexical retrieval/local contracts need no provider key. `requirements-dev.txt` includes the optional AI SDK for isolated mocked adapter regressions; minimal application runtime can install `requirements.txt` only. Actual model requests require explicit server opt-in, key and UI request and may incur cost. Optional trained local runtime is separately installed, trusted-artifact-bound and unverified here. Public GitHub GET imports and selected private App authorization are separate opt-ins; no CLI credential/token fallback. Voice/SMS/arbitrary tools/external writes remain disabled.
+
+[Integrations](INTEGRATIONS.md) describes PDF/private access/index/grounded-answer bounds. [Intelligence hardening](INTELLIGENCE_HARDENING.md) describes trained adapters, fresh transmission checks, local recovery/verification, exact retention and quotas. Recovery's absolute `RECOVERY_OUTBOX_PATH` is private development/test delivery only; it sends no email and production rejects it. [External validation](EXTERNAL_VALIDATION_CHECKLIST.md) lists owner prerequisites without requiring secrets for ordinary tests.
+
+## Migrating existing data
+
+The current head is **`0018_sync_checkpoints`**. Never reset a database or run create_all/drop_all/historical destructive seeds to make an upgrade pass.
+
+1. Stop all HTTP/worker writers and verify the intended `DATABASE_URL`.
+2. Make a database-native backup to an exclusive private path and prove it restores into a **new disposable** destination. SQLite uses `python backup.py --output /absolute/private/new-backup.db`; use PostgreSQL-native procedures for PostgreSQL. Do not copy a live SQLite main file without WAL handling.
+3. Run `python migrate.py` against the restored disposable copy first. Check owners, memberships, original messages, decisions, session validity and receipts.
+4. Only after that review, migrate the intended database. Run `python migrate.py` again, `alembic current` and `alembic check`; expect head 0018 and no new upgrade operations.
+
+Known legacy schemas are adopted explicitly, not blindly stamped. Historical messages remain in their original owners' private workspaces; fields/IDs/timestamps are preserved. Unknown/orphaned schemas stop for review. SQLite DDL failure can leave partial operations: preserve backups, investigate and restore only a disposable/approved destination. Destructive downgrades are intentionally blocked. Additive migrations 0010–0018 cover PDF provenance, indexes/private grants, shared limits, trained adapters, recovery, retention, answer modes and sync checkpoints.
+
+Register through the UI. Optional `python seed.py --confirm-development --email developer@example.test --name Developer` prompts privately and leaves existing data intact; it is development-only.
+
+## Verification
+
+From the root with the backend environment active:
+
+```bash
+ruff check backend scripts
+ruff format --check backend scripts
+pytest -q backend/tests
+python backend/evaluation/run.py --ranking legacy
+python backend/evaluation/run.py --ranking coverage
+python backend/evaluation/connected.py
+python backend/evaluation/pilot.py
+python scripts/check_secrets.py
+pip install pip-audit==2.10.0
+pip-audit -r backend/requirements-ai.txt --progress-spinner off
+```
+
+Backend tests migrate isolated SQLite files and block outbound sockets. Fake provider adapters prove local failure/authorization contracts, not live compatibility or quality. Evaluations use synthetic author/developer judgments; do not mix development and frozen holdout labels.
+
+From `parallel-frontend`:
 
 ```bash
 npm ci
-npm run dev
-```
-
-Vite uses port 5174; CORS must explicitly include the actual frontend origin. `VITE_API_BASE` defaults to http://localhost:8000. Keep localhost/127.0.0.1 consistent for cookies. Provider keys are never Vite variables.
-
-## Settings
-
-`APP_ENV` is development, test or production. `DATABASE_URL` is read after backend/.env loading. SQLite's relative path is relative to the process working directory: run backend commands from backend, or use an absolute SQLite URL.
-
-Development can use a random process-local secret. For stable sessions generate a secret with `python -c 'import secrets; print(secrets.token_urlsafe(48))'` and set SECRET_KEY in backend/.env. Production requires at least 32 bytes and explicit HTTPS CORS_ORIGINS; cookies are Secure and HttpOnly. Local HTTP uses HttpOnly/SameSite=Lax cookies. A changed signing key invalidates old sessions.
-
-No provider credentials are required. For optional AI replies install `pip install -r requirements-ai.txt` and set OPENAI_API_KEY explicitly. This is a server-owned model credential, not another user's account fallback. Real requests can incur cost; do not exercise them without authorization. Model selection is OPENAI_MODEL. Optional grounded answers additionally require GROUNDED_MODEL_ENABLED=true and explicit model mode. Public read-only GitHub sync requires GITHUB_CONNECTOR_ENABLED=true in HTTP and worker environments; it uses no account token. Voice/SMS/private repository access/external writes remain disabled.
-
-## Migrating existing databases
-
-1. Stop all writers. Verify DATABASE_URL points to the intended database.
-2. Make a database-native backup and verify it can be restored. For SQLite use Python's sqlite3 backup API while the application is stopped; preserve WAL state through the backup API rather than copying a live main file. Use pg_dump/restore procedures for PostgreSQL.
-3. Test `python migrate.py` against a disposable copy first.
-4. Inspect account/message/activity counts and ownership. Only then run against the intended database.
-5. Run `alembic current` and `alembic check`; expect 0013_shared_limits and no new upgrade operations.
-
-Revision 0001 adopts known legacy tables or creates an empty schema; it does not stamp a database blindly. Revision 0002 creates one private workspace per original user and assigns that user's message/activity rows there. Credentials, record IDs, existing timestamps and contents are preserved. Missing legacy creation timestamps are filled with the migration time so pagination remains ordered. No other user receives membership. Unknown schemas or orphan ownership stop migration for owner review; never delete records merely to make migration pass.
-
-Re-running an already completed migration is safe. SQLite DDL failures can leave partial schema operations: retain the backup, investigate, and restore the disposable/approved backup before retrying. Destructive downgrade is intentionally blocked. Do not run create_all, drop_all or the historical seed script to repair migrations.
-
-## Optional development account
-
-Register through the UI. Alternatively, after migration:
-
-```bash
-python seed.py --confirm-development --email developer@example.test --name Developer
-```
-
-The script prompts privately for a password, is development-only, and leaves existing accounts/data intact. Importing it performs no work.
-
-## Tests
-
-```bash
-ruff check . ../scripts
-ruff format --check . ../scripts
-pytest -q
-python ../scripts/check_secrets.py
-```
-
-Backend tests migrate isolated SQLite files and block outbound sockets. Provider unit tests use mocks and do not prove live compatibility. Requirements-dev includes the optional AI SDK for mocked adapter regressions; the application runtime can still install only requirements.txt and run local intelligence without that SDK or provider keys.
-
-Frontend:
-
-```bash
+npm audit --audit-level=high
 npm run lint
 npm run build
 npx playwright install chromium
 PARALLEL_TEST_PYTHON=../backend/.venv/bin/python npm test
 ```
 
-Desktop/mobile browser tests create a temporary database/server on 127.0.0.1:18001 and frontend on 15175. Use an executable Python with the backend dependencies installed. Test accounts and databases are disposable; no paid keys are passed. CI also verifies PostgreSQL collaboration, optimistic task concurrency, session revocation, and upgrade from a populated Phase 1A schema.
+Browser tests start a temporary migrated FastAPI/worker on 127.0.0.1:18001 and Vite on 15175, with separate synthetic account contexts. Their private outbox has bounded-prefix ownership-checked teardown. Keep these ports free; ordinary tests write screenshots/traces only to ignored Playwright output. Six widths/both themes, keyboard/dialog/citations, failures/retry, isolation, member removal, approval/rejection/replay, recovery and retention complement populated collaboration journeys. [Regression evidence](PRODUCT_REGRESSION_QA.md) records dated commands/results; CI repeats its five-job gate.
 
-## Docker (development)
+For PostgreSQL use a new disposable PostgreSQL 16 service with database name `parallel_test`, `APP_ENV=test` and a test-only URL. Migrate it twice and run `alembic check`; then run `backend/tests/postgres_{smoke,upgrade,intelligence,connected}.py` individually from the root. The latter scripts create guarded exclusive schemas. `PARALLEL_TEST_POSTGRES=true pytest -q backend/tests/test_recovery.py backend/tests/test_embedding_providers.py backend/tests/test_retention.py` uses exclusive schemas too. Never target a user database. `postgres_restore.py --container DISPOSABLE_CONTAINER_ID` creates exclusive source/destination databases and verifies all rows/receipts without overwriting the configured database; [operations](OPERATIONS.md) explains scope and cleanup.
 
-In backend/.env set generated SECRET_KEY and POSTGRES_PASSWORD values. Use a URL-safe generated database password, or percent-encode it when composing DATABASE_URL. Then `docker compose up --build`. PostgreSQL must be healthy before the backend runs migrations and starts. Backend binds only localhost:8000; run the frontend separately. Existing volumes are preserved. Back up existing database volumes before upgrades. Never use `docker compose down -v` on data you need.
-
-The image runs as an unprivileged user, includes application code, and excludes .env files/databases. Compose is a local development profile, not a production deployment recipe.
-
-## Troubleshooting
-
-- Migration-required startup error: verify the correct working directory/URL and run migrations after backup.
-- Missing provider: human messages still save; optional AI returns 503.
-- Provider failure: AI returns 502, creates no assistant success message, and preserves the human message.
-- 404 workspace: the current account is not a member, or the workspace does not exist.
-- 403 membership write: only the owner can add members.
-- Invalid password input: registration requires 8+ characters and at most 72 UTF-8 bytes. Existing shorter legacy passwords can still authenticate.
-- CORS/cookie failures: match hostnames, ports and allowed origins; production requires HTTPS.
-
-
-## Phase 1B upgrade and collaboration usage
-
-Run `python migrate.py` after the existing backup/disposable-copy procedure. Revision 0003 checks that each existing workspace has exactly one matching owner membership, then adds tables and constraints without resetting Phase 1A records. Inconsistent ownership stops before schema changes for owner review. Existing users must log in again: old stateless JWTs have no session record. The script refuses destructive downgrades. `alembic check` must show no model drift. CI tests both a populated SQLite Phase 1A file and an isolated PostgreSQL Phase 1A schema.
-
-Use Members → Invite collaborator with a registered email. The recipient opens Invitations and accepts/declines. No email delivery is configured. Owners revoke pending invitations in Members; owners can remove members and transfer ownership to an existing member. A member may leave; an owner must transfer first. Adding a collaborator grants access to existing workspace history.
-
-Use Tasks → New task. Choose an assignee from current members, a status, priority, optional due date, description and prerequisite tasks. Save commits real database state. API edits/archive require the current version; on conflict use Reload task and reconcile your draft. The UI offers up to 100 recent active prerequisite candidates; the API supports any active same-workspace task. Tasks are listed 50 per page and archived rather than deleted.
-
-Mark prerequisites Done before completing dependents. Reopen completed dependents before reopening their prerequisite. Remove dependent links before archiving a prerequisite. Removing a member clears their assignments, including archived-task assignments, while preserving creator attribution and task contents.
-
-Log out revokes the current session. Log out all sessions requires confirmation and invalidates all existing browser sessions. Other browsers return to sign-in on their next authenticated refresh. Auth throttling returns 429/Retry-After after 20 registration/login attempts per connection IP within 60 seconds; do not trust X-Forwarded-For without a controlled deployment design.
-
-`postgres_smoke.py` and `postgres_upgrade.py` are CI-only scripts guarded by APP_ENV=test and the disposable parallel_test database name. The upgrade script creates an isolated schema in that test service; never point these scripts at user databases.
-
-
-## Phase 2 + 3 development
-
-After the backup and disposable-copy procedure, `python migrate.py` applies `0004_intelligence`. This adds decision/revision/source, visit, run/event and approval tables without changing existing Phase 1B records or invalidating its live sessions. Stop both HTTP and worker writers before upgrading a user database. `alembic current` and `alembic check` must agree with the new revision.
-
-Start the backend, frontend and a separate worker using the same database URL:
+## Product screenshots
 
 ```bash
-cd backend
-source .venv/bin/activate
-python worker.py
+PARALLEL_CAPTURE_PRODUCT=true PARALLEL_TEST_PYTHON=../backend/.venv/bin/python npm test -- showcase.spec.js
 ```
 
-`python worker.py --once` processes at most one queued job, expired lease or approval; a coordinator requires multiple iterations. For the optional development Docker profile, start the backend/database first, then `docker compose run --rm backend python worker.py`. Docker execution has not been verified in this phase. Never start a worker before the intended database is migrated. A missing worker leaves runs Queued, not Completed.
+Run from `parallel-frontend`. This explicit command refreshes curated `docs/screenshots/product/` PNGs through real synthetic account, conversation, document, source, local-agent and exact-approval workflows. Ordinary CI runs the same assertions but writes captures only to Playwright results. The accepted decision is seeded through the authenticated API against the same isolated storage; other displayed state is created through actual UI flows. No generated mockups, live model claims or private user data. Review images before committing; preserve historical baseline captures.
 
-In Decisions, record a statement, rationale and linked source, revise it with a reason, or supersede an accepted decision with another accepted record. In Intelligence, inspect a visit-relative briefing, apply a timestamp, mark changes seen, or search current/historical source records. In Agents & approvals, request a local status/dependency/handoff report and inspect its child runs, context and events. Select publication only when you want an owner to review the exact report for posting to Conversation. Approval and publication are separate persisted states.
+## Documentation verification
 
-Additional verification from the repository root:
-
-```bash
-python backend/evaluation/run.py --ranking legacy
-python backend/evaluation/run.py --ranking coverage
-python backend/evaluation/connected.py
-python scripts/check_secrets.py
-```
-
-CI runs PostgreSQL collaboration plus `postgres_intelligence.py`: populated Phase 1B preservation, source-linked decisions, concurrent revisions, SQL retrieval, delegated handoffs and competing-worker approval publication. Those scripts require APP_ENV=test and the disposable parallel_test service; never target a user database. Browser scenarios use synthetic accounts, real localhost HTTP, SQLite and the same worker implementation. See [Evaluation](EVALUATION.md) and [Agent orchestration](AGENT_ORCHESTRATION.md) for metrics and recovery commands.
-
-Troubleshooting: Queued means check the worker uses the same migrated DATABASE_URL; `task_blocked` means complete prerequisites or use dependency analysis; `context_changed` means project state changed during computation/approval and a fresh run is needed; `lease_expired` means interrupted execution failed visibly and can be explicitly retried. A pending approval can only be answered by the current owner. Approved means the worker still has to execute; Executed contains the publication message receipt.
-
-
-## Documentation validation
-
-Screenshots are captured by the real `intelligence.spec.js` and `connected.spec.js` desktop/mobile scenarios into Playwright test output; curated copies live in `docs/screenshots/` and contain synthetic accounts only. Do not substitute generated mockups. To validate Markdown links and parse/render every Mermaid diagram without adding a runtime dependency:
+From the root after frontend/Chromium installation:
 
 ```bash
 npm install --prefix /tmp/parallel-doc-tools --no-save --package-lock=false mermaid@11.12.0
 MERMAID_BUNDLE=/tmp/parallel-doc-tools/node_modules/mermaid/dist/mermaid.min.js node scripts/check_docs.cjs
 ```
 
-Run from the repository root after frontend dependency/Chromium installation. The script uses that Playwright browser and checks actual local link/image targets. This validation is optional locally and was executed for the documentation overhaul; the core CI has no Mermaid package dependency.
+The checker resolves actual local Markdown/image targets and parses/renders every Mermaid diagram. Mermaid is an isolated documentation tool, not a runtime dependency. The architecture sources must track implemented modules and states.
 
-## Phases 4–6 development
+## Troubleshooting and operations
 
-The current migration head is `0013_shared_limits`. Use the same backup/disposable-copy procedure before upgrading; new tables and nullable/defaulted epoch metadata preserve existing records. Start the existing HTTP/worker/frontend processes. Upload `.txt`/`.md` in Documents, wait for Ready, then use Ask workspace or Intelligence search. New revisions require the current version; Archive makes all passages unavailable. PDF is explicitly unsupported.
+- Startup migration error: verify URL/working directory; back up and migrate the intended disposable copy first.
+- Missing/failed provider: human messages persist; optional replies fail explicitly. Retry only by a new deliberate action.
+- 404 workspace/source: missing membership, closure or unavailable evidence; UI filtering cannot authorize access.
+- Task conflict/prerequisite failure: reload the current version and review dependencies; never force Done.
+- Queued/failed run: verify worker/database/configuration, then inspect durable context/event/error state. `context_changed` needs a fresh plan; lease failure is not completion. Approved waits for execution; receipt proves the native effect.
+- Cookie/CORS issues: match browser/API hostname and allowed origin; use HTTPS in production.
+- Recovery token missing: only a configured private test/development channel exists; no email was sent.
 
-Enable the public connector only when network reads are intended: set `GITHUB_CONNECTOR_ENABLED=true` for both HTTP and worker, restart, and connect `owner/repository` as a workspace owner. It imports a bounded recent snapshot; private/authenticated repositories are unsupported. See [Integrations](INTEGRATIONS.md) for budgets, cooldown, errors and revocation. Browser connector checks use a test-only synthetic provider fixture; production code has no fixture switch.
-
-In Agents & approvals choose Task planner or Delivery coordinator and enter up to five explicit task titles separated by semicolons/newlines. Research uses lexical objective terms. Inspect Native action proposals, approve the exact payload as current owner and wait for an Executed receipt; new tasks remain To do/unassigned, with sequential prerequisites. Changed context requires a fresh plan. Read-only research/status reports still need no approval until publication is requested.
-
-`/ready`, Overview worker health, request IDs and `backup.py` support diagnosis/recovery. [Operations](OPERATIONS.md) explains tested paths and remaining deployment responsibilities. CI adds `postgres_connected.py` for real PostgreSQL document/search/answer/revocation/delegation/native-receipt and competing-worker checks. It is guarded by APP_ENV=test plus the disposable parallel_test service name.
-
-## Pilot verification and optional configuration
-
-Run `python backend/evaluation/pilot.py` from the root for the frozen 40-query developer holdout; it creates only temporary synthetic storage and calls no providers. Existing baseline/connected commands remain required. PDF extraction needs the pinned pypdf runtime dependency; Linux supplies the strongest memory bound. Private App configuration, encryption-key backup and opt-in local index are described in [Integrations](INTEGRATIONS.md). Keep secrets server-side and keep HTTP/worker configuration identical.
-
-The new browser journey reads `parallel-frontend/tests/fixtures/pilot-notes.pdf`, runs real HTTP/worker/SQLite persistence, and uses an explicit test-only GitHub App transport. It does not prove a live grant. Chromium attachments capture interaction counts, refresh checks, completion, duration and layout; they are automated usability evidence with zero human participants. Existing seven journeys remain. Restore to a new path with `python backend/restore.py --source /private/backup.db --output /private/NEW-copy.db`; do not overwrite live data.
-
-Local Phase 7–9 verification ran **183 backend tests**, retained all original seven Chromium journeys and added two persisted pilot workflows. Ruff, frontend lint/build, all three retrieval evaluations, fresh/repeated migrations and metadata drift checks are part of the delivery verification. Exact remote Python/PostgreSQL/browser results belong to the PR and CI run; these local counts do not by themselves certify a green remote run.
+`GET /health` is liveness; `/ready` checks database/head. [Operations](OPERATIONS.md) covers private logs, backup/new-path restoration, queue fairness, bounded leases and operator-installed supervision. Docker Compose is an optional local profile: configure generated private keys/passwords, preserve existing volumes, run frontend separately, and never use `down -v` on needed data. No production deployment or public release is authorized by these instructions.

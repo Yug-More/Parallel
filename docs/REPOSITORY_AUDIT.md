@@ -1,6 +1,6 @@
 # Repository audit and remediation
 
-Current Phase 10–12 implementation, setup, verification and limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
+Runtime configuration, hardening and external limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
 
 ## Original verified baseline
 
@@ -51,3 +51,7 @@ Verification includes isolated backend storage/worker races, real desktop/mobile
 Started from verified clean local/remote main `6c5008419a2c57cee7bceb00811f1d2442ca34ad` (PR #4). Baseline verification ran 153 backend tests and retained seven browser journeys. This cycle adds bounded PDF parsing/page citations, optional local index/provider lifecycle, measured phrase ranking, private GitHub App device grants/renewal/revocation, approved issue triage, shared counters, fairer worker queue rotation and a new-path restore drill. Additive migrations 0010–0013 preserve populated Phase 6 records.
 
 Targeted review fixed rotated refresh-grant loss on a subsequent network outage, incorrect inferred dependencies between separate issues, and explicit source-dialog focus restoration. Tests cover malicious model action fields, private permission expiry/owner transfer, late sync results, resource-bounded parser failures and competing shared counters. All data used for verification is synthetic. No paid calls, live private authorization, external App registration, production deployment, original user-data reset or historical rewriting occurred. Delivery evidence and limitations are recorded in the implementation PR and [pilot readiness](PILOT_READINESS.md).
+
+## Phases 13–16 product finalization
+
+Started from the verified Phase 12 merge `d54b91973d7fd97bda96ef090a6b88b195e86e4b`. The [screen audit](PRODUCT_UI_AUDIT.md) and [design system](PRODUCT_DESIGN_SYSTEM.md) precede the [interface refinement](PRODUCT_UI_IMPLEMENTATION.md). [Regression QA](PRODUCT_REGRESSION_QA.md) retains historical workflows and adds six-width/both-theme, keyboard, failure/retry, safe formatting and rejection/replay evidence. The README now uses reproducible actual synthetic screenshots, current schema/setup and explicit optional/external boundaries. Earlier audit entries remain historical; they are not current capability inventories.

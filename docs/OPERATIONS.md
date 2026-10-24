@@ -1,12 +1,12 @@
 # Operations and recovery
 
-Current Phase 10–12 implementation, setup, verification and limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
+Runtime configuration, hardening and external limits: [trained intelligence and operational hardening](INTELLIGENCE_HARDENING.md). Earlier milestone sections below describe their original scope.
 
 This is a local/team foundation, not a public deployment recipe. Keep the HTTP process, worker and migrations on the same configured database. No user database was reset or migrated during implementation verification.
 
 ## Readiness and worker health
 
-`GET /health` is process liveness. `GET /ready` checks database connectivity and the expected Alembic head (`0013_shared_limits`), returning 503 on failure. Startup refuses a missing/outdated schema. Neither endpoint exposes credentials, workspace data or provider errors.
+`GET /health` is process liveness. `GET /ready` checks database connectivity and the expected Alembic head (`0018_sync_checkpoints`), returning 503 on failure. Startup refuses a missing/outdated schema. Neither endpoint exposes credentials, workspace data or provider errors.
 
 Run `python worker.py` from backend with the intended environment. The worker processes native approvals, local runs, document extraction and explicitly enabled public GitHub syncs. `--once` handles at most one operation, so a coordinator needs several iterations. Worker heartbeat records update approximately every ten seconds and become stale after 60 seconds. Overview distinguishes recent polling from actual job success; inspect each durable state/receipt to establish success.
 
@@ -28,15 +28,15 @@ python backup.py --output /absolute/private/path/parallel-before-upgrade.db
 
 The SQLite utility uses the native backup API, opens the source read-only, creates the output exclusively with mode 0600, refuses overwrite/source equality, and checks integrity. It does not remove failed outputs. It accepts file-backed SQLite only. Keep backups out of the repository and off public/shared paths. Copying a live `.db` file without WAL handling is insufficient.
 
-For PostgreSQL use an operator-reviewed `pg_dump`/restore procedure with credentials supplied privately. Test restoration in a disposable database; do not replace production data merely to verify a backup. The SQLite backup/restore path is covered by isolated tests. No live production restore or PostgreSQL operational backup drill is claimed.
+For PostgreSQL use an operator-reviewed `pg_dump`/restore procedure with credentials supplied privately. Test restoration in a disposable database; do not replace production data merely to verify a backup. The SQLite backup/restore path is covered by isolated tests. The isolated PostgreSQL dump/restore drill verifies synthetic data and receipts into exclusive new databases. No live production restore, offsite-key recovery or production recovery objective is claimed.
 
-Test migrations and application checks against the restored disposable copy first. Then follow [Development](DEVELOPMENT.md) before updating the intended database. Migrations 0005–0013 add connected-knowledge/action/heartbeat tables and nullable/defaulted revocation metadata; existing records and live session data remain intact. Populated Phase 1B/Phase 3 preservation and foreign keys are tested; downgrade is intentionally blocked.
+Test migrations and application checks against the restored disposable copy first. Then follow [Development](DEVELOPMENT.md) before updating the intended database. Migrations 0005–0018 add connected knowledge, actions, heartbeats, indexes/private grants, trained adapters, recovery/retention and checkpoints; existing records and live session data remain intact. Populated Phase 1B/Phase 3 preservation and foreign keys are tested; downgrade is intentionally blocked.
 
 ## Retention and deployment gaps
 
-Raw document uploads are discarded after terminal extraction/cancellation; document revisions/passages, imported history, answers, runs, approvals, receipts, sessions and activity are retained. Archiving/revocation restricts application retrieval without deleting the audit record. Heartbeats older than seven days are operational telemetry and are pruned. Application storage is not encrypted at rest; protect database files, volumes, backups and logs.
+Raw document uploads are discarded after terminal extraction/cancellation; document revisions/passages, imported history, answers, runs, approvals, receipts and activity are retained until their applicable explicit retention operation. Expired operational authentication/recovery records have bounded cleanup as described in the hardening guide. Archiving/revocation restricts application retrieval without deleting the audit record. Heartbeats older than seven days are operational telemetry and are pruned. Application storage is not encrypted at rest; protect database files, volumes, backups and logs.
 
-Before public deployment establish TLS/trusted ingress, broader account/organization abuse controls, account verification/recovery, database/backup encryption, restore drills, retention policies and monitored worker supervision. Authentication uses shared atomic fixed-minute database counters (20 attempts per peer/minute), keyed by HMAC rather than raw IP. Boundary bursts can cross adjacent windows; trusted ingress controls remain necessary. Answer/sync quotas are workspace/database serialized, not a complete global or distributed abuse-control service. Model calls have no global organization spend cap; configure provider-side limits before enabling them. Historical exposed Plivo credentials still require owner-side revocation/rotation.
+Before public deployment establish TLS/trusted ingress, broader account/organization abuse controls, a reviewed production recovery/delivery channel, database/backup encryption, production restore drills and an operational retention policy and monitored worker supervision. Authentication uses shared atomic fixed-minute database counters (20 attempts per peer/minute), keyed by HMAC rather than raw IP. Boundary bursts can cross adjacent windows; trusted ingress controls remain necessary. Answer/sync quotas are workspace/database serialized, not a complete global or distributed abuse-control service. Model calls have no global organization spend cap; configure provider-side limits before enabling them. Historical exposed Plivo credentials still require owner-side revocation/rotation.
 
 ## Restore and supervision drill
 
@@ -53,3 +53,7 @@ Shared counters expire after one day and contain only HMAC keys/window/count; ra
 `RECOVERY_OUTBOX_PATH` is development/test only, absolute and private; production rejects it. Keep outbox files out of web roots and backups intended for sharing. Database token expiry does not clean the private delivery files; the operator must remove expired outbox files. Worker operational retention expires abandoned recovery jobs at thirty minutes, retains recovery metadata seven days and retains expired sessions seven days after expiry. It never expires native project history or retention receipts automatically.
 
 Heartbeat status means recently alive, including while a job waits on I/O. Inspect durable job state/checkpoints and receipts for actual progress. Queue exceptions back off for thirty seconds; persistent failures need operator investigation. Existing systemd/Compose templates remain operator-installed examples, not a managed deployment.
+
+## Current operator boundaries
+
+Private local account recovery/verification, signed owner erasure/closure previews, operational metadata cleanup, independent worker heartbeat/backoff and isolated PostgreSQL restoration are implemented. They do not provide real email, production service installation, backup erasure or deployment readiness. [External validation checklist](EXTERNAL_VALIDATION_CHECKLIST.md) specifies the remaining owner steps. The current head is shared by HTTP and worker; settings mismatch must fail closed.
