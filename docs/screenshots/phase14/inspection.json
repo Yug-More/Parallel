@@ -1,0 +1,464 @@
+[
+  {
+    "width": 1440,
+    "section": "conversation",
+    "viewport": 1440,
+    "document": 1440,
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "section": "overview",
+    "viewport": 1440,
+    "document": 1440,
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "section": "tasks",
+    "viewport": 1440,
+    "document": 1440,
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "section": "decisions",
+    "viewport": 1440,
+    "document": 1440,
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "section": "intelligence",
+    "viewport": 1440,
+    "document": 1440,
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "section": "documents",
+    "viewport": 1440,
+    "document": 1440,
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "section": "connections",
+    "viewport": 1440,
+    "document": 1440,
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "section": "answers",
+    "viewport": 1440,
+    "document": 1440,
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "section": "agents",
+    "viewport": 1440,
+    "document": 1440,
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "section": "members",
+    "viewport": 1440,
+    "document": 1440,
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "section": "activity",
+    "viewport": 1440,
+    "document": 1440,
+    "pageErrors": []
+  },
+  {
+    "width": 1280,
+    "section": "conversation",
+    "viewport": 1280,
+    "document": 1280,
+    "pageErrors": []
+  },
+  {
+    "width": 1280,
+    "section": "overview",
+    "viewport": 1280,
+    "document": 1280,
+    "pageErrors": []
+  },
+  {
+    "width": 1280,
+    "section": "tasks",
+    "viewport": 1280,
+    "document": 1280,
+    "pageErrors": []
+  },
+  {
+    "width": 1280,
+    "section": "decisions",
+    "viewport": 1280,
+    "document": 1280,
+    "pageErrors": []
+  },
+  {
+    "width": 1280,
+    "section": "intelligence",
+    "viewport": 1280,
+    "document": 1280,
+    "pageErrors": []
+  },
+  {
+    "width": 1280,
+    "section": "documents",
+    "viewport": 1280,
+    "document": 1280,
+    "pageErrors": []
+  },
+  {
+    "width": 1280,
+    "section": "connections",
+    "viewport": 1280,
+    "document": 1280,
+    "pageErrors": []
+  },
+  {
+    "width": 1280,
+    "section": "answers",
+    "viewport": 1280,
+    "document": 1280,
+    "pageErrors": []
+  },
+  {
+    "width": 1280,
+    "section": "agents",
+    "viewport": 1280,
+    "document": 1280,
+    "pageErrors": []
+  },
+  {
+    "width": 1280,
+    "section": "members",
+    "viewport": 1280,
+    "document": 1280,
+    "pageErrors": []
+  },
+  {
+    "width": 1280,
+    "section": "activity",
+    "viewport": 1280,
+    "document": 1280,
+    "pageErrors": []
+  },
+  {
+    "width": 1024,
+    "section": "conversation",
+    "viewport": 1024,
+    "document": 1024,
+    "pageErrors": []
+  },
+  {
+    "width": 1024,
+    "section": "overview",
+    "viewport": 1024,
+    "document": 1024,
+    "pageErrors": []
+  },
+  {
+    "width": 1024,
+    "section": "tasks",
+    "viewport": 1024,
+    "document": 1024,
+    "pageErrors": []
+  },
+  {
+    "width": 1024,
+    "section": "decisions",
+    "viewport": 1024,
+    "document": 1024,
+    "pageErrors": []
+  },
+  {
+    "width": 1024,
+    "section": "intelligence",
+    "viewport": 1024,
+    "document": 1024,
+    "pageErrors": []
+  },
+  {
+    "width": 1024,
+    "section": "documents",
+    "viewport": 1024,
+    "document": 1024,
+    "pageErrors": []
+  },
+  {
+    "width": 1024,
+    "section": "connections",
+    "viewport": 1024,
+    "document": 1024,
+    "pageErrors": []
+  },
+  {
+    "width": 1024,
+    "section": "answers",
+    "viewport": 1024,
+    "document": 1024,
+    "pageErrors": []
+  },
+  {
+    "width": 1024,
+    "section": "agents",
+    "viewport": 1024,
+    "document": 1024,
+    "pageErrors": []
+  },
+  {
+    "width": 1024,
+    "section": "members",
+    "viewport": 1024,
+    "document": 1024,
+    "pageErrors": []
+  },
+  {
+    "width": 1024,
+    "section": "activity",
+    "viewport": 1024,
+    "document": 1024,
+    "pageErrors": []
+  },
+  {
+    "width": 768,
+    "section": "conversation",
+    "viewport": 768,
+    "document": 768,
+    "pageErrors": []
+  },
+  {
+    "width": 768,
+    "section": "overview",
+    "viewport": 768,
+    "document": 768,
+    "pageErrors": []
+  },
+  {
+    "width": 768,
+    "section": "tasks",
+    "viewport": 768,
+    "document": 768,
+    "pageErrors": []
+  },
+  {
+    "width": 768,
+    "section": "decisions",
+    "viewport": 768,
+    "document": 768,
+    "pageErrors": []
+  },
+  {
+    "width": 768,
+    "section": "intelligence",
+    "viewport": 768,
+    "document": 768,
+    "pageErrors": []
+  },
+  {
+    "width": 768,
+    "section": "documents",
+    "viewport": 768,
+    "document": 768,
+    "pageErrors": []
+  },
+  {
+    "width": 768,
+    "section": "connections",
+    "viewport": 768,
+    "document": 768,
+    "pageErrors": []
+  },
+  {
+    "width": 768,
+    "section": "answers",
+    "viewport": 768,
+    "document": 768,
+    "pageErrors": []
+  },
+  {
+    "width": 768,
+    "section": "agents",
+    "viewport": 768,
+    "document": 768,
+    "pageErrors": []
+  },
+  {
+    "width": 768,
+    "section": "members",
+    "viewport": 768,
+    "document": 768,
+    "pageErrors": []
+  },
+  {
+    "width": 768,
+    "section": "activity",
+    "viewport": 768,
+    "document": 768,
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "section": "conversation",
+    "viewport": 390,
+    "document": 390,
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "section": "overview",
+    "viewport": 390,
+    "document": 390,
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "section": "tasks",
+    "viewport": 390,
+    "document": 390,
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "section": "decisions",
+    "viewport": 390,
+    "document": 390,
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "section": "intelligence",
+    "viewport": 390,
+    "document": 390,
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "section": "documents",
+    "viewport": 390,
+    "document": 390,
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "section": "connections",
+    "viewport": 390,
+    "document": 390,
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "section": "answers",
+    "viewport": 390,
+    "document": 390,
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "section": "agents",
+    "viewport": 390,
+    "document": 390,
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "section": "members",
+    "viewport": 390,
+    "document": 390,
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "section": "activity",
+    "viewport": 390,
+    "document": 390,
+    "pageErrors": []
+  },
+  {
+    "width": 360,
+    "section": "conversation",
+    "viewport": 360,
+    "document": 360,
+    "pageErrors": []
+  },
+  {
+    "width": 360,
+    "section": "overview",
+    "viewport": 360,
+    "document": 360,
+    "pageErrors": []
+  },
+  {
+    "width": 360,
+    "section": "tasks",
+    "viewport": 360,
+    "document": 360,
+    "pageErrors": []
+  },
+  {
+    "width": 360,
+    "section": "decisions",
+    "viewport": 360,
+    "document": 360,
+    "pageErrors": []
+  },
+  {
+    "width": 360,
+    "section": "intelligence",
+    "viewport": 360,
+    "document": 360,
+    "pageErrors": []
+  },
+  {
+    "width": 360,
+    "section": "documents",
+    "viewport": 360,
+    "document": 360,
+    "pageErrors": []
+  },
+  {
+    "width": 360,
+    "section": "connections",
+    "viewport": 360,
+    "document": 360,
+    "pageErrors": []
+  },
+  {
+    "width": 360,
+    "section": "answers",
+    "viewport": 360,
+    "document": 360,
+    "pageErrors": []
+  },
+  {
+    "width": 360,
+    "section": "agents",
+    "viewport": 360,
+    "document": 360,
+    "pageErrors": []
+  },
+  {
+    "width": 360,
+    "section": "members",
+    "viewport": 360,
+    "document": 360,
+    "pageErrors": []
+  },
+  {
+    "width": 360,
+    "section": "activity",
+    "viewport": 360,
+    "document": 360,
+    "pageErrors": []
+  }
+]

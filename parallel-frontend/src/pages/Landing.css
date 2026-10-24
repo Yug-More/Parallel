@@ -21,16 +21,16 @@
   max-width: 820px;
 }
 .landing-eyebrow {
-  color: #157286;
+  color: var(--accent);
   font-size: 14px;
   font-weight: 600;
   margin: 0 0 24px;
 }
 .landing-intro h1 {
-  font-size: clamp(44px, 6vw, 76px);
+  font-size: clamp(36px, 5vw, 60px);
   line-height: 1.08;
   font-weight: 600;
-  letter-spacing: -2.5px;
+  letter-spacing: -1.8px;
   margin: 0;
 }
 .landing-subtitle {
@@ -41,9 +41,9 @@
   margin: 28px 0;
 }
 .cta-button {
-  background: #157286;
+  background: var(--primary-fill);
   color: #fff;
-  border: 1px solid #157286;
+  border: 1px solid var(--primary-fill);
   border-radius: 7px;
   padding: 14px 24px;
   font: inherit;
@@ -51,7 +51,7 @@
   cursor: pointer;
 }
 .cta-button:focus-visible {
-  outline: 3px solid #157286;
+  outline: 3px solid var(--accent);
   outline-offset: 4px;
 }
 .landing-note {

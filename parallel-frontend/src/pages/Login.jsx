@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion as Motion } from "framer-motion";
+import ThemeToggle from "../components/ThemeToggle";
 import { api } from "../api";
 import "./Auth.css";
 import AccountRecovery from "../components/AccountRecovery";
@@ -24,12 +24,12 @@ export default function Login({ goSignup, goDashboard }) {
   }
   return (
     <div className="auth-container">
-      <Motion.div
-        className="auth-card glass"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h2 className="auth-title">Welcome Back</h2>
+      <div className="auth-card">
+        <div className="auth-header">
+          <strong>Parallel</strong>
+          <ThemeToggle />
+        </div>
+        <h1 className="auth-title">Welcome Back</h1>
         <p className="auth-subtitle">Sign in to your workspace</p>
         <form onSubmit={submit}>
           <label>
@@ -70,7 +70,7 @@ export default function Login({ goSignup, goDashboard }) {
             Create an account
           </button>
         </p>
-      </Motion.div>
+      </div>
     </div>
   );
 }

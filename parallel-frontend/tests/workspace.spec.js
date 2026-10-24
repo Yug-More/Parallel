@@ -210,6 +210,7 @@ for (const viewport of [
     await expect(
       copiedPage.getByLabel("Workspace", { exact: true }),
     ).toBeVisible();
+    await member.getByText("Account & security", { exact: true }).click();
     await member
       .getByRole("button", { name: "Log out all sessions", exact: true })
       .click();

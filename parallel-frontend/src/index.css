@@ -1,27 +1,128 @@
 @import "./theme.css";
 
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Display", sans-serif;
 }
-
-body, html, #root {
-  height: 100%;
-  background: var(--bg-pearl);
+body {
+  margin: 0;
+  font:
+    14px/1.6 Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  background: var(--bg);
   color: var(--text);
 }
-
-.glass {
-  background: var(--panel-glass);
-  backdrop-filter: var(--backdrop);
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+button,
+summary {
+  cursor: pointer;
+}
+button,
+input,
+textarea,
+select {
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border-radius: 6px;
+  color: var(--text);
+  background: var(--surface);
+}
+button {
+  min-height: 36px;
+  padding: 8px 12px;
+}
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+input,
+textarea,
+select {
+  min-width: 0;
+  max-width: 100%;
+  padding: 10px 12px;
+}
+input[type="checkbox"] {
+  accent-color: var(--primary-fill);
+}
+pre,
+code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+pre {
+  max-width: 100%;
+  overflow: auto;
+}
+summary {
+  line-height: 1.6;
+}
+[role="alert"] {
+  color: var(--danger);
+  overflow-wrap: anywhere;
+}
+.skip-link {
+  position: fixed;
+  left: 16px;
+  top: -100px;
+  z-index: 20;
+  background: var(--surface);
+  padding: 12px 16px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+}
+.skip-link:focus {
+  top: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+@media (max-width: 768px) {
+  button,
+  summary {
+    min-height: 44px;
+  }
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
 }
 
-/* Smooth transitions */
-html {
-  transition: background 0.4s ease, color 0.4s ease;
+input,
+textarea,
+select {
+  border-color: var(--control-border);
 }

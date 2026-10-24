@@ -1,65 +1,35 @@
-/* ================================
-   PARALLEL OS — GLOBAL THEME
-   Mother-of-Pearl VisionOS aesthetic
-==================================*/
-
 :root {
-  --bg: #f6f6f7;
-  --bg-pearl: radial-gradient(
-      circle at 20% 0%,
-      #ffffff 0%,
-      #f7f7f9 40%,
-      #f3f3f5 78%,
-      #ececef 100%
-  );
-
-  --sidebar-glass: rgba(255, 255, 255, 0.55);
-  --panel-glass: rgba(255, 255, 255, 0.6);
-
-  --text: #1c1c1e;
-  --text-secondary: rgba(0,0,0,0.55);
-
-  --border: rgba(0,0,0,0.12);
-  --code-bg: rgba(255,255,255,0.8);
-
-  --accent: #00c4ff;
-  --accent-soft: rgba(0,196,255,0.1);
-
-  --radius: 20px;
-  --radius-sm: 14px;
-
-  --shadow: 0 4px 22px rgba(0,0,0,0.08);
-  --shadow-strong: 0 8px 32px rgba(0,0,0,0.12);
-
-  --backdrop: blur(26px);
+  color-scheme: light;
+  --bg: #f7f8fa;
+  --surface: #ffffff;
+  --surface-secondary: #f0f3f5;
+  --text: #19242e;
+  --text-secondary: #52616f;
+  --muted: var(--text-secondary);
+  --border: #d3dbe2;
+  --control-border: #81929e;
+  --accent: #126678;
+  --brand-color: var(--accent);
+  --accent-soft: #e6f1f3;
+  --primary-fill: #126678;
+  --danger: #a82d35;
+  --success: #216b43;
+  --code-bg: #edf1f4;
+  --radius: 8px;
+  --radius-sm: 6px;
 }
-
-/* DARK MODE */
 [data-theme="dark"] {
-  --bg: #0d0f12;
-  --bg-pearl: radial-gradient(
-      circle at 20% 0%,
-      #1b1d22 0%,
-      #0d0f12 100%
-  );
-
-  --sidebar-glass: rgba(255,255,255,0.06);
-  --panel-glass: rgba(255,255,255,0.07);
-
-  --text: #f7f7f7;
-  --text-secondary: rgba(255,255,255,0.6);
-
-  --border: rgba(255,255,255,0.12);
-  --code-bg: rgba(255,255,255,0.06);
-
-  --shadow: 0 4px 22px rgba(0,0,0,0.45);
-  --shadow-strong: 0 8px 32px rgba(0,0,0,0.5);
-}
-
-:root {
-  --logo-filter: none;
-}
-
-[data-theme="dark"] {
-  --logo-filter: invert(1);
+  color-scheme: dark;
+  --bg: #11171d;
+  --surface: #182129;
+  --surface-secondary: #202d37;
+  --text: #edf2f5;
+  --text-secondary: #acbbc7;
+  --border: #3c4c59;
+  --control-border: #71899b;
+  --accent: #85d3df;
+  --accent-soft: #213d45;
+  --danger: #ffabb1;
+  --success: #9ddcb7;
+  --code-bg: #111b24;
 }
