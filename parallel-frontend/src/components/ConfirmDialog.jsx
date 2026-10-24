@@ -1,4 +1,5 @@
 import { useEffect, useRef, useId } from "react";
+import { containDialogFocus } from "./dialogFocus";
 
 export default function ConfirmDialog({
   confirmation,
@@ -9,15 +10,23 @@ export default function ConfirmDialog({
 }) {
   const dialog = useRef(null);
   const titleId = useId();
+  const opener = useRef(null);
   useEffect(() => {
-    if (confirmation && !dialog.current.open) dialog.current.showModal();
-    if (!confirmation && dialog.current.open) dialog.current.close();
+    if (confirmation && !dialog.current.open) {
+      opener.current = document.activeElement;
+      dialog.current.showModal();
+    }
+    if (!confirmation && dialog.current.open) {
+      dialog.current.close();
+      if (opener.current?.isConnected) opener.current.focus();
+    }
   }, [confirmation]);
   return (
     <dialog
       ref={dialog}
       className="confirm-dialog"
       aria-labelledby={titleId}
+      onKeyDown={containDialogFocus}
       onCancel={(event) => {
         event.preventDefault();
         if (!busy) onCancel();

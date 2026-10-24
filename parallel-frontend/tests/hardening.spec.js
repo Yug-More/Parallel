@@ -27,7 +27,7 @@ async function deliveredToken(email, purpose) {
 for (const width of [1440, 390]) {
   test(`hardening at ${width}px: fixture embeddings, evidence, retention and private account delivery`, async ({
     browser,
-  }) => {
+  }, testInfo) => {
     test.setTimeout(150000);
     const context = await browser.newContext({
       viewport: { width, height: width === 390 ? 844 : 1000 },
@@ -116,7 +116,7 @@ for (const width of [1440, 390]) {
       page.getByRole("heading", { name: "Review exact erasure scope" }),
     ).toBeVisible();
     await page.screenshot({
-      path: `../docs/screenshots/phase101112-retention-${width}.png`,
+      path: testInfo.outputPath(`retention-${width}.png`),
       fullPage: true,
     });
     await page

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useWorkspaceQuery } from "./projectHooks";
+import { containDialogFocus } from "./dialogFocus";
 
 export function SourceLink({ source, onOpen }) {
   return (
@@ -46,6 +47,7 @@ export function SourceViewer({
       ref={dialog}
       className="source-dialog"
       aria-label="Project source"
+      onKeyDown={containDialogFocus}
       onCancel={onClose}
     >
       <div className="section-heading">
