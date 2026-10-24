@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { Buffer } from "node:buffer";
 
 const sections = [
   "Overview",
@@ -300,4 +301,156 @@ test("rejecting an exact native proposal creates no tasks and replay cannot appr
     fullPage: true,
   });
   await context.close();
+});
+
+test("360px: signed closure review preserves its receipt and denies closed-workspace access", async ({
+  browser,
+}, testInfo) => {
+  test.setTimeout(60000);
+  const { context, page } = await account(
+    browser,
+    "closure-product-review",
+    360,
+  );
+  const outsider = await browser.newContext();
+  expect(
+    (
+      await outsider.request.post(`${base}/auth/register`, {
+        data: {
+          name: "Closure outsider",
+          email: "closure-outsider@example.test",
+          password: "synthetic-browser-password",
+        },
+      })
+    ).status(),
+  ).toBe(201);
+  await page.getByLabel("New workspace").fill("Retired synthetic workspace");
+  await page
+    .getByRole("button", { name: "Create workspace", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", {
+      name: "Retired synthetic workspace",
+      exact: true,
+    }),
+  ).toBeVisible();
+  const wid = await page.getByLabel("Workspace", { exact: true }).inputValue();
+  await page
+    .getByLabel("Message", { exact: true })
+    .fill("Human-authored history has explicit retention exceptions.");
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await expect(page.locator(".conversation-entry")).toHaveCount(1);
+  await page.getByRole("button", { name: "Documents", exact: true }).click();
+  await page.getByLabel("Document title").fill("Closure source");
+  await page.getByLabel("Text, Markdown or PDF file").setInputFiles({
+    name: "closure.md",
+    mimeType: "text/markdown",
+    buffer: Buffer.from(
+      "Synthetic private passage for the signed closure test.",
+    ),
+  });
+  await page
+    .getByRole("button", { name: "Upload document", exact: true })
+    .click();
+  await expect(
+    page.getByRole("article").filter({
+      has: page.getByRole("heading", { name: "Closure source", exact: true }),
+    }),
+  ).toContainText("ready");
+  await page.getByRole("button", { name: "Members", exact: true }).click();
+  await page
+    .getByText("Retention and workspace closure · owner only", { exact: true })
+    .click();
+  await page.getByLabel("Retention scope").selectOption("close");
+  await page
+    .getByRole("button", { name: "Preview erasure", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", {
+      name: "Review exact erasure scope",
+      exact: true,
+    }),
+  ).toBeVisible();
+  const execute = page.getByRole("button", {
+    name: "Erase reviewed content",
+    exact: true,
+  });
+  await expect(execute).toBeDisabled();
+  await page.getByLabel("Type ERASE REVIEWED CONTENT").fill("ERASE");
+  await expect(execute).toBeDisabled();
+  expect(
+    (await context.request.get(`${base}/workspaces/${wid}/messages`)).status(),
+  ).toBe(200);
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(360);
+  await page.screenshot({
+    path: testInfo.outputPath("closure-preview-360.png"),
+    fullPage: true,
+  });
+  await page
+    .getByLabel("Type ERASE REVIEWED CONTENT")
+    .fill("ERASE REVIEWED CONTENT");
+  const receiptResponse = page.waitForResponse(
+    (response) =>
+      response.url() === `${base}/workspaces/${wid}/retention/execute` &&
+      response.request().method() === "POST",
+  );
+  await execute.click();
+  const response = await receiptResponse;
+  expect(response.status()).toBe(200);
+  const receipt = await response.json();
+  expect(receipt.scope).toBe("close");
+  await expect(
+    page.getByRole("status").filter({ hasText: "Workspace closed." }),
+  ).toContainText(`Workspace closed. Retained audit receipt: ${receipt.id}`);
+  await expect(
+    page.getByRole("option", {
+      name: "Retired synthetic workspace",
+      exact: true,
+    }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: "Personal workspace", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator(".conversation-entry")).toHaveCount(0);
+  expect(
+    (await context.request.get(`${base}/workspaces/${wid}/messages`)).status(),
+  ).toBe(404);
+  expect(
+    (await context.request.get(`${base}/workspaces/${wid}/documents`)).status(),
+  ).toBe(404);
+  expect(
+    (
+      await context.request.post(
+        `${base}/workspaces/${wid}/retention/execute`,
+        { data: response.request().postDataJSON() },
+      )
+    ).status(),
+  ).toBe(409);
+  const audit = await context.request.get(
+    `${base}/workspaces/${wid}/retention/receipts`,
+  );
+  expect(audit.status()).toBe(200);
+  const records = await audit.json();
+  expect(records.items).toHaveLength(1);
+  expect(records.items[0].id).toBe(receipt.id);
+  expect(
+    (
+      await outsider.request.get(`${base}/workspaces/${wid}/retention/receipts`)
+    ).status(),
+  ).toBe(404);
+  await page.screenshot({
+    path: testInfo.outputPath("closure-receipt-360.png"),
+    fullPage: true,
+  });
+  await page.reload();
+  await expect(
+    page.getByRole("option", {
+      name: "Retired synthetic workspace",
+      exact: true,
+    }),
+  ).toHaveCount(0);
+  await context.close();
+  await outsider.close();
 });

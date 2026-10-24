@@ -9,8 +9,8 @@
       "file": "agents.png",
       "width": 1440,
       "height": 1000,
-      "bytes": 150587,
-      "sha256": "32e9c439a46473beb1b23b641c6fe03107651e7058111c5159cfac4fa81a78c6"
+      "bytes": 148839,
+      "sha256": "4cb433c7e83938d351ce18197f6e04c11756786e5ffd33d516407cdc00883d5e"
     },
     {
       "file": "answers.png",
@@ -23,36 +23,36 @@
       "file": "approval.png",
       "width": 1440,
       "height": 1000,
-      "bytes": 162796,
-      "sha256": "c0b36b42d335175fea859794d9097fad5fc3e3b3a38ef34bf6a42e0ebed95833"
+      "bytes": 180492,
+      "sha256": "721f8dea7142d05d110a5e8d90eae5f3fc57a33bb08214f8f906e887e2a6c372"
     },
     {
       "file": "conversation-mobile.png",
       "width": 390,
       "height": 1455,
-      "bytes": 92321,
-      "sha256": "aa738e286eee75399c8a0c1f77cda890975cdb755089478a231f5cf954992b54"
+      "bytes": 91764,
+      "sha256": "0cd23c212743e4f0aca64504cc09b8e182e431fa612ac8c788ea100eb970bb61"
     },
     {
       "file": "conversation.png",
       "width": 1440,
       "height": 1000,
-      "bytes": 120633,
-      "sha256": "d57f9f040be538bc0d6b780d4e8b57c08aa1b7eb4d3e581eefcd343ce4dcf208"
+      "bytes": 119993,
+      "sha256": "3d585a01ed57cc7c982a701f37915d9bc4035e1874d433820eee211130ae89b4"
     },
     {
       "file": "evidence.png",
       "width": 1440,
       "height": 1000,
-      "bytes": 159474,
-      "sha256": "bac82d952b53e17d8a19a93145506f872888f6c87a58641e7cbe70f0010c79e9"
+      "bytes": 157350,
+      "sha256": "5897426a3360ea55f2f2dddd113f0f4f827d98c56530358ddb3395e257baeb6b"
     },
     {
       "file": "memory.png",
       "width": 1440,
       "height": 1000,
-      "bytes": 166358,
-      "sha256": "bf8a94bc9f91e8e41c869bbd6eefc1b21be6c11827cc76591843ae93f4da108b"
+      "bytes": 166050,
+      "sha256": "aeccd825ac47e6b47fa02c0852b9350958d65bac21f6a4ef497b768ac7a6ea8c"
     },
     {
       "file": "shared.png",

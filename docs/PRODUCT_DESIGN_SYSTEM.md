@@ -32,7 +32,7 @@ Forms have visible labels, concise help and bounded input. Recovery forms use th
 
 Conversation: multiline composer, Enter sends, Shift+Enter inserts a line break; do not submit during IME composition. Human and generated messages have explicit role labels, stable authorship/time, readable paragraphs, safely escaped Markdown/code and no raw HTML. Code may scroll within its own container. Evidence remains interactive SourceLink → current-authorized SourceViewer; rendering never creates citations.
 
-Agent contracts are code-defined capabilities, not custom autonomous assistants. Keep contract explanation, selected capability, evidence, execution history and owner approvals visually distinct. Approval preview includes exact effect/hash/context, expiry, and resulting receipt; never reduce it to an unexplained accept button.
+Agent contracts are code-defined capabilities, not custom autonomous assistants. Keep contract explanation, selected capability, evidence, execution history and owner approvals visually distinct. Approval preview includes exact effect/hash/context and expiry inside the confirmation, with a resulting receipt after execution; never reduce it to an unexplained accept button.
 
 Memory is workspace records and retrieval, not a separate personal vector-memory editor. Describe Documents, Decisions and Intelligence as the retained context sources; link to actual retention controls. GitHub status must distinguish cached/synced from recently permission-verified access and show returned expiry/checkpoint metadata.
 

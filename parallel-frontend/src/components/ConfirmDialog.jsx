@@ -11,10 +11,12 @@ export default function ConfirmDialog({
   const dialog = useRef(null);
   const titleId = useId();
   const opener = useRef(null);
+  const cancelButton = useRef(null);
   useEffect(() => {
     if (confirmation && !dialog.current.open) {
       opener.current = document.activeElement;
       dialog.current.showModal();
+      cancelButton.current?.focus();
     }
     if (!confirmation && dialog.current.open) {
       dialog.current.close();
@@ -34,9 +36,17 @@ export default function ConfirmDialog({
     >
       <h2 id={titleId}>{confirmation?.title}</h2>
       <p>{confirmation?.message}</p>
+      {confirmation?.preview && (
+        <div className="confirmation-preview">
+          <h3>Exact task effect</h3>
+          <pre tabIndex={0} aria-label="Exact task effect">
+            {confirmation.preview}
+          </pre>
+        </div>
+      )}
       {error && <p role="alert">{error}</p>}
       <div className="button-row">
-        <button autoFocus disabled={busy} onClick={onCancel}>
+        <button ref={cancelButton} autoFocus disabled={busy} onClick={onCancel}>
           Cancel
         </button>
         <button className="primary" disabled={busy} onClick={onConfirm}>

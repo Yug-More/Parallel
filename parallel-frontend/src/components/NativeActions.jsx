@@ -4,7 +4,12 @@ import { SourceLink, SourceViewer } from "./ProjectSources";
 import ConfirmDialog from "./ConfirmDialog";
 import { useProjectAction, useWorkspaceQuery } from "./projectHooks";
 
-export default function NativeActions({ workspaceId, owner, onAccessLost }) {
+export default function NativeActions({
+  workspaceId,
+  workspaceName,
+  owner,
+  onAccessLost,
+}) {
   const base = `/workspaces/${workspaceId}/action-proposals`;
   const query = useWorkspaceQuery(base, workspaceId, onAccessLost, 1500);
   const actions = useProjectAction(workspaceId, onAccessLost);
@@ -86,7 +91,7 @@ export default function NativeActions({ workspaceId, owner, onAccessLost }) {
                 </div>
               )}
               <details>
-                <summary>Exact approved payload</summary>
+                <summary>Exact proposed payload</summary>
                 <pre className="source-body">
                   {JSON.stringify(proposal.payload, null, 2)}
                 </pre>
@@ -155,6 +160,19 @@ export default function NativeActions({ workspaceId, owner, onAccessLost }) {
                   confirmation.choice === "approve"
                     ? "Approve exact task plan?"
                     : "Reject task plan?",
+                preview:
+                  confirmation.choice === "approve" &&
+                  confirmation.proposal.payload
+                    ? [
+                        `Workspace: ${workspaceName || workspaceId}`,
+                        ...confirmation.proposal.payload.proposal.tasks.map(
+                          (task, index) =>
+                            `${index + 1}. ${task.title} · ${task.status === "todo" ? "To do" : task.status} · ${task.priority} · unassigned${index > 0 && confirmation.proposal.payload.proposal.sequential_dependencies ? " · requires previous step" : " · no prerequisite"}`,
+                        ),
+                        `Expires: ${new Date(confirmation.proposal.expires_at).toLocaleString()}`,
+                        `SHA-256: ${confirmation.proposal.payload_hash}`,
+                      ].join("\n")
+                    : null,
                 message:
                   confirmation.choice === "approve"
                     ? "The worker will create exactly the displayed tasks and prerequisites, only if the owner, initiating membership and captured context still match."

@@ -55,3 +55,7 @@ Targeted review fixed rotated refresh-grant loss on a subsequent network outage,
 ## Phases 13–16 product finalization
 
 Started from the verified Phase 12 merge `d54b91973d7fd97bda96ef090a6b88b195e86e4b`. The [screen audit](PRODUCT_UI_AUDIT.md) and [design system](PRODUCT_DESIGN_SYSTEM.md) precede the [interface refinement](PRODUCT_UI_IMPLEMENTATION.md). [Regression QA](PRODUCT_REGRESSION_QA.md) retains historical workflows and adds six-width/both-theme, keyboard, failure/retry, safe formatting and rejection/replay evidence. The README now uses reproducible actual synthetic screenshots, current schema/setup and explicit optional/external boundaries. Earlier audit entries remain historical; they are not current capability inventories.
+
+## Phase 17 final QA
+
+Final inspection corrected pending/rejected payload terminology, added an exact native task preview to confirmation and retained closure-success receipt feedback while clearing inaccessible workspace state. A new 360px closure journey verifies preview/typed execution/replay/owner audit. Unused active-import-free visual dependencies, obsolete styles and stock assets were removed; original branding/history/audit fixtures remain. [Final handoff](FINAL_PRODUCT_HANDOFF.md) contains the actual final gate and explicit external/production limitations. No backend schema/ranking or external execution boundary changed.

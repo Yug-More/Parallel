@@ -595,6 +595,14 @@ export default function Dashboard({ user, onLogout }) {
                             key={workspaceId}
                             workspaceId={workspaceId}
                             onAccessLost={lostAccess}
+                            onClosed={(receipt) => {
+                              lostAccess(workspaceId);
+                              setTab("conversation");
+                              setError("");
+                              setNotice(
+                                `Workspace closed. Retained audit receipt: ${receipt.id}.`,
+                              );
+                            }}
                           />
                         )}
                     </>

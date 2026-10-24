@@ -1031,3 +1031,40 @@ button.inbox-button.active {
 .project-form textarea {
   border-color: var(--control-border);
 }
+
+/* Final QA: consequential reviews stay readable inside narrow native dialogs. */
+.confirm-dialog {
+  max-height: 90dvh;
+  overflow: auto;
+}
+.confirmation-preview {
+  margin: 16px 0 24px;
+}
+.confirmation-preview h3 {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.confirmation-preview pre {
+  max-height: 32dvh;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.status-badge {
+  display: inline-block;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-secondary);
+  padding: 3px 8px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.run-placeholder .empty-state {
+  padding: 0;
+}

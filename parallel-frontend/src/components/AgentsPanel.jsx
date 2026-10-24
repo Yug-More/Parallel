@@ -539,6 +539,7 @@ export default function AgentsPanel({
       </div>
       <NativeActions
         workspaceId={workspaceId}
+        workspaceName={workspace.name}
         owner={workspace.role === "owner"}
         onAccessLost={onAccessLost}
       />
