@@ -415,6 +415,9 @@ export default function Dashboard({ user, onLogout }) {
                       </div>
                       <div
                         className="conversation-log"
+                        role="log"
+                        aria-live="polite"
+                        aria-relevant="additions"
                         aria-label="Saved messages"
                       >
                         {view.messages.length > 0 && (
