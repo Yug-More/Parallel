@@ -1,0 +1,272 @@
+[
+  {
+    "width": 1440,
+    "section": "conversation",
+    "overflow": {
+      "viewport": 1440,
+      "document": 1440
+    },
+    "headings": [
+      "Conversation",
+      ""
+    ]
+  },
+  {
+    "width": 1440,
+    "section": "overview",
+    "overflow": {
+      "viewport": 1440,
+      "document": 1440
+    },
+    "headings": [
+      "Project overview",
+      ""
+    ]
+  },
+  {
+    "width": 1440,
+    "section": "tasks",
+    "overflow": {
+      "viewport": 1440,
+      "document": 1440
+    },
+    "headings": [
+      "Tasks",
+      ""
+    ]
+  },
+  {
+    "width": 1440,
+    "section": "decisions",
+    "overflow": {
+      "viewport": 1440,
+      "document": 1440
+    },
+    "headings": [
+      "Decisions",
+      "",
+      ""
+    ]
+  },
+  {
+    "width": 1440,
+    "section": "intelligence",
+    "overflow": {
+      "viewport": 1440,
+      "document": 1440
+    },
+    "headings": [
+      "Project intelligence",
+      ""
+    ]
+  },
+  {
+    "width": 1440,
+    "section": "documents",
+    "overflow": {
+      "viewport": 1440,
+      "document": 1440
+    },
+    "headings": [
+      "Workspace documents",
+      ""
+    ]
+  },
+  {
+    "width": 1440,
+    "section": "connections",
+    "overflow": {
+      "viewport": 1440,
+      "document": 1440
+    },
+    "headings": [
+      "Connected repositories",
+      ""
+    ]
+  },
+  {
+    "width": 1440,
+    "section": "answers",
+    "overflow": {
+      "viewport": 1440,
+      "document": 1440
+    },
+    "headings": [
+      "Ask the workspace",
+      ""
+    ]
+  },
+  {
+    "width": 1440,
+    "section": "agents",
+    "overflow": {
+      "viewport": 1440,
+      "document": 1440
+    },
+    "headings": [
+      "Agents & approvals",
+      "",
+      "",
+      ""
+    ]
+  },
+  {
+    "width": 1440,
+    "section": "members",
+    "overflow": {
+      "viewport": 1440,
+      "document": 1440
+    },
+    "headings": [
+      "Members",
+      ""
+    ]
+  },
+  {
+    "width": 1440,
+    "section": "activity",
+    "overflow": {
+      "viewport": 1440,
+      "document": 1440
+    },
+    "headings": [
+      "Activity",
+      ""
+    ]
+  },
+  {
+    "width": 390,
+    "section": "conversation",
+    "overflow": {
+      "viewport": 390,
+      "document": 390
+    },
+    "headings": [
+      "Conversation",
+      ""
+    ]
+  },
+  {
+    "width": 390,
+    "section": "overview",
+    "overflow": {
+      "viewport": 390,
+      "document": 390
+    },
+    "headings": [
+      "Project overview",
+      ""
+    ]
+  },
+  {
+    "width": 390,
+    "section": "tasks",
+    "overflow": {
+      "viewport": 390,
+      "document": 390
+    },
+    "headings": [
+      "Tasks",
+      ""
+    ]
+  },
+  {
+    "width": 390,
+    "section": "decisions",
+    "overflow": {
+      "viewport": 390,
+      "document": 390
+    },
+    "headings": [
+      "Decisions",
+      "",
+      ""
+    ]
+  },
+  {
+    "width": 390,
+    "section": "intelligence",
+    "overflow": {
+      "viewport": 390,
+      "document": 390
+    },
+    "headings": [
+      "Project intelligence",
+      ""
+    ]
+  },
+  {
+    "width": 390,
+    "section": "documents",
+    "overflow": {
+      "viewport": 390,
+      "document": 390
+    },
+    "headings": [
+      "Workspace documents",
+      ""
+    ]
+  },
+  {
+    "width": 390,
+    "section": "connections",
+    "overflow": {
+      "viewport": 390,
+      "document": 390
+    },
+    "headings": [
+      "Connected repositories",
+      ""
+    ]
+  },
+  {
+    "width": 390,
+    "section": "answers",
+    "overflow": {
+      "viewport": 390,
+      "document": 390
+    },
+    "headings": [
+      "Ask the workspace",
+      ""
+    ]
+  },
+  {
+    "width": 390,
+    "section": "agents",
+    "overflow": {
+      "viewport": 390,
+      "document": 390
+    },
+    "headings": [
+      "Agents & approvals",
+      "",
+      "",
+      ""
+    ]
+  },
+  {
+    "width": 390,
+    "section": "members",
+    "overflow": {
+      "viewport": 390,
+      "document": 390
+    },
+    "headings": [
+      "Members",
+      ""
+    ]
+  },
+  {
+    "width": 390,
+    "section": "activity",
+    "overflow": {
+      "viewport": 390,
+      "document": 390
+    },
+    "headings": [
+      "Activity",
+      ""
+    ]
+  }
+]
