@@ -45,3 +45,7 @@ The PR must pass every configured check, including the new Compose job. Branch p
 ## Verified implementation commit
 
 Runtime/security changes: `e1a1a1f44d4e4bbba172c60bcbc0c5dbb4e6850f`. Both author and committer verified as Yug-More <yugmore20@gmail.com>; no co-author trailers. Documentation and evidence are committed separately. All README screenshot references and historical contributors remain preserved. Local Markdown links, the exact private/exclusive configuration-generation command, source secret guard and diff whitespace checks passed.
+
+## Release gate and immutable evidence
+
+[PR #12](https://github.com/Yug-More/Parallel/pull/12) contains the final design, exact commits, six CI jobs, review and merge outcome. [Main verification runs](https://github.com/Yug-More/Parallel/actions?query=branch%3Amain) provide the post-merge gate; their results must be inspected, not inferred from this source file. Runtime/security implementation: `e1a1a1f44d4e4bbba172c60bcbc0c5dbb4e6850f`; initial evidence freeze: `ed962112140cb7fb41a07f0ebfa5b23b9620bb63`. No CI/merge result is predeclared before observation. Numerical fixture results above are frozen; repository release state remains observable through these linked records.
