@@ -76,3 +76,7 @@ Residual boundaries: the PDF subprocess is not a complete OS filesystem/network 
 ## Product refinement regression
 
 Phase 15 retained the backend security suite and added real browser checks for escaped script/image/unsafe-link text, 503 draft preservation/explicit retry, workspace cache clearing, current citation focus, exact proposal rejection/denied replay and dialog containment. UI selection never replaces membership/freshness checks. [QA report](PRODUCT_REGRESSION_QA.md) states results and [external validation](EXTERNAL_VALIDATION_CHECKLIST.md) states limits. No penetration test or blanket accessibility/production certification is implied.
+
+## Dependency review — 9 November 2026
+
+The finalization audit found seven published pypdf advisories affecting the pinned 6.21.2 version (CVE-2026-119203 through CVE-2026-119209). Both requirements and constraints now pin 6.21.4; the repeated requirements-ai audit reports no known vulnerabilities. PDF signature/size/page/character/deadline/CPU/Linux memory limits and subprocess isolation remain unchanged. Supported OpenAPI no longer advertises the disabled legacy catch-all; actual 410/404 denials remain regression-tested. These changes do not establish a penetration test, optional full ML runtime safety or owner-side revocation of historically exposed credentials. [Final validation](FINAL_VALIDATION_REPORT.md) records scope and limits.

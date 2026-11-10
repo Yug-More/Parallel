@@ -59,3 +59,7 @@ Started from the verified Phase 12 merge `d54b91973d7fd97bda96ef090a6b88b195e86e
 ## Phase 17 final QA
 
 Final inspection corrected pending/rejected payload terminology, added an exact native task preview to confirmation and retained closure-success receipt feedback while clearing inaccessible workspace state. A new 360px closure journey verifies preview/typed execution/replay/owner audit. Unused active-import-free visual dependencies, obsolete styles and stock assets were removed; original branding/history/audit fixtures remain. [Final handoff](FINAL_PRODUCT_HANDOFF.md) contains the actual final gate and explicit external/production limitations. No backend schema/ranking or external execution boundary changed.
+
+## Finalization audit — 9 November 2026
+
+The [final validation report](FINAL_VALIDATION_REPORT.md) prioritizes the current findings: seven PDF dependency advisories fixed by pypdf 6.21.4; missing Compose worker fixed with migration-aware readiness ordering and real CI smoke; misleading legacy OpenAPI operations removed from the supported schema; award rankings and current metrics reconciled against evidence. Existing authorization, context, leases and exact approvals were preserved and rechecked. Scope includes runtime/domain inventory, existing frontend journeys, CI/migrations, integration boundaries and evidence; no exhaustive security certification or live provider verification is inferred. [Frozen metrics](FINAL_PROJECT_METRICS.md) supersede older current-count claims while retaining their historical records.

@@ -36,3 +36,7 @@ Preserve membership/source boundaries, migration data, historical contributors a
 ## Phases 10–16 implementation
 
 Optional artifact-bound trained adapters and external-consent boundaries, fresh private transmission checks, atomic sync checkpoints, private local recovery/verification, shared quotas, signed retention/closure and an isolated PostgreSQL restore drill are implemented through schema 0018. The product refinement cycle adds a documented design system, coherent responsive light/dark shell, bounded Markdown/code conversation, explicit capability/evidence/freshness explanations, keyboard-contained dialogs, expanded real browser regressions and reproducible synthetic product captures. None establishes trained quality, real email/private access, independent usability or production readiness. Remaining evidence gates are in [external validation](EXTERNAL_VALIDATION_CHECKLIST.md).
+
+## Finalization freeze — 9 November 2026
+
+The current engineering/evidence freeze is documented in [metrics](FINAL_PROJECT_METRICS.md) and [validation](FINAL_VALIDATION_REPORT.md). Further work should be driven by an observed defect or an explicitly authorized capability, rather than routine feature churn for application materials. Remaining research/operational work is independent relevance judgments, representative usability/accessibility, live private/provider quality verification, credential revocation and production operation/recovery. Historical external connectors remain disabled; no broader autonomous execution was enabled by this freeze.
