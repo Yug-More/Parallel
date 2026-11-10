@@ -160,7 +160,11 @@ def create_app(settings=None):
     async def disabled_voice(websocket: WebSocket):
         await websocket.close(code=1008, reason="Voice is disabled")
 
-    @app.api_route("/{legacy_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+    @app.api_route(
+        "/{legacy_path:path}",
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+        include_in_schema=False,
+    )
     def unsupported(legacy_path: str):
         unsafe = {
             "voice",

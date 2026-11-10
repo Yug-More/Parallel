@@ -37,3 +37,7 @@ Project continuity now includes extractable PDF page provenance, selected privat
 ## Current product experience
 
 A coherent light/dark shell keeps workspace identity, role/member count and evidence controls visible. Conversations retain readable multiline text/code; Intelligence explains the actual shared context and local lexical limits. Selected contract scope, exact approval review, permission expiry and signed retention remain explicit. Optional trained adapters and local recovery are implemented under separate opt-ins; live model quality, private grant behavior and real delivery are not verified. See [design system](PRODUCT_DESIGN_SYSTEM.md) and [external validation](EXTERNAL_VALIDATION_CHECKLIST.md).
+
+## Evidence freeze
+
+The [9 November 2026 metrics](FINAL_PROJECT_METRICS.md) describe the implemented local product, confirmed historical award records and measured fixture scope. Current coordination is six deterministic bounded contracts with explicit human approval for native effects. Historical integrations and event demos must not be presented as today's live external execution. [Application wording](GRADUATE_APPLICATION_SUMMARY.md) preserves that distinction.

@@ -1,0 +1,10 @@
+{
+  "workspace_id": "ee89ced0-0687-41e0-893e-c2e6b66c647d",
+  "task_id": "14c76467-ffe3-4bee-8ab4-2bd12c3e66bb",
+  "document_id": "5e6c20e2-651b-456c-a7d2-c568c94950e2",
+  "run_id": "7676a515-12f9-48e8-9201-c0c8502b7bda",
+  "coordinator": "completed",
+  "document": "ready",
+  "idempotency": "passed",
+  "cross_workspace_denial": "passed"
+}

@@ -4,6 +4,18 @@
 
 Parallel is a persistent project workspace for people and bounded local agents. Keep conversations, tasks, decisions and documents together; return to what changed; inspect the evidence behind an answer; approve an exact plan before it creates project tasks.
 
+## Hackathon awards & recognition
+
+Parallel earned awards at **three separate AI competitions**, spanning collaborative agents, developer tooling and voice interaction.
+
+| Competition | Recognition | Supporting evidence |
+| --- | --- | --- |
+| **Scoop AI Hackathon** — SpoonOS and Berkeley Emerging Technology Association | **Winning team** | [Winning announcement](https://www.linkedin.com/posts/yugmore13_48-hours-zero-sleep-one-turning-point-activity-7399135503683571712-kQk6) · [Team announcement](https://www.linkedin.com/posts/sean-aminov_hackathon-spoonos-parallelos-activity-7399594794231996416-HxUu) · [Official event](https://scoop.spoonai.io/) |
+| **TRAE Friends @ Silicon Valley — Pitch and Demo Event** | **First Place / Grand Prize Winner** | [Winning announcement](https://www.linkedin.com/posts/paralleldev_ai-startup-parallel-activity-7405709912682463232-4XuK) · [Official event](https://luma.com/b1ii8quj) |
+| **Google DeepMind Continual Learning Hackathon** | **Best Use of Composio** and **Best Voice Agent Using Plivo** | [Devpost winner record](https://devpost.com/software/parallel) · [Winning announcement](https://www.linkedin.com/posts/yugmore13_68-teams-200-hackers-two-track-wins-activity-7426742140065693697--u9G) |
+
+TRAE's event took place at the Plug and Play Tech Center in Sunnyvale, California. The continual-learning awards are two tracks within one competition. [Evidence notes](docs/PROJECT_HISTORY.md) preserve the Scoop placement discrepancy and distinguish historical prototypes from current technical capabilities.
+
 ![Parallel workspace overview with synthetic release-review data](docs/screenshots/product/workspace.png)
 
 *Actual Chromium capture from the synthetic release-review walkthrough. The API, database and worker are running; these are persisted records, not a mockup.*
@@ -126,6 +138,26 @@ Defaults disable paid providers, trained retrieval and GitHub access. Keys stay 
 
 See [example configuration](backend/.env.example), [integrations](docs/INTEGRATIONS.md), [trained intelligence/recovery/retention](docs/INTELLIGENCE_HARDENING.md) and [operations](docs/OPERATIONS.md). Optional full ML runtime compatibility, actual trained quality and live private/model integrations are unverified.
 
+## Docker demo
+
+With Docker Desktop running, generate local configuration from the repository root:
+
+```bash
+python3 - <<'PYCONFIG'
+import os
+import secrets
+
+values = {"SECRET_KEY": secrets.token_urlsafe(48), "POSTGRES_PASSWORD": secrets.token_hex(24)}
+with open("/tmp/parallel-demo.env", "x", opener=lambda path, flags: os.open(path, flags, 0o600)) as output:
+    output.write("".join(f"{key}={value}\n" for key, value in values.items()))
+PYCONFIG
+docker compose --env-file /tmp/parallel-demo.env -f backend/docker-compose.yml -p parallel-demo up --build -d --wait
+```
+
+Run the frontend separately using the local instructions. Compose starts PostgreSQL, migrates the API database, waits for `/ready`, then starts the worker with the same configuration. Optional external providers stay disabled. Keep the private environment file and volume for subsequent starts; do not regenerate keys for existing data. Stop with the same command prefix followed by `stop`; never remove needed volumes.
+
+For a **disposable** stack only, `python3 scripts/compose_smoke.py` creates synthetic accounts/documents/tasks and verifies real worker computation, duplicate suppression and access denial. [Reproducibility](docs/REPRODUCIBILITY.md) records tested scope and restart behavior.
+
 ## Verify
 
 With the backend development environment active, from the repository root:
@@ -178,6 +210,8 @@ Historical Plivo credential exposure still requires owner-side revocation/rotati
 - `docs/`: [product vision](docs/PRODUCT_VISION.md), [design system](docs/PRODUCT_DESIGN_SYSTEM.md), [screen audit](docs/PRODUCT_UI_AUDIT.md), [UI implementation](docs/PRODUCT_UI_IMPLEMENTATION.md), [agent contracts](docs/AGENT_ORCHESTRATION.md), [roadmap](docs/DEVELOPMENT_ROADMAP.md) and [audit history](docs/REPOSITORY_AUDIT.md).
 
 The [final product handoff](docs/FINAL_PRODUCT_HANDOFF.md) records completed phases, verification and remaining owner steps.
+
+The [final validation report](docs/FINAL_VALIDATION_REPORT.md), [frozen project metrics](docs/FINAL_PROJECT_METRICS.md) and [application summary](docs/GRADUATE_APPLICATION_SUMMARY.md) provide current evidence and defensible claim wording.
 
 Contribute through focused PRs with actual verification evidence; follow [AGENTS.md](AGENTS.md), preserve user data/history and keep authorization/approval boundaries intact. The original project began as a hackathon prototype; owner-supplied recognition is recorded with its verification limits in [project history](docs/PROJECT_HISTORY.md). Historical human contributions remain preserved.
 

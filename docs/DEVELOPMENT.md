@@ -107,3 +107,7 @@ The checker resolves actual local Markdown/image targets and parses/renders ever
 - Recovery token missing: only a configured private test/development channel exists; no email was sent.
 
 `GET /health` is liveness; `/ready` checks database/head. [Operations](OPERATIONS.md) covers private logs, backup/new-path restoration, queue fairness, bounded leases and operator-installed supervision. Docker Compose is an optional local profile: configure generated private keys/passwords, preserve existing volumes, run frontend separately, and never use `down -v` on needed data. No production deployment or public release is authorized by these instructions.
+
+## Final validation entry points
+
+Use [reproducibility](REPRODUCIBILITY.md) for the corrected API/database/worker Compose profile, generated private environment and real disposable-stack smoke. Install Chromium before browser tests. [Final validation](FINAL_VALIDATION_REPORT.md) records actual commands/failures/outcomes and [frozen metrics](FINAL_PROJECT_METRICS.md) governs application claims. Existing-data safety procedures above remain required.

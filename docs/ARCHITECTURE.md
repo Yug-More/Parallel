@@ -157,3 +157,7 @@ stateDiagram-v2
 ## Product interface
 
 The React state router retains workspace/section query parameters. A persistent desktop sidebar becomes a local horizontal section row on mobile. Shared native controls, light/dark tokens, bounded text-only message formatting, named live message log, focus-contained native dialogs and explicit account/retention navigation preserve the server contracts. See [design system](PRODUCT_DESIGN_SYSTEM.md), [screen inventory](PRODUCT_UI_AUDIT.md) and [regression evidence](PRODUCT_REGRESSION_QA.md). No frontend visibility or rendered model text grants permissions.
+
+## Finalized local Compose profile — 9 November 2026
+
+Compose now runs PostgreSQL 16, a nonroot API and a separate nonroot worker. API startup migrates after database health; `/ready` verifies the expected schema before the worker starts with the shared runtime mapping. It does not run competing worker migrations. The frontend remains a separate Vite process. The [real smoke](../scripts/compose_smoke.py) exercises persisted ingestion and delegated handoff completion. [Reproducibility](REPRODUCIBILITY.md) distinguishes dependency ordering from restart behavior. The supported OpenAPI schema excludes the disabled legacy catch-all: 61 paths/75 operations; disabled legacy and voice denial behavior remains intact. No schema change or backfill accompanies this release.

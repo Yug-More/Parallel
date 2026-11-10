@@ -1,0 +1,104 @@
+{
+  "method": "deterministic_lexical_v2",
+  "fixture": "synthetic-v1",
+  "query_count": 11,
+  "macro_precision_at_5": 0.9090909090909091,
+  "macro_recall_at_5": 0.9090909090909091,
+  "mean_reciprocal_rank": 0.8888888888888888,
+  "citation_correctness": 1.0,
+  "citations_checked": 11,
+  "current_state_correctness": 1.0,
+  "current_state_checks": 5,
+  "unauthorized_retrieval_count": 0,
+  "access_denials_checked": 6,
+  "scenarios": [
+    {
+      "scenario": "current decision",
+      "precision_at_5": 1.0,
+      "recall_at_5": 1.0,
+      "reciprocal_rank": 1.0,
+      "returned": 1,
+      "relevant": 1
+    },
+    {
+      "scenario": "historical decisions",
+      "precision_at_5": 1.0,
+      "recall_at_5": 1.0,
+      "reciprocal_rank": 1.0,
+      "returned": 2,
+      "relevant": 2
+    },
+    {
+      "scenario": "similar task names",
+      "precision_at_5": 1.0,
+      "recall_at_5": 1.0,
+      "reciprocal_rank": 1.0,
+      "returned": 2,
+      "relevant": 2
+    },
+    {
+      "scenario": "archived task explicit",
+      "precision_at_5": 1.0,
+      "recall_at_5": 1.0,
+      "reciprocal_rank": 1.0,
+      "returned": 1,
+      "relevant": 1
+    },
+    {
+      "scenario": "archived task excluded",
+      "precision_at_5": 1.0,
+      "recall_at_5": 1.0,
+      "reciprocal_rank": null,
+      "returned": 0,
+      "relevant": 0
+    },
+    {
+      "scenario": "contradictory raw conversation",
+      "precision_at_5": 1.0,
+      "recall_at_5": 1.0,
+      "reciprocal_rank": 1.0,
+      "returned": 2,
+      "relevant": 2
+    },
+    {
+      "scenario": "long history needle",
+      "precision_at_5": 1.0,
+      "recall_at_5": 1.0,
+      "reciprocal_rank": 1.0,
+      "returned": 1,
+      "relevant": 1
+    },
+    {
+      "scenario": "no invented evidence",
+      "precision_at_5": 1.0,
+      "recall_at_5": 1.0,
+      "reciprocal_rank": null,
+      "returned": 0,
+      "relevant": 0
+    },
+    {
+      "scenario": "temporal interval",
+      "precision_at_5": 1.0,
+      "recall_at_5": 1.0,
+      "reciprocal_rank": 1.0,
+      "returned": 1,
+      "relevant": 1
+    },
+    {
+      "scenario": "ambiguous OR terms",
+      "precision_at_5": 1.0,
+      "recall_at_5": 1.0,
+      "reciprocal_rank": 1.0,
+      "returned": 1,
+      "relevant": 1
+    },
+    {
+      "scenario": "lexical vocabulary gap",
+      "precision_at_5": 0.0,
+      "recall_at_5": 0.0,
+      "reciprocal_rank": 0,
+      "returned": 0,
+      "relevant": 1
+    }
+  ]
+}
