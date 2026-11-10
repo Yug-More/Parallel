@@ -10,6 +10,16 @@ from models import WorkerHeartbeat, utc_now
 from worker_health import heartbeat, status
 
 
+def test_openapi_advertises_unique_supported_operations_only(application, client):
+    schema = application.openapi()
+    assert "/{legacy_path}" not in schema["paths"]
+    operations = [operation for path in schema["paths"].values() for operation in path.values()]
+    ids = [operation["operationId"] for operation in operations]
+    assert len(ids) == len(set(ids))
+    assert client.post("/tools").status_code == 410
+    assert client.get("/unknown-route").status_code == 404
+
+
 def test_backup_restore_and_overwrite_protection(tmp_path):
     original = tmp_path / "original.db"
     output = tmp_path / "backup.db"

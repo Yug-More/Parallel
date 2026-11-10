@@ -9,6 +9,26 @@ concurrency:
   group: verify-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  compose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start isolated API, worker and PostgreSQL
+        env:
+          SECRET_KEY: ci-only-compose-signing-key-not-for-deployment
+          POSTGRES_PASSWORD: ci-only-compose-database-password
+        run: docker compose -f backend/docker-compose.yml -p parallel-ci up --build -d --wait
+      - name: Verify real ingestion, coordinator, replay and isolation
+        run: python scripts/compose_smoke.py
+      - name: Preserve diagnostics and stop services
+        if: always()
+        env:
+          SECRET_KEY: ci-only-compose-signing-key-not-for-deployment
+          POSTGRES_PASSWORD: ci-only-compose-database-password
+        run: |
+          docker compose -f backend/docker-compose.yml -p parallel-ci ps
+          docker compose -f backend/docker-compose.yml -p parallel-ci stop
   dependencies:
     runs-on: ubuntu-latest
     timeout-minutes: 15
