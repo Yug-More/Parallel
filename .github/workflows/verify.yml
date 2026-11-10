@@ -109,7 +109,8 @@ jobs:
       - name: Isolated PostgreSQL dump and restoration drill
         run: python backend/tests/postgres_restore.py --container "${{ job.services.postgres.id }}"
   frontend:
-    runs-on: ubuntu-latest
+    # Match the OS supported by the locked Playwright release.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4

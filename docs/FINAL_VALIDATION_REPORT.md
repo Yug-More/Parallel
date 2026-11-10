@@ -34,6 +34,8 @@ This is a scoped source review plus automated verification, not proof that every
 
 The first browser attempt had no Chromium binary; installed it as documented. A subsequent run had 15/16 passing, with one PDF subprocess failure while the environment's pypdf package was being replaced. The fixed PDF/operations tests passed; the full suite was rerun in a stable environment without weakening the resource limits or assertions. Docker's first build lacked the bundled credential helper on PATH; adding Docker Desktop's own binary directory resolved it without changing credential storage.
 
+The first remote frontend gate failed before tests because `ubuntu-latest` had moved to Ubuntu 26.04, unsupported by locked Playwright 1.58.2. Its installed platform/dependency registry confirms Ubuntu 24.04 support; the frontend job now pins `ubuntu-24.04` without changing the browser tests. Compose, dependency and PostgreSQL jobs passed on that run.
+
 The initial vulnerability gate failed legitimately and was fixed with a patch upgrade, not an exclusion. Starlette test-client deprecation, intentionally short-key JWT negative-test and historical SQLite datetime warnings remain visible. No test was removed or skipped to obtain passing outcomes.
 
 ## Release gates and limitations
